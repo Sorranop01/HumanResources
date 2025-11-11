@@ -1,0 +1,25 @@
+{
+  "projects": {
+    "default": "human-b4c2c",
+    "dev": "human-b3c1c-dev",
+    "staging": "human-b4c2c",
+    "production": "human-b4c2c"
+  },
+  "targets": {
+    "human-b4c2c": {
+      "hosting": {
+        "production": [
+          "human-b4c2c"
+        ]
+      }
+    },
+    "human-b3c1c-dev": {
+      "hosting": {
+        "development": [
+          "human-b3c1c-dev"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
