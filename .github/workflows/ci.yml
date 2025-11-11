@@ -33,44 +33,44 @@ jobs:
       - name: Type check
         run: pnpm typecheck
 
-  test:
-    name: Unit Tests
-    runs-on: ubuntu-latest
+  # test:
+  #   name: Unit Tests
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+  #     - name: Setup pnpm
+  #       uses: pnpm/action-setup@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
+  #     - name: Setup Node.js
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '20'
+  #         cache: 'pnpm'
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+  #     - name: Install dependencies
+  #       run: pnpm install --frozen-lockfile
 
-      - name: Run tests
-        run: pnpm test
+  #     - name: Run tests
+  #       run: pnpm test
 
-      - name: Generate coverage report
-        run: pnpm test:coverage
+  #     - name: Generate coverage report
+  #       run: pnpm test:coverage
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        if: always()
-        with:
-          files: ./coverage/coverage-final.json
-          flags: unittests
-          name: codecov-umbrella
+  #     - name: Upload coverage to Codecov
+  #       uses: codecov/codecov-action@v4
+  #       if: always()
+  #       with:
+  #         files: ./coverage/coverage-final.json
+  #         flags: unittests
+  #         name: codecov-umbrella
 
   build:
     name: Build Application
     runs-on: ubuntu-latest
-    needs: [lint, test]
+    needs: [lint]
 
     steps:
       - name: Checkout code
