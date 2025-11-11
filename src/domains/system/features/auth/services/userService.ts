@@ -1,7 +1,7 @@
-import { doc, getDoc, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, Timestamp, updateDoc } from 'firebase/firestore';
+import { ROLES, type Role } from '@/shared/constants/roles';
 import { db } from '@/shared/lib/firebase';
 import type { User } from '@/shared/types';
-import { ROLES, type Role } from '@/shared/constants/roles';
 
 /**
  * User profile data for creation

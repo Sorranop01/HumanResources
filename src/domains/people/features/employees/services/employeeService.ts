@@ -1,16 +1,16 @@
 import {
-  collection,
-  doc,
-  getDocs,
-  getDoc,
   addDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  orderBy,
+  collection,
   type DocumentData,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
   type QueryConstraint,
+  query,
+  updateDoc,
+  where,
 } from 'firebase/firestore';
 import { db } from '@/shared/lib/firebase';
 import type { Employee } from '@/shared/types';
@@ -22,10 +22,7 @@ export const employeeService = {
   /**
    * Get all employees
    */
-  async getAll(filters?: {
-    status?: string;
-    department?: string;
-  }): Promise<Employee[]> {
+  async getAll(filters?: { status?: string; department?: string }): Promise<Employee[]> {
     const constraints: QueryConstraint[] = [];
 
     if (filters?.status) {
@@ -41,10 +38,13 @@ export const employeeService = {
     const q = query(employeesCol, ...constraints);
     const snapshot = await getDocs(q);
 
-    return snapshot.docs.map((d) => ({
-      id: d.id,
-      ...(d.data() as DocumentData),
-    } as Employee));
+    return snapshot.docs.map(
+      (d) =>
+        ({
+          id: d.id,
+          ...(d.data() as DocumentData),
+        }) as Employee
+    );
   },
 
   /**

@@ -1,10 +1,10 @@
-import { type ReactNode } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
 import { Spin } from 'antd';
-import { useAuth } from '@/shared/hooks/useAuth';
-import { ROUTES } from '@/shared/constants/routes';
+import type { ReactNode } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import type { Role } from '@/shared/constants/roles';
 import { hasRolePrivilege } from '@/shared/constants/roles';
+import { ROUTES } from '@/shared/constants/routes';
+import { useAuth } from '@/shared/hooks/useAuth';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -28,11 +28,7 @@ interface ProtectedRouteProps {
  * - Supports role-based access control
  * - Preserves the intended route after login via state
  */
-export function ProtectedRoute({
-  children,
-  requiredRole,
-  loadingElement,
-}: ProtectedRouteProps) {
+export function ProtectedRoute({ children, requiredRole, loadingElement }: ProtectedRouteProps) {
   const { user, loading, isAuthenticated } = useAuth();
   const location = useLocation();
 

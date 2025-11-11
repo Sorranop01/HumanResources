@@ -14,11 +14,14 @@ export function logWarn(message: string, data?: Record<string, unknown>): void {
 
 export function logError(message: string, error?: unknown, data?: Record<string, unknown>): void {
   logger.error(message, {
-    error: error instanceof Error ? {
-      name: error.name,
-      message: error.message,
-      stack: error.stack,
-    } : error,
+    error:
+      error instanceof Error
+        ? {
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+          }
+        : error,
     ...data,
   });
 }

@@ -4,12 +4,7 @@ import { z } from 'zod';
  * Login validation schema
  */
 export const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, 'กรุณากรอกอีเมล')
-    .email('รูปแบบอีเมลไม่ถูกต้อง')
-    .toLowerCase()
-    .trim(),
+  email: z.string().min(1, 'กรุณากรอกอีเมล').email('รูปแบบอีเมลไม่ถูกต้อง').toLowerCase().trim(),
   password: z.string().min(6, 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'),
   remember: z.boolean().optional(),
 });
@@ -26,12 +21,7 @@ export const registerSchema = z
       .min(1, 'กรุณากรอกชื่อ-นามสกุล')
       .max(100, 'ชื่อ-นามสกุลต้องไม่เกิน 100 ตัวอักษร')
       .trim(),
-    email: z
-      .string()
-      .min(1, 'กรุณากรอกอีเมล')
-      .email('รูปแบบอีเมลไม่ถูกต้อง')
-      .toLowerCase()
-      .trim(),
+    email: z.string().min(1, 'กรุณากรอกอีเมล').email('รูปแบบอีเมลไม่ถูกต้อง').toLowerCase().trim(),
     phoneNumber: z
       .string()
       .regex(/^[0-9]{10}$/, 'กรุณากรอกเบอร์โทรศัพท์ 10 หลัก')
@@ -51,12 +41,7 @@ export type RegisterFormData = z.infer<typeof registerSchema>;
  * Forgot password validation schema
  */
 export const forgotPasswordSchema = z.object({
-  email: z
-    .string()
-    .min(1, 'กรุณากรอกอีเมล')
-    .email('รูปแบบอีเมลไม่ถูกต้อง')
-    .toLowerCase()
-    .trim(),
+  email: z.string().min(1, 'กรุณากรอกอีเมล').email('รูปแบบอีเมลไม่ถูกต้อง').toLowerCase().trim(),
 });
 
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;

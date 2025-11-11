@@ -1,8 +1,8 @@
 import { Card, Typography } from 'antd';
 import { Navigate } from 'react-router-dom';
-import { RegisterForm } from '../components/RegisterForm';
-import { useAuth } from '@/shared/hooks/useAuth';
 import { ROUTES } from '@/shared/constants/routes';
+import { useAuth } from '@/shared/hooks/useAuth';
+import { RegisterForm } from '../components/RegisterForm';
 
 const { Title, Paragraph } = Typography;
 

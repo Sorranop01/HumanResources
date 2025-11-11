@@ -1,9 +1,9 @@
-import { Form, Input, Button } from 'antd';
-import { UserOutlined, LockOutlined, PhoneOutlined, IdcardOutlined } from '@ant-design/icons';
+import { IdcardOutlined, LockOutlined, PhoneOutlined, UserOutlined } from '@ant-design/icons';
+import { Button, Form, Input } from 'antd';
 import { Link } from 'react-router-dom';
+import { ROUTES } from '@/shared/constants/routes';
 import { useRegister } from '../hooks/useRegister';
 import type { RegisterData } from '../services/authService';
-import { ROUTES } from '@/shared/constants/routes';
 
 interface RegisterFormValues extends Omit<RegisterData, 'role'> {
   confirmPassword: string;
@@ -13,6 +13,7 @@ export function RegisterForm() {
   const { mutate: register, isPending } = useRegister();
 
   const handleSubmit = (values: RegisterFormValues) => {
+    // biome-ignore lint/correctness/noUnusedVariables: confirmPassword is intentionally extracted and not used
     const { confirmPassword, ...registerData } = values;
 
     register(registerData);

@@ -1,17 +1,17 @@
-import { type ReactNode, useState } from 'react';
-import { Layout, Menu, Avatar, Dropdown, type MenuProps } from 'antd';
 import {
+  ClockCircleOutlined,
+  DashboardOutlined,
+  DollarOutlined,
+  LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  DashboardOutlined,
-  UserOutlined,
-  TeamOutlined,
-  ClockCircleOutlined,
-  DollarOutlined,
   SettingOutlined,
-  LogoutOutlined,
+  TeamOutlined,
+  UserOutlined,
 } from '@ant-design/icons';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Avatar, Dropdown, Layout, Menu, type MenuProps } from 'antd';
+import { type ReactNode, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/shared/constants/routes';
 
 const { Header, Sider, Content } = Layout;
@@ -139,9 +139,25 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
           }}
         >
-          <div onClick={() => setCollapsed(!collapsed)} style={{ cursor: 'pointer', fontSize: 18 }}>
+          <button
+            type="button"
+            onClick={() => setCollapsed(!collapsed)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                setCollapsed(!collapsed);
+              }
+            }}
+            style={{
+              cursor: 'pointer',
+              fontSize: 18,
+              background: 'none',
+              border: 'none',
+              padding: 0,
+            }}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
             {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-          </div>
+          </button>
           <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
             <div style={{ cursor: 'pointer' }}>
               <Avatar icon={<UserOutlined />} />

@@ -1,6 +1,6 @@
-import { type ReactNode } from 'react';
-import { Typography, Breadcrumb } from 'antd';
 import { HomeOutlined } from '@ant-design/icons';
+import { Breadcrumb, Typography } from 'antd';
+import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
 const { Title } = Typography;
@@ -26,8 +26,8 @@ export function PageHeader({ title, breadcrumbs, extra }: PageHeaderProps) {
               <HomeOutlined />
             </Link>
           </Breadcrumb.Item>
-          {breadcrumbs.map((item, index) => (
-            <Breadcrumb.Item key={index}>
+          {breadcrumbs.map((item) => (
+            <Breadcrumb.Item key={item.path || item.label}>
               {item.path ? <Link to={item.path}>{item.label}</Link> : item.label}
             </Breadcrumb.Item>
           ))}

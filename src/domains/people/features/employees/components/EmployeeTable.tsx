@@ -1,13 +1,13 @@
-import { memo } from 'react';
-import { Table, Tag, Space, Button } from 'antd';
 import { EditOutlined, EyeOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { Button, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { useEmployees } from '../hooks/useEmployees';
-import type { Employee, EmployeeStatus } from '@/shared/types';
+import { memo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '@/shared/constants/routes';
 import { formatThaiDate } from '@/shared/lib/date';
 import { formatMoney } from '@/shared/lib/format';
-import { ROUTES } from '@/shared/constants/routes';
+import type { Employee, EmployeeStatus } from '@/shared/types';
+import { useEmployees } from '../hooks/useEmployees';
 
 const STATUS_COLORS: Record<EmployeeStatus, string> = {
   active: 'green',

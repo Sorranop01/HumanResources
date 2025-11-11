@@ -1,6 +1,6 @@
-import { useAuth } from './useAuth';
 import type { Role } from '@/shared/constants/roles';
 import { hasRolePrivilege } from '@/shared/constants/roles';
+import { useAuth } from './useAuth';
 
 interface UseRBACReturn {
   hasRole: (role: Role) => boolean;

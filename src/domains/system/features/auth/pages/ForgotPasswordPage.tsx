@@ -1,8 +1,8 @@
 import { Card, Typography } from 'antd';
 import { Navigate } from 'react-router-dom';
-import { ForgotPasswordForm } from '../components/ForgotPasswordForm';
-import { useAuth } from '@/shared/hooks/useAuth';
 import { ROUTES } from '@/shared/constants/routes';
+import { useAuth } from '@/shared/hooks/useAuth';
+import { ForgotPasswordForm } from '../components/ForgotPasswordForm';
 
 const { Title, Paragraph } = Typography;
 
@@ -36,9 +36,7 @@ export function ForgotPasswordPage() {
           <Title level={2} style={{ marginBottom: '8px' }}>
             ลืมรหัสผ่าน
           </Title>
-          <Paragraph type="secondary">
-            กรอกอีเมลของคุณเพื่อรับลิงก์รีเซ็ตรหัสผ่าน
-          </Paragraph>
+          <Paragraph type="secondary">กรอกอีเมลของคุณเพื่อรับลิงก์รีเซ็ตรหัสผ่าน</Paragraph>
         </div>
 
         <ForgotPasswordForm />

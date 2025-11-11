@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
-import { employeeService } from '../services/employeeService';
 import type { Employee } from '@/shared/types';
+import { employeeService } from '../services/employeeService';
 
 export function useCreateEmployee() {
   const queryClient = useQueryClient();

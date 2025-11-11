@@ -1,9 +1,9 @@
-import { type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import type { ReactNode } from 'react';
 import { BrowserRouter } from 'react-router-dom';
-import { ThemeProvider } from './ThemeProvider';
 import { ErrorBoundary } from '@/shared/ui/components/ErrorBoundary';
+import { ThemeProvider } from './ThemeProvider';
 
 // Create a client
 const queryClient = new QueryClient({

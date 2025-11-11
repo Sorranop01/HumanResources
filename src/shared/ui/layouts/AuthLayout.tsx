@@ -1,5 +1,5 @@
-import { type ReactNode } from 'react';
-import { Layout, Card } from 'antd';
+import { Card, Layout } from 'antd';
+import type { ReactNode } from 'react';
 
 const { Content } = Layout;
 
@@ -10,8 +10,15 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ children, title = 'HumanResources' }: AuthLayoutProps) {
   return (
-    <Layout style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
-      <Content style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '24px' }}>
+    <Layout
+      style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      }}
+    >
+      <Content
+        style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '24px' }}
+      >
         <Card
           style={{
             width: '100%',

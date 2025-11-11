@@ -1,4 +1,4 @@
-import { HttpsError, type FunctionsErrorCode } from 'firebase-functions/v2/https';
+import { type FunctionsErrorCode, HttpsError } from 'firebase-functions/v2/https';
 
 /**
  * Helper functions for creating HttpsError instances
@@ -16,9 +16,7 @@ export function createUnauthenticatedError(message = 'กรุณาเข้�
   return createHttpsError('unauthenticated', message);
 }
 
-export function createPermissionDeniedError(
-  message = 'คุณไม่มีสิทธิ์ในการดำเนินการนี้'
-): HttpsError {
+export function createPermissionDeniedError(message = 'คุณไม่มีสิทธิ์ในการดำเนินการนี้'): HttpsError {
   return createHttpsError('permission-denied', message);
 }
 

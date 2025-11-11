@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { onAuthStateChanged, type User as FirebaseUser } from 'firebase/auth';
-import { auth } from '@/shared/lib/firebase';
+import { type User as FirebaseUser, onAuthStateChanged } from 'firebase/auth';
+import { useEffect, useState } from 'react';
 import { userService } from '@/domains/system/features/auth/services/userService';
+import { auth } from '@/shared/lib/firebase';
 import type { User } from '@/shared/types';
 
 interface UseAuthReturn {

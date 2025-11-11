@@ -1,5 +1,11 @@
 import { useAuth } from '@/shared/hooks/useAuth';
-import { checkPermission, canAccess, getPermissions, type Permission, type Resource } from '../utils/checkPermission';
+import {
+  canAccess,
+  checkPermission,
+  getPermissions,
+  type Permission,
+  type Resource,
+} from '../utils/checkPermission';
 
 interface UsePermissionReturn {
   hasPermission: (resource: Resource, permission: Permission) => boolean;

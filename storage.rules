@@ -1,0 +1,72 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserRole() {
+      return isAuthenticated() && 'role' in request.auth.token
+        ? request.auth.token.role
+        : 'employee';
+    }
+
+    function isAdmin() {
+      return getUserRole() == 'admin';
+    }
+
+    function isHR() {
+      return getUserRole() in ['hr', 'admin'];
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // File size limit (10MB)
+    function isValidSize() {
+      return request.resource.size <= 10 * 1024 * 1024;
+    }
+
+    // Allowed file types for avatars
+    function isValidImageType() {
+      return request.resource.contentType.matches('image/(jpeg|jpg|png|gif|webp)');
+    }
+
+    // Allowed file types for documents
+    function isValidDocumentType() {
+      return request.resource.contentType.matches(
+        'application/pdf|application/msword|application/vnd.openxmlformats-officedocument.*|image/.*'
+      );
+    }
+
+    // User profile pictures
+    match /users/{userId}/avatar/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if (isOwner(userId) || isHR()) && isValidSize() && isValidImageType();
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+
+    // Employee documents (resumes, certificates, etc.)
+    match /employees/{employeeId}/documents/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isHR() && isValidSize() && isValidDocumentType();
+      allow delete: if isAdmin();
+    }
+
+    // Company documents and resources
+    match /company/{category}/{fileName} {
+      allow read: if isAuthenticated();
+      allow write: if isHR() && isValidSize() && isValidDocumentType();
+      allow delete: if isAdmin();
+    }
+
+    // Default deny all other paths
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

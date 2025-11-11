@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { Form, Input, Button, Result } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
+import { Button, Form, Input, Result } from 'antd';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useForgotPassword } from '../hooks/useForgotPassword';
 import { ROUTES } from '@/shared/constants/routes';
+import { useForgotPassword } from '../hooks/useForgotPassword';
 
 export function ForgotPasswordForm() {
   const { mutate: resetPassword, isPending, isSuccess } = useForgotPassword();

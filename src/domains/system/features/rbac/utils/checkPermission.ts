@@ -66,11 +66,7 @@ const PERMISSION_MATRIX: Record<Role, Partial<Record<Resource, Permission[]>>> =
 /**
  * Check if a role has permission to perform an operation on a resource
  */
-export function checkPermission(
-  role: Role,
-  resource: Resource,
-  permission: Permission
-): boolean {
+export function checkPermission(role: Role, resource: Resource, permission: Permission): boolean {
   const rolePermissions = PERMISSION_MATRIX[role];
 
   if (!rolePermissions) {

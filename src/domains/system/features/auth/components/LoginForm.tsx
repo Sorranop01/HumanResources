@@ -1,9 +1,9 @@
-import { Form, Input, Button, Checkbox } from 'antd';
-import { UserOutlined, LockOutlined } from '@ant-design/icons';
+import { LockOutlined, UserOutlined } from '@ant-design/icons';
+import { Button, Checkbox, Form, Input } from 'antd';
 import { Link } from 'react-router-dom';
+import { ROUTES } from '@/shared/constants/routes';
 import { useLogin } from '../hooks/useLogin';
 import type { LoginCredentials } from '../services/authService';
-import { ROUTES } from '@/shared/constants/routes';
 
 export function LoginForm() {
   const { mutate: login, isPending } = useLogin();
@@ -30,17 +30,10 @@ export function LoginForm() {
           { type: 'email', message: 'รูปแบบอีเมลไม่ถูกต้อง' },
         ]}
       >
-        <Input
-          prefix={<UserOutlined />}
-          placeholder="อีเมล"
-          autoComplete="email"
-        />
+        <Input prefix={<UserOutlined />} placeholder="อีเมล" autoComplete="email" />
       </Form.Item>
 
-      <Form.Item
-        name="password"
-        rules={[{ required: true, message: 'กรุณากรอกรหัสผ่าน' }]}
-      >
+      <Form.Item name="password" rules={[{ required: true, message: 'กรุณากรอกรหัสผ่าน' }]}>
         <Input.Password
           prefix={<LockOutlined />}
           placeholder="รหัสผ่าน"

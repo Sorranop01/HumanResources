@@ -1,5 +1,5 @@
-import { type ReactNode } from 'react';
 import { ConfigProvider, theme } from 'antd';
+import type { ReactNode } from 'react';
 
 interface ThemeProviderProps {
   children: ReactNode;
@@ -17,7 +17,8 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
           colorInfo: '#1890ff',
           borderRadius: 6,
           fontSize: 14,
-          fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial',
+          fontFamily:
+            '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial',
         },
         algorithm: theme.defaultAlgorithm,
       }}

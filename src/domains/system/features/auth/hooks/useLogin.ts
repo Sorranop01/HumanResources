@@ -1,8 +1,8 @@
 import { useMutation } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
-import { authService, getAuthErrorMessage, type LoginCredentials } from '../services/authService';
+import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/shared/constants/routes';
+import { authService, getAuthErrorMessage, type LoginCredentials } from '../services/authService';
 
 export function useLogin() {
   const navigate = useNavigate();

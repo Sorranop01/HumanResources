@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { employeeService } from '../services/employeeService';
 import type { Employee } from '@/shared/types';
+import { employeeService } from '../services/employeeService';
 
 interface UseEmployeesOptions {
   status?: string;

@@ -1,14 +1,14 @@
 import {
-  signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signOut,
   sendPasswordResetEmail,
-  updateProfile,
+  signInWithEmailAndPassword,
+  signOut,
   type UserCredential,
+  updateProfile,
 } from 'firebase/auth';
+import type { Role } from '@/shared/constants/roles';
 import { auth } from '@/shared/lib/firebase';
 import { userService } from './userService';
-import type { Role } from '@/shared/constants/roles';
 
 export interface LoginCredentials {
   email: string;
@@ -100,7 +100,10 @@ export const authService = {
       return userCredential;
     } catch (error: unknown) {
       // If Firestore creation fails, we should probably delete the auth user
-      // For now, we'll just rethrow the error
+      // For now, we'll just rethrow the error with additional context
+      if (error instanceof Error) {
+        throw new Error(`Registration failed: ${error.message}`);
+      }
       throw error;
     }
   },

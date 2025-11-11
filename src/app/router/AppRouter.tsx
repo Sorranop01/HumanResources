@@ -1,11 +1,10 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { ROUTES } from '@/shared/constants/routes';
-import { ProtectedRoute } from './components/ProtectedRoute';
-
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { ForgotPasswordPage } from '@/domains/system/features/auth/pages/ForgotPasswordPage';
 // Auth Pages
 import { LoginPage } from '@/domains/system/features/auth/pages/LoginPage';
 import { RegisterPage } from '@/domains/system/features/auth/pages/RegisterPage';
-import { ForgotPasswordPage } from '@/domains/system/features/auth/pages/ForgotPasswordPage';
+import { ROUTES } from '@/shared/constants/routes';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 // Temporary placeholder pages
 function DashboardPage() {

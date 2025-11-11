@@ -2,8 +2,8 @@ import { onCall } from 'firebase-functions/v2/https';
 import { REGION } from '../../config/constants';
 import { db } from '../../config/firebase';
 import { verifyAuth } from '../../middleware/auth';
-import { logInfo, logError } from '../../utils/logger';
 import { createInternalError } from '../../utils/errors';
+import { logError, logInfo } from '../../utils/logger';
 
 interface GetEmployeesRequest {
   status?: string;
