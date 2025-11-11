@@ -1,6 +1,7 @@
 {
   "name": "functions",
   "version": "1.0.0",
+  "type": "module",
   "description": "Cloud Functions for HumanResources",
   "main": "lib/index.js",
   "scripts": {
