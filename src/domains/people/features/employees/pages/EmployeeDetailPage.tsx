@@ -10,6 +10,14 @@ import { useDeleteEmployee } from '@/domains/people/features/employees/hooks/use
 import { useEmployee } from '@/domains/people/features/employees/hooks/useEmployee';
 import type { EmployeeStatus } from '@/domains/people/features/employees/types';
 import {
+  formDataToLeaveRequestInput,
+  LeaveEntitlementCard,
+  LeaveRequestForm,
+  type LeaveRequestFormInput,
+  LeaveRequestList,
+  useCreateLeaveRequest,
+} from '@/domains/people/features/leave';
+import {
   type SocialSecurity,
   SocialSecurityCard,
   SocialSecurityForm,
@@ -18,14 +26,6 @@ import {
   useDeleteSocialSecurity,
   useUpdateSocialSecurity,
 } from '@/domains/people/features/socialSecurity';
-import {
-  LeaveEntitlementCard,
-  LeaveRequestForm,
-  LeaveRequestList,
-  type LeaveRequestFormInput,
-  formDataToLeaveRequestInput,
-  useCreateLeaveRequest,
-} from '@/domains/people/features/leave';
 import { formatThaiDate } from '@/shared/lib/date';
 import { formatMoney } from '@/shared/lib/format';
 
@@ -238,76 +238,372 @@ export const EmployeeDetailPage: FC = () => {
               label: 'ข้อมูลทั่วไป',
               children: (
                 <Row gutter={[16, 16]}>
-                  <Col xs={24} lg={16}>
-                    <Descriptions column={2} bordered>
-                      <Descriptions.Item label="ชื่อ (อังกฤษ)" span={1}>
-                        {employee.firstName}
-                      </Descriptions.Item>
-                      <Descriptions.Item label="นามสกุล (อังกฤษ)" span={1}>
-                        {employee.lastName}
-                      </Descriptions.Item>
+                  <Col xs={24}>
+                    <Card title="ข้อมูลส่วนตัว" style={{ marginBottom: 16 }}>
+                      <Descriptions column={{ xs: 1, sm: 2, md: 2, lg: 3 }} bordered>
+                        <Descriptions.Item label="ชื่อ (อังกฤษ)">{employee.firstName}</Descriptions.Item>
+                        <Descriptions.Item label="นามสกุล (อังกฤษ)">
+                          {employee.lastName}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="ชื่อเล่น">
+                          {employee.nickname || '-'}
+                        </Descriptions.Item>
 
-                      <Descriptions.Item label="ชื่อ (ไทย)" span={1}>
-                        {employee.thaiFirstName}
-                      </Descriptions.Item>
-                      <Descriptions.Item label="นามสกุล (ไทย)" span={1}>
-                        {employee.thaiLastName}
-                      </Descriptions.Item>
+                        <Descriptions.Item label="ชื่อ (ไทย)">{employee.thaiFirstName}</Descriptions.Item>
+                        <Descriptions.Item label="นามสกุล (ไทย)">
+                          {employee.thaiLastName}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="เพศ">
+                          {employee.gender === 'male' ? 'ชาย' : employee.gender === 'female' ? 'หญิง' : 'อื่นๆ'}
+                        </Descriptions.Item>
 
-                      <Descriptions.Item label="อีเมล" span={2}>
-                        <a href={`mailto:${employee.email}`}>{employee.email}</a>
-                      </Descriptions.Item>
+                        <Descriptions.Item label="วันเกิด" span={1}>
+                          {formatThaiDate(employee.dateOfBirth)}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="อายุ" span={1}>
+                          {employee.age} ปี
+                        </Descriptions.Item>
+                        <Descriptions.Item label="สถานภาพ" span={1}>
+                          {employee.maritalStatus === 'single'
+                            ? 'โสด'
+                            : employee.maritalStatus === 'married'
+                              ? 'สมรส'
+                              : employee.maritalStatus === 'divorced'
+                                ? 'หย่า'
+                                : 'หม้าย'}
+                        </Descriptions.Item>
 
-                      <Descriptions.Item label="เบอร์โทรศัพท์" span={2}>
-                        <a href={`tel:${employee.phoneNumber}`}>{employee.phoneNumber}</a>
-                      </Descriptions.Item>
+                        <Descriptions.Item label="สัญชาติ">{employee.nationality}</Descriptions.Item>
+                        <Descriptions.Item label="ศาสนา">{employee.religion || '-'}</Descriptions.Item>
+                        <Descriptions.Item label="เลขบัตรประชาชน">
+                          {employee.nationalId}
+                        </Descriptions.Item>
+                      </Descriptions>
+                    </Card>
 
-                      <Descriptions.Item label="แผนก" span={1}>
-                        {employee.department}
-                      </Descriptions.Item>
-                      <Descriptions.Item label="ตำแหน่ง" span={1}>
-                        {employee.position}
-                      </Descriptions.Item>
+                    <Card title="ข้อมูลติดต่อ" style={{ marginBottom: 16 }}>
+                      <Descriptions column={{ xs: 1, sm: 2, md: 2 }} bordered>
+                        <Descriptions.Item label="อีเมลบริษัท" span={1}>
+                          <a href={`mailto:${employee.email}`}>{employee.email}</a>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="อีเมลส่วนตัว" span={1}>
+                          {employee.personalEmail ? (
+                            <a href={`mailto:${employee.personalEmail}`}>{employee.personalEmail}</a>
+                          ) : (
+                            '-'
+                          )}
+                        </Descriptions.Item>
 
-                      <Descriptions.Item label="เงินเดือน" span={2}>
-                        {formatMoney(employee.salary)}
-                      </Descriptions.Item>
+                        <Descriptions.Item label="เบอร์โทรศัพท์" span={2}>
+                          <a href={`tel:${employee.phoneNumber}`}>{employee.phoneNumber}</a>
+                        </Descriptions.Item>
 
-                      <Descriptions.Item label="วันเกิด" span={1}>
-                        {formatThaiDate(employee.dateOfBirth)}
-                      </Descriptions.Item>
-                      <Descriptions.Item label="วันเริ่มงาน" span={1}>
-                        {formatThaiDate(employee.hireDate)}
-                      </Descriptions.Item>
+                        <Descriptions.Item label="ผู้ติดต่อฉุกเฉิน" span={2}>
+                          <div>
+                            <strong>{employee.emergencyContact.name}</strong> ({employee.emergencyContact.relationship})
+                            <br />
+                            <a href={`tel:${employee.emergencyContact.phoneNumber}`}>
+                              {employee.emergencyContact.phoneNumber}
+                            </a>
+                          </div>
+                        </Descriptions.Item>
 
-                      <Descriptions.Item label="สร้างเมื่อ" span={1}>
-                        {formatThaiDate(employee.createdAt)}
-                      </Descriptions.Item>
-                      <Descriptions.Item label="แก้ไขล่าสุด" span={1}>
-                        {formatThaiDate(employee.updatedAt)}
-                      </Descriptions.Item>
-                    </Descriptions>
+                        <Descriptions.Item label="ที่อยู่ปัจจุบัน" span={2}>
+                          {employee.currentAddress.addressLine1}
+                          {employee.currentAddress.addressLine2 && ` ${employee.currentAddress.addressLine2}`}
+                          <br />
+                          {`${employee.currentAddress.subDistrict} ${employee.currentAddress.district} ${employee.currentAddress.province} ${employee.currentAddress.postalCode}`}
+                        </Descriptions.Item>
+                      </Descriptions>
+                    </Card>
+
+                    <Card title="ข้อมูลการจ้างงาน" style={{ marginBottom: 16 }}>
+                      <Descriptions column={{ xs: 1, sm: 2, md: 3 }} bordered>
+                        <Descriptions.Item label="ประเภทการจ้างงาน">
+                          <Tag color="blue">
+                            {employee.employmentType === 'permanent'
+                              ? 'ประจำ'
+                              : employee.employmentType === 'contract'
+                                ? 'สัญญา'
+                                : employee.employmentType === 'probation'
+                                  ? 'ทดลองงาน'
+                                  : employee.employmentType === 'freelance'
+                                    ? 'ฟรีแลนซ์'
+                                    : 'ฝึกงาน'}
+                          </Tag>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="รูปแบบการทำงาน">
+                          <Tag color={employee.workType === 'full-time' ? 'green' : 'orange'}>
+                            {employee.workType === 'full-time' ? 'Full-time' : 'Part-time'}
+                          </Tag>
+                        </Descriptions.Item>
+                        <Descriptions.Item label="สถานที่ทำงาน">
+                          {employee.workLocation.office}
+                        </Descriptions.Item>
+
+                        <Descriptions.Item label="แผนก">{employee.department}</Descriptions.Item>
+                        <Descriptions.Item label="ฝ่าย">{employee.division || '-'}</Descriptions.Item>
+                        <Descriptions.Item label="ทีม">{employee.team || '-'}</Descriptions.Item>
+
+                        <Descriptions.Item label="ตำแหน่ง">{employee.position}</Descriptions.Item>
+                        <Descriptions.Item label="ระดับ">{employee.level || '-'}</Descriptions.Item>
+                        <Descriptions.Item label="วันเริ่มงาน">
+                          {formatThaiDate(employee.hireDate)}
+                        </Descriptions.Item>
+
+                        {employee.probationEndDate && (
+                          <Descriptions.Item label="สิ้นสุดทดลองงาน" span={1}>
+                            {formatThaiDate(employee.probationEndDate)}
+                          </Descriptions.Item>
+                        )}
+                        {employee.confirmationDate && (
+                          <Descriptions.Item label="วันผ่านทดลองงาน" span={1}>
+                            {formatThaiDate(employee.confirmationDate)}
+                          </Descriptions.Item>
+                        )}
+                      </Descriptions>
+                    </Card>
+                  </Col>
+                </Row>
+              ),
+            },
+            {
+              key: 'compensation',
+              label: 'เงินเดือนและสวัสดิการ',
+              children: (
+                <Row gutter={[16, 16]}>
+                  <Col xs={24}>
+                    <Card title="ข้อมูลเงินเดือน" style={{ marginBottom: 16 }}>
+                      <Descriptions column={{ xs: 1, sm: 2 }} bordered>
+                        <Descriptions.Item label="เงินเดือนพื้นฐาน">
+                          {formatMoney(employee.salary.baseSalary)} {employee.salary.currency}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="รอบการจ่าย">
+                          {employee.salary.paymentFrequency === 'monthly'
+                            ? 'รายเดือน'
+                            : employee.salary.paymentFrequency === 'bi-weekly'
+                              ? 'ทุก 2 สัปดาห์'
+                              : employee.salary.paymentFrequency === 'weekly'
+                                ? 'รายสัปดาห์'
+                                : 'รายชั่วโมง'}
+                        </Descriptions.Item>
+
+                        {employee.salary.hourlyRate && (
+                          <Descriptions.Item label="อัตราต่อชั่วโมง" span={2}>
+                            {formatMoney(employee.salary.hourlyRate)} THB/ชม.
+                          </Descriptions.Item>
+                        )}
+
+                        <Descriptions.Item label="วันที่มีผล" span={2}>
+                          {formatThaiDate(employee.salary.effectiveDate)}
+                        </Descriptions.Item>
+                      </Descriptions>
+                    </Card>
+
+                    {employee.allowances && employee.allowances.length > 0 && (
+                      <Card title="เบี้ยเลี้ยง" style={{ marginBottom: 16 }}>
+                        <Descriptions column={1} bordered>
+                          {employee.allowances.map((allowance, index) => (
+                            <Descriptions.Item key={index} label={allowance.type}>
+                              {formatMoney(allowance.amount)} ({allowance.frequency})
+                            </Descriptions.Item>
+                          ))}
+                        </Descriptions>
+                      </Card>
+                    )}
+
+                    {employee.benefits && (
+                      <Card title="สวัสดิการ" style={{ marginBottom: 16 }}>
+                        <Descriptions column={{ xs: 1, sm: 2 }} bordered>
+                          <Descriptions.Item label="ประกันสุขภาพ">
+                            {employee.benefits.healthInsurance ? '✅ มี' : '❌ ไม่มี'}
+                          </Descriptions.Item>
+                          <Descriptions.Item label="ประกันชีวิต">
+                            {employee.benefits.lifeInsurance ? '✅ มี' : '❌ ไม่มี'}
+                          </Descriptions.Item>
+
+                          <Descriptions.Item label="กองทุนสำรองเลี้ยงชีพ" span={2}>
+                            {employee.benefits.providentFund.isEnrolled
+                              ? `✅ เข้าร่วม (พนักงาน ${employee.benefits.providentFund.employeeContributionRate}%, บริษัท ${employee.benefits.providentFund.employerContributionRate}%)`
+                              : '❌ ไม่เข้าร่วม'}
+                          </Descriptions.Item>
+
+                          <Descriptions.Item label="วันลาพักร้อน">
+                            {employee.benefits.annualLeave} วัน/ปี
+                          </Descriptions.Item>
+                          <Descriptions.Item label="วันลาป่วย">
+                            {employee.benefits.sickLeave} วัน/ปี
+                          </Descriptions.Item>
+
+                          {employee.benefits.otherBenefits && employee.benefits.otherBenefits.length > 0 && (
+                            <Descriptions.Item label="สวัสดิการอื่นๆ" span={2}>
+                              {employee.benefits.otherBenefits.join(', ')}
+                            </Descriptions.Item>
+                          )}
+                        </Descriptions>
+                      </Card>
+                    )}
+                  </Col>
+                </Row>
+              ),
+            },
+            {
+              key: 'tax',
+              label: 'ภาษีและประกันสังคม',
+              children: (
+                <Row gutter={[16, 16]}>
+                  <Col xs={24} md={12}>
+                    <Card title="ประกันสังคม">
+                      <Descriptions column={1} bordered>
+                        <Descriptions.Item label="สถานะ">
+                          {employee.socialSecurity.isEnrolled ? '✅ เข้าประกันสังคม' : '❌ ไม่ได้เข้าประกันสังคม'}
+                        </Descriptions.Item>
+
+                        {employee.socialSecurity.isEnrolled && (
+                          <>
+                            {employee.socialSecurity.ssNumber && (
+                              <Descriptions.Item label="เลขประกันสังคม">
+                                {employee.socialSecurity.ssNumber}
+                              </Descriptions.Item>
+                            )}
+                            {employee.socialSecurity.hospitalName && (
+                              <Descriptions.Item label="โรงพยาบาล">
+                                {employee.socialSecurity.hospitalName}
+                                {employee.socialSecurity.hospitalCode && ` (${employee.socialSecurity.hospitalCode})`}
+                              </Descriptions.Item>
+                            )}
+                            {employee.socialSecurity.enrollmentDate && (
+                              <Descriptions.Item label="วันที่เข้าร่วม">
+                                {formatThaiDate(employee.socialSecurity.enrollmentDate)}
+                              </Descriptions.Item>
+                            )}
+                          </>
+                        )}
+                      </Descriptions>
+                    </Card>
                   </Col>
 
-                  <Col xs={24} lg={8}>
-                    <Card title="ข้อมูลเพิ่มเติม">
-                      <Space direction="vertical" style={{ width: '100%' }}>
-                        <div>
-                          <strong>User ID:</strong> {employee.userId}
-                        </div>
-                        {employee.photoURL && (
-                          <div>
-                            <strong>รูปภาพ:</strong>
-                            <br />
-                            <img
-                              src={employee.photoURL}
-                              alt={fullName}
-                              style={{ width: '100%', marginTop: 8, borderRadius: 8 }}
-                            />
-                          </div>
+                  <Col xs={24} md={12}>
+                    <Card title="ภาษี">
+                      <Descriptions column={1} bordered>
+                        <Descriptions.Item label="หัก ณ ที่จ่าย">
+                          {employee.tax.withholdingTax ? '✅ หัก' : '❌ ไม่หัก'}
+                        </Descriptions.Item>
+
+                        {employee.tax.taxId && (
+                          <Descriptions.Item label="เลขประจำตัวผู้เสียภาษี">
+                            {employee.tax.taxId}
+                          </Descriptions.Item>
                         )}
-                      </Space>
+
+                        {employee.tax.withholdingRate && (
+                          <Descriptions.Item label="อัตราการหัก">
+                            {employee.tax.withholdingRate}%
+                          </Descriptions.Item>
+                        )}
+
+                        {employee.tax.taxReliefs && employee.tax.taxReliefs.length > 0 && (
+                          <Descriptions.Item label="ลดหย่อนภาษี">
+                            {employee.tax.taxReliefs.map((relief, index) => (
+                              <div key={index}>
+                                {relief.type}: {formatMoney(relief.amount)} THB
+                              </div>
+                            ))}
+                          </Descriptions.Item>
+                        )}
+                      </Descriptions>
                     </Card>
+                  </Col>
+
+                  <Col xs={24}>
+                    <Card title="บัญชีธนาคาร">
+                      <Descriptions column={{ xs: 1, sm: 2 }} bordered>
+                        <Descriptions.Item label="ธนาคาร">{employee.bankAccount.bankName}</Descriptions.Item>
+                        <Descriptions.Item label="สาขา">
+                          {employee.bankAccount.branchName || '-'}
+                        </Descriptions.Item>
+
+                        <Descriptions.Item label="เลขที่บัญชี">
+                          {employee.bankAccount.accountNumber}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="ชื่อบัญชี">
+                          {employee.bankAccount.accountName}
+                        </Descriptions.Item>
+                      </Descriptions>
+                    </Card>
+                  </Col>
+                </Row>
+              ),
+            },
+            {
+              key: 'education',
+              label: 'การศึกษาและทักษะ',
+              children: (
+                <Row gutter={[16, 16]}>
+                  <Col xs={24}>
+                    {employee.education && employee.education.length > 0 && (
+                      <Card title="ประวัติการศึกษา" style={{ marginBottom: 16 }}>
+                        {employee.education.map((edu, index) => (
+                          <Card key={index} type="inner" style={{ marginBottom: 8 }}>
+                            <Descriptions column={{ xs: 1, sm: 2 }} bordered>
+                              <Descriptions.Item label="ระดับการศึกษา">
+                                {edu.level === 'bachelor'
+                                  ? 'ปริญญาตรี'
+                                  : edu.level === 'master'
+                                    ? 'ปริญญาโท'
+                                    : edu.level === 'doctorate'
+                                      ? 'ปริญญาเอก'
+                                      : edu.level === 'diploma'
+                                        ? 'ปวส.'
+                                        : 'มัธยมศึกษา'}
+                              </Descriptions.Item>
+                              <Descriptions.Item label="สถาบัน">{edu.institution}</Descriptions.Item>
+
+                              <Descriptions.Item label="สาขา">{edu.fieldOfStudy}</Descriptions.Item>
+                              <Descriptions.Item label="ปีที่สำเร็จการศึกษา">
+                                {edu.graduationYear}
+                              </Descriptions.Item>
+
+                              {edu.gpa && (
+                                <Descriptions.Item label="เกรดเฉลี่ย" span={2}>
+                                  {edu.gpa.toFixed(2)}
+                                </Descriptions.Item>
+                              )}
+                            </Descriptions>
+                          </Card>
+                        ))}
+                      </Card>
+                    )}
+
+                    {employee.certifications && employee.certifications.length > 0 && (
+                      <Card title="ใบอนุญาต / ใบรับรอง">
+                        {employee.certifications.map((cert, index) => (
+                          <Card key={index} type="inner" style={{ marginBottom: 8 }}>
+                            <Descriptions column={{ xs: 1, sm: 2 }} bordered>
+                              <Descriptions.Item label="ชื่อใบอนุญาต">{cert.name}</Descriptions.Item>
+                              <Descriptions.Item label="หน่วยงานที่ออก">
+                                {cert.issuingOrganization}
+                              </Descriptions.Item>
+
+                              <Descriptions.Item label="วันที่ออก">
+                                {formatThaiDate(cert.issueDate)}
+                              </Descriptions.Item>
+                              {cert.expiryDate && (
+                                <Descriptions.Item label="วันหมดอายุ">
+                                  {formatThaiDate(cert.expiryDate)}
+                                </Descriptions.Item>
+                              )}
+
+                              {cert.credentialId && (
+                                <Descriptions.Item label="รหัสหนังสือรับรอง" span={2}>
+                                  {cert.credentialId}
+                                </Descriptions.Item>
+                              )}
+                            </Descriptions>
+                          </Card>
+                        ))}
+                      </Card>
+                    )}
                   </Col>
                 </Row>
               ),

@@ -1,4 +1,4 @@
-import { ConfigProvider, theme } from 'antd';
+import { App, ConfigProvider, theme } from 'antd';
 import type { ReactNode } from 'react';
 
 interface ThemeProviderProps {
@@ -23,7 +23,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
         algorithm: theme.defaultAlgorithm,
       }}
     >
-      {children}
+      <App>{children}</App>
     </ConfigProvider>
   );
 }

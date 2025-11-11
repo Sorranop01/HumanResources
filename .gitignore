@@ -19,9 +19,11 @@ build/
 .env.test.local
 .env.production.local
 .env.development
-.env.example
 .env.test
 .env.production
+
+# Allow .env.example as template
+!.env.example
 
 
 # Firebase
@@ -32,6 +34,9 @@ ui-debug.log
 database-debug.log
 pubsub-debug.log
 storage-debug.log
+
+# Firebase Emulator Data
+emulator-data/
 
 # Logs
 logs/

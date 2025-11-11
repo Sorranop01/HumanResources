@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { message } from 'antd';
+import { App } from 'antd';
 import { authService, getAuthErrorMessage } from '../services/authService';
 
 interface ForgotPasswordData {
@@ -7,6 +7,8 @@ interface ForgotPasswordData {
 }
 
 export function useForgotPassword() {
+  const { message } = App.useApp();
+
   return useMutation({
     mutationFn: (data: ForgotPasswordData) => authService.resetPassword(data.email),
     onSuccess: () => {

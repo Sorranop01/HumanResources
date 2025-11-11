@@ -1,98 +1,59 @@
 /**
- * Central type definitions for the HR system
- * Re-export domain-specific types here
+ * Shared Common Types
+ * Only generic/reusable types that are used across multiple domains
+ * Domain-specific types should live in their respective feature folders
  */
 
 import type { Role } from '@/shared/constants/roles';
 
-// Base types
+// ============================================
+// Base Entity Types
+// ============================================
+
+/**
+ * Base entity with common fields
+ */
 export interface BaseEntity {
   id: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
-// User types
+// ============================================
+// User Types (System-level)
+// ============================================
+
+/**
+ * System user (for authentication)
+ */
 export interface User extends BaseEntity {
   email: string;
   displayName: string;
-  role: Role;
+  role: Role; // Primary key for logic & security rules
+  roleId?: string | undefined; // Foreign key to roleDefinitions
+  roleName?: string | undefined; // Denormalized: display name for UI
   photoURL?: string | undefined;
   phoneNumber?: string | undefined;
   isActive: boolean;
 }
 
-// Employee types
-export interface Employee extends BaseEntity {
-  userId: string;
-  employeeCode: string;
-  firstName: string;
-  lastName: string;
-  thaiFirstName: string;
-  thaiLastName: string;
-  email: string;
-  phoneNumber: string;
-  dateOfBirth: Date;
-  hireDate: Date;
-  position: string;
-  department: string;
-  salary: number;
-  status: EmployeeStatus;
-  photoURL?: string;
-}
+// ============================================
+// API Response Types (Generic)
+// ============================================
 
-export type EmployeeStatus = 'active' | 'on-leave' | 'resigned' | 'terminated';
-
-// Attendance types
-export interface AttendanceRecord extends BaseEntity {
-  employeeId: string;
-  date: Date;
-  checkIn?: Date;
-  checkOut?: Date;
-  status: AttendanceStatus;
-  notes?: string;
-}
-
-export type AttendanceStatus = 'present' | 'absent' | 'late' | 'leave' | 'holiday';
-
-// Leave request types
-export interface LeaveRequest extends BaseEntity {
-  employeeId: string;
-  leaveType: LeaveType;
-  startDate: Date;
-  endDate: Date;
-  totalDays: number;
-  reason: string;
-  status: LeaveRequestStatus;
-  approvedBy?: string;
-  approvedAt?: Date;
-}
-
-export type LeaveType = 'annual' | 'sick' | 'personal' | 'maternity' | 'paternity';
-export type LeaveRequestStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
-
-// Payroll types
-export interface PayrollRun extends BaseEntity {
-  periodStart: Date;
-  periodEnd: Date;
-  status: PayrollStatus;
-  totalGrossPay: number;
-  totalDeductions: number;
-  totalNetPay: number;
-  processedBy?: string;
-  processedAt?: Date;
-}
-
-export type PayrollStatus = 'draft' | 'processing' | 'completed' | 'paid' | 'cancelled';
-
-// API response types
+/**
+ * Standard API response wrapper
+ */
 export interface ApiResponse<T> {
   success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
+  data?: T | undefined;
+  error?: string | undefined;
+  message?: string | undefined;
 }
 
+/**
+ * Paginated response wrapper
+ */
 export interface PaginatedResponse<T> {
   items: T[];
   total: number;
@@ -100,3 +61,12 @@ export interface PaginatedResponse<T> {
   pageSize: number;
   hasMore: boolean;
 }
+
+// ============================================
+// Future Domain Types (Placeholder)
+// ============================================
+// Note: When implementing these features, move types to their respective domains:
+// - Employee → domains/people/features/employees/types/
+// - Attendance → domains/people/features/attendance/types/
+// - Leave → domains/people/features/leave/types/
+// - Payroll → domains/finance/features/payroll/types/

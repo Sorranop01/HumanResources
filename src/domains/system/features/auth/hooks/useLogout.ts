@@ -1,11 +1,12 @@
 import { useMutation } from '@tanstack/react-query';
-import { message } from 'antd';
+import { App } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/shared/constants/routes';
 import { authService } from '../services/authService';
 
 export function useLogout() {
   const navigate = useNavigate();
+  const { message } = App.useApp();
 
   return useMutation({
     mutationFn: () => authService.logout(),

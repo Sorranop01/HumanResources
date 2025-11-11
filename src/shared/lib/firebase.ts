@@ -1,7 +1,8 @@
 import { type FirebaseApp, initializeApp } from 'firebase/app';
-import { type Auth, getAuth } from 'firebase/auth';
-import { type Firestore, getFirestore } from 'firebase/firestore';
-import { type FirebaseStorage, getStorage } from 'firebase/storage';
+import { type Auth, connectAuthEmulator, getAuth } from 'firebase/auth';
+import { connectFirestoreEmulator, type Firestore, getFirestore } from 'firebase/firestore';
+import { connectFunctionsEmulator, type Functions, getFunctions } from 'firebase/functions';
+import { connectStorageEmulator, type FirebaseStorage, getStorage } from 'firebase/storage';
 import { env } from '@/env';
 
 // Firebase configuration
@@ -19,12 +20,24 @@ let app: FirebaseApp;
 let auth: Auth;
 let db: Firestore;
 let storage: FirebaseStorage;
+let functions: Functions;
 
 try {
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
   db = getFirestore(app);
   storage = getStorage(app);
+  functions = getFunctions(app, 'asia-southeast1');
+
+  // Connect to emulators in development
+  if (import.meta.env.DEV) {
+    connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
+    connectFirestoreEmulator(db, 'localhost', 8080);
+    connectFunctionsEmulator(functions, 'localhost', 5001);
+    connectStorageEmulator(storage, 'localhost', 9199);
+    // eslint-disable-next-line no-console
+    console.log('🔧 Firebase connected to emulators');
+  }
 
   // eslint-disable-next-line no-console
   console.log('✅ Firebase initialized successfully');
@@ -33,4 +46,4 @@ try {
   throw error;
 }
 
-export { app, auth, db, storage };
+export { app, auth, db, functions, storage };

@@ -8,6 +8,8 @@ export { LeaveEntitlementCard } from './components/LeaveEntitlementCard';
 export { LeaveRequestCard } from './components/LeaveRequestCard';
 export { LeaveRequestForm } from './components/LeaveRequestForm';
 export { LeaveRequestList } from './components/LeaveRequestList';
+// Pages
+export { LeaveRequestPage } from './pages/LeaveRequestPage';
 export { useApproveLeaveRequest } from './hooks/useApproveLeaveRequest';
 export { useCancelLeaveRequest } from './hooks/useCancelLeaveRequest';
 export { useCreateLeaveEntitlement } from './hooks/useCreateLeaveEntitlement';

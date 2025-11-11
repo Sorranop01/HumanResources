@@ -2,11 +2,15 @@ import {
   ClockCircleOutlined,
   DashboardOutlined,
   DollarOutlined,
+  FileTextOutlined,
+  KeyOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  SafetyCertificateOutlined,
   SettingOutlined,
   TeamOutlined,
+  UsergroupAddOutlined,
   UserOutlined,
 } from '@ant-design/icons';
 import { Avatar, Dropdown, Layout, Menu, type MenuProps } from 'antd';
@@ -86,8 +90,38 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     {
       key: 'settings',
       icon: <SettingOutlined />,
-      label: 'ตั้งค่า',
-      onClick: () => navigate(ROUTES.SETTINGS),
+      label: 'ตั้งค่าระบบ',
+      children: [
+        {
+          key: ROUTES.USERS,
+          icon: <UsergroupAddOutlined />,
+          label: 'จัดการผู้ใช้',
+          onClick: () => navigate(ROUTES.USERS),
+        },
+        {
+          key: ROUTES.ROLES,
+          icon: <SafetyCertificateOutlined />,
+          label: 'จัดการบทบาท',
+          onClick: () => navigate(ROUTES.ROLES),
+        },
+        {
+          key: ROUTES.PERMISSIONS,
+          icon: <KeyOutlined />,
+          label: 'จัดการสิทธิ์',
+          onClick: () => navigate(ROUTES.PERMISSIONS),
+        },
+        {
+          key: ROUTES.AUDIT_LOGS,
+          icon: <FileTextOutlined />,
+          label: 'Audit Logs',
+          onClick: () => navigate(ROUTES.AUDIT_LOGS),
+        },
+        {
+          key: ROUTES.SETTINGS,
+          label: 'ตั้งค่าทั่วไป',
+          onClick: () => navigate(ROUTES.SETTINGS),
+        },
+      ],
     },
   ];
 
@@ -124,7 +158,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <Menu
           mode="inline"
           selectedKeys={[location.pathname]}
-          defaultOpenKeys={['people', 'attendance', 'payroll']}
+          defaultOpenKeys={['people', 'attendance', 'payroll', 'settings']}
           items={menuItems}
         />
       </Sider>

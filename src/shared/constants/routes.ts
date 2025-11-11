@@ -28,6 +28,7 @@ export const ROUTES = {
   SETTINGS: '/settings',
   USERS: '/users',
   ROLES: '/roles',
+  PERMISSIONS: '/permissions',
   AUDIT_LOGS: '/audit-logs',
 } as const;
 

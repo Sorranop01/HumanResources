@@ -3,15 +3,18 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
+    // ============================================
+    // Helper functions - Authentication & Role
+    // ============================================
+
     function isAuthenticated() {
       return request.auth != null;
     }
 
     function getUserRole() {
-      // Get role from custom claims, default to 'employee' if not set
-      return isAuthenticated() && 'role' in request.auth.token
-        ? request.auth.token.role
+      // Get role from Firestore users collection
+      return isAuthenticated()
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role
         : 'employee';
     }
 
@@ -47,35 +50,71 @@ service cloud.firestore {
       return hasRole('auditor');
     }
 
+    // ============================================
+    // Context-Based Permission Helpers
+    // NOTE: Context-based permissions (:own vs :all) should be validated
+    // at the application layer (client-side hooks and Cloud Functions).
+    // Firestore Rules use simpler role-based checks for performance.
+    // ============================================
+
     // Users collection
     match /users/{userId} {
       allow read: if isOwner(userId) || isHR();
-      allow create: if isAdmin();
+      // Allow user to create their own profile during registration
+      allow create: if isOwner(userId) || isAdmin();
       allow update: if isOwner(userId) || isHR();
       allow delete: if isAdmin();
     }
 
+    // ============================================
     // Employees collection
+    // ============================================
     match /employees/{employeeId} {
+      // Read: All authenticated users can read
+      // (Context-based filtering is done at application layer)
       allow read: if isAuthenticated();
+
+      // Create: HR and Admin
       allow create: if isHR();
-      allow update: if isHR();
+
+      // Update: HR and Admin, or employee updating own record
+      allow update: if isHR() || (isEmployee() && resource.data.userId == request.auth.uid);
+
+      // Delete: Admin only
       allow delete: if isAdmin();
     }
 
+    // ============================================
     // Attendance collection
+    // ============================================
     match /attendance/{attendanceId} {
+      // Read: All authenticated users
       allow read: if isAuthenticated();
+
+      // Create: All employees
       allow create: if isEmployee();
-      allow update: if isManager();
+
+      // Update: Manager, HR, Admin, or employee updating own record
+      allow update: if isManager() || (isEmployee() && resource.data.userId == request.auth.uid);
+
+      // Delete: Admin only
       allow delete: if isAdmin();
     }
 
+    // ============================================
     // Leave requests
+    // ============================================
     match /leave-requests/{requestId} {
+      // Read: All authenticated users
       allow read: if isAuthenticated();
+
+      // Create: All employees
       allow create: if isEmployee();
-      allow update: if isManager();
+
+      // Update: Manager, HR, Admin, or employee updating own request
+      allow update: if isManager() || (isEmployee() && resource.data.userId == request.auth.uid);
+
+      // Delete: Admin only
       allow delete: if isAdmin();
     }
 
@@ -85,7 +124,34 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
-    // Roles collection (system-level)
+    // Role Definitions collection (RBAC system-level)
+    match /roleDefinitions/{roleId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Permission Definitions collection (RBAC system-level)
+    match /permissionDefinitions/{permissionId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Role Permissions collection (RBAC system-level)
+    match /rolePermissions/{permissionId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // User Role Assignments collection (RBAC dynamic assignments)
+    match /userRoleAssignments/{assignmentId} {
+      allow read: if isAuthenticated();
+      // Only admin/hr can assign/revoke roles
+      allow create: if isHR();
+      allow update: if isHR();
+      allow delete: if isAdmin();
+    }
+
+    // Roles collection (legacy, keep for compatibility)
     match /roles/{roleId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
@@ -97,7 +163,13 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Audit logs (read-only for auditors and admins)
+    // RBAC Audit logs (read-only for auditors and admins)
+    match /rbacAuditLogs/{logId} {
+      allow read: if isAuditor() || isAdmin();
+      allow write: if false; // Only Cloud Functions can write
+    }
+
+    // Audit logs (legacy, keep for compatibility)
     match /audit-logs/{logId} {
       allow read: if isAuditor() || isAdmin();
       allow write: if false; // Only Cloud Functions can write

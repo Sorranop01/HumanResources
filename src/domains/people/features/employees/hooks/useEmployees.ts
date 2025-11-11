@@ -1,16 +1,20 @@
 import { useQuery } from '@tanstack/react-query';
-import type { Employee } from '@/shared/types';
-import { employeeService } from '../services/employeeService';
+import type { EmployeeFilters } from '@/domains/people/features/employees/schemas';
+import {
+  employeeKeys,
+  employeeService,
+} from '@/domains/people/features/employees/services/employeeService';
+import type { Employee } from '@/domains/people/features/employees/types';
 
-interface UseEmployeesOptions {
-  status?: string;
-  department?: string;
-}
-
-export function useEmployees(options?: UseEmployeesOptions) {
+/**
+ * Hook to fetch all employees with optional filters
+ * Uses TanStack Query for server state management
+ */
+export function useEmployees(filters?: EmployeeFilters) {
   return useQuery<Employee[], Error>({
-    queryKey: ['employees', options],
-    queryFn: () => employeeService.getAll(options),
+    queryKey: employeeKeys.list(filters),
+    queryFn: () => employeeService.getAll(filters),
     staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
   });
 }

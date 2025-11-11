@@ -3,8 +3,15 @@ import { AppLayout } from '@/app/layouts';
 // People Pages
 import { AttendancePage } from '@/domains/people/features/attendance';
 import { CandidatesPage } from '@/domains/people/features/candidates';
-import { EmployeeListPage } from '@/domains/people/features/employees';
-// import { LeaveRequestPage } from '@/domains/people/features/leave';
+import {
+  EmployeeCreatePage,
+  EmployeeDetailPage,
+  EmployeeEditPage,
+  EmployeeListPage,
+} from '@/domains/people/features/employees';
+import { LeaveRequestPage } from '@/domains/people/features/leave';
+// Payroll Pages
+import { PayrollPage, PayrollRunsPage } from '@/domains/payroll';
 // Auth Pages
 import { ForgotPasswordPage } from '@/domains/system/features/auth/pages/ForgotPasswordPage';
 import { LoginPage } from '@/domains/system/features/auth/pages/LoginPage';
@@ -12,7 +19,7 @@ import { RegisterPage } from '@/domains/system/features/auth/pages/RegisterPage'
 // Dashboard Page
 import { DashboardPage } from '@/domains/system/features/dashboard';
 // System Pages
-import { AuditLogsPage, RolesPage } from '@/domains/system/features/rbac';
+import { AuditLogsPage, PermissionMatrixPage, RolesPage } from '@/domains/system/features/rbac';
 import { SettingsPage } from '@/domains/system/features/settings';
 import { UserManagementPage } from '@/domains/system/features/users';
 import { ROUTES } from '@/shared/constants/routes';
@@ -50,6 +57,36 @@ export function AppRouter() {
         }
       />
       <Route
+        path={ROUTES.EMPLOYEE_CREATE}
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <EmployeeCreatePage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.EMPLOYEE_DETAIL}
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <EmployeeDetailPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/employees/:id/edit"
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <EmployeeEditPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path={ROUTES.CANDIDATES}
         element={
           <ProtectedRoute>
@@ -69,8 +106,7 @@ export function AppRouter() {
           </ProtectedRoute>
         }
       />
-      {/* TODO: Implement LeaveRequestPage */}
-      {/* <Route
+      <Route
         path={ROUTES.LEAVE_REQUESTS}
         element={
           <ProtectedRoute>
@@ -79,7 +115,29 @@ export function AppRouter() {
             </AppLayout>
           </ProtectedRoute>
         }
-      /> */}
+      />
+
+      {/* Payroll Routes */}
+      <Route
+        path={ROUTES.PAYROLL}
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <PayrollPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.PAYROLL_RUNS}
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <PayrollRunsPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
 
       {/* System Routes */}
       <Route
@@ -98,6 +156,16 @@ export function AppRouter() {
           <ProtectedRoute>
             <AppLayout>
               <RolesPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.PERMISSIONS}
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <PermissionMatrixPage />
             </AppLayout>
           </ProtectedRoute>
         }
