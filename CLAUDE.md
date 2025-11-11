@@ -50,6 +50,21 @@ humanresources/
 ├─ .firebaserc
 └─ package.json
 
+โครงสร้างมาตรฐานภายใน Feature
+สมมติว่าเรากำลังสร้างฟีเจอร์ "จัดการพนักงาน" (Employees) ภายในโดเมน people
+
+src/
+└─ domains/
+   └─ people/
+      └─ features/
+         └─ employees/          # ⬅️ นี่คือ "Feature Slice"
+            ├─ components/     # 1. UI ที่ใช้ซ้ำ (เฉพาะใน Feature นี้)
+            ├─ pages/          # 2. หน้าหลัก (ที่ผูกกับ Router)
+            ├─ hooks/          # 3. ตะขอเกี่ยวข้อมูล (TanStack Query)
+            ├─ services/       # 4. ตรรกะคุยกับ Backend (Firestore/Functions)
+            ├─ schemas/        # 5. เครื่องสแกนข้อมูล (Zod Schemas)
+            └─ index.ts        # 6. ประตูทางเข้า (Public API ของ Feature)
+
 
 Golden Placement
 

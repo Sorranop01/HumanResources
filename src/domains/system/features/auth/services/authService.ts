@@ -79,9 +79,11 @@ export const authService = {
   async register(data: RegisterData): Promise<UserCredential> {
     const { email, password, displayName, phoneNumber, role } = data;
 
+    let userCredential: UserCredential | null = null;
+
     try {
       // 1. Create Firebase Auth user
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
       // 2. Update Firebase Auth profile
       await updateProfile(userCredential.user, {
@@ -99,11 +101,17 @@ export const authService = {
 
       return userCredential;
     } catch (error: unknown) {
-      // If Firestore creation fails, we should probably delete the auth user
-      // For now, we'll just rethrow the error with additional context
-      if (error instanceof Error) {
-        throw new Error(`Registration failed: ${error.message}`);
+      // If Firestore creation fails, delete the auth user to maintain consistency
+      if (userCredential) {
+        try {
+          await userCredential.user.delete();
+          console.log('Cleaned up Firebase Auth user after Firestore profile creation failure');
+        } catch (deleteError) {
+          console.error('Failed to cleanup Firebase Auth user:', deleteError);
+        }
       }
+
+      // Re-throw the original error
       throw error;
     }
   },

@@ -37,26 +37,37 @@ export const userService = {
     const userRef = doc(db, 'users', data.id);
 
     const now = Timestamp.now();
-    const userProfile: Omit<User, 'createdAt' | 'updatedAt'> & {
-      createdAt: Timestamp;
-      updatedAt: Timestamp;
-    } = {
+
+    // Build profile data (exclude undefined fields for Firestore)
+    const profileData: Record<string, unknown> = {
       id: data.id,
       email: data.email,
       displayName: data.displayName,
       role: data.role || ROLES.EMPLOYEE, // Default role
-      phoneNumber: data.phoneNumber ?? undefined,
-      photoURL: data.photoURL ?? undefined,
       isActive: true,
       createdAt: now,
       updatedAt: now,
     };
 
-    await setDoc(userRef, userProfile);
+    // Only add optional fields if they have values (Firestore doesn't accept undefined)
+    if (data.phoneNumber) {
+      profileData.phoneNumber = data.phoneNumber;
+    }
+    if (data.photoURL) {
+      profileData.photoURL = data.photoURL;
+    }
+
+    await setDoc(userRef, profileData);
 
     // Convert Timestamp to Date for return
     return {
-      ...userProfile,
+      id: data.id,
+      email: data.email,
+      displayName: data.displayName,
+      role: (data.role || ROLES.EMPLOYEE) as Role,
+      phoneNumber: data.phoneNumber,
+      photoURL: data.photoURL,
+      isActive: true,
       createdAt: now.toDate(),
       updatedAt: now.toDate(),
     };
