@@ -1,17 +1,17 @@
-import * as admin from 'firebase-admin';
+import { initializeApp } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
 
 // Initialize Firebase Admin SDK
-admin.initializeApp();
+initializeApp();
 
 // Export instances
-export const db = admin.firestore();
-export const auth = admin.auth();
-export const storage = admin.storage();
+export const db = getFirestore();
+export const auth = getAuth();
+export const storage = getStorage();
 
 // Set Firestore settings
 db.settings({
   ignoreUndefinedProperties: true,
 });
-
-// Export admin for advanced usage
-export { admin };

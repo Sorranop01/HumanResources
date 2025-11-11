@@ -1,0 +1,234 @@
+rules_version = '2';
+
+/**
+ * Firestore Security Rules for Auth Feature
+ * Copy these rules to your main firestore.rules file
+ *
+ * Path: /firestore.rules (project root)
+ */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ========================================
+    // Helper Functions
+    // ========================================
+
+    /**
+     * Check if user is authenticated
+     */
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    /**
+     * Check if user is the owner of the resource
+     */
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    /**
+     * Get current user's role
+     */
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    /**
+     * Check if user is an admin
+     */
+    function isAdmin() {
+      return isAuthenticated() && getUserRole() == 'ADMIN';
+    }
+
+    /**
+     * Check if user is HR or Admin
+     */
+    function isHROrAdmin() {
+      return isAuthenticated() && getUserRole() in ['ADMIN', 'HR'];
+    }
+
+    /**
+     * Check if user is Manager, HR, or Admin
+     */
+    function isManagerOrAbove() {
+      return isAuthenticated() && getUserRole() in ['ADMIN', 'HR', 'MANAGER'];
+    }
+
+    /**
+     * Check if update affects protected fields
+     */
+    function affectsProtectedFields() {
+      return request.resource.data.diff(resource.data)
+        .affectedKeys()
+        .hasAny(['id', 'email', 'role', 'isActive', 'createdAt']);
+    }
+
+    /**
+     * Validate email format
+     */
+    function isValidEmail(email) {
+      return email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
+    }
+
+    /**
+     * Validate phone number (E.164 format)
+     */
+    function isValidPhone(phone) {
+      return phone == null || phone.matches('^\\+[1-9]\\d{1,14}$');
+    }
+
+    // ========================================
+    // Collection: users
+    // ========================================
+
+    match /users/{userId} {
+      /**
+       * READ: Anyone authenticated can read user profiles
+       */
+      allow read: if isAuthenticated();
+
+      /**
+       * CREATE: Users can create their own profile
+       * - Must be the owner (userId == auth.uid)
+       * - Email must match Firebase Auth email
+       * - Default role must be EMPLOYEE
+       * - Email must be valid format
+       * - Phone must be valid format (if provided)
+       */
+      allow create: if isOwner(userId)
+                    && request.resource.data.email == request.auth.token.email
+                    && request.resource.data.id == userId
+                    && request.resource.data.role == 'EMPLOYEE'
+                    && isValidEmail(request.resource.data.email)
+                    && isValidPhone(request.resource.data.get('phoneNumber', null))
+                    && request.resource.data.isActive == true;
+
+      /**
+       * UPDATE: Users can update their own profile (limited fields)
+       * - Cannot change: id, email, role, isActive, createdAt
+       * - Can change: displayName, phoneNumber, photoURL
+       */
+      allow update: if isOwner(userId)
+                    && !affectsProtectedFields()
+                    && isValidPhone(request.resource.data.get('phoneNumber', null));
+
+      /**
+       * UPDATE: Admins can update any user (including protected fields)
+       * - Can change role and isActive
+       * - Email validation still applies
+       */
+      allow update: if isAdmin()
+                    && isValidEmail(request.resource.data.email)
+                    && isValidPhone(request.resource.data.get('phoneNumber', null));
+
+      /**
+       * DELETE: No one can delete users
+       * Use soft delete (isActive: false) instead
+       */
+      allow delete: if false;
+    }
+
+    // ========================================
+    // Collection: userSessions
+    // ========================================
+
+    match /userSessions/{sessionId} {
+      /**
+       * READ: Users can read their own sessions
+       */
+      allow read: if isAuthenticated()
+                  && resource.data.userId == request.auth.uid;
+
+      /**
+       * READ: Admins can read all sessions
+       */
+      allow read: if isAdmin();
+
+      /**
+       * CREATE: Users can create their own sessions
+       * - userId must match auth.uid
+       * - Must include required fields
+       */
+      allow create: if isAuthenticated()
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.sessionId is string
+                    && request.resource.data.deviceInfo is map
+                    && request.resource.data.loginAt is timestamp
+                    && request.resource.data.expiresAt is timestamp;
+
+      /**
+       * UPDATE: Users can update their own sessions
+       * - Can only update lastActivityAt and isActive
+       */
+      allow update: if isAuthenticated()
+                    && resource.data.userId == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                        .affectedKeys()
+                        .hasOnly(['lastActivityAt', 'isActive']);
+
+      /**
+       * DELETE: Users can delete their own sessions (logout)
+       */
+      allow delete: if isAuthenticated()
+                    && resource.data.userId == request.auth.uid;
+
+      /**
+       * DELETE: Admins can delete any session
+       */
+      allow delete: if isAdmin();
+    }
+
+    // ========================================
+    // Collection: passwordResetTokens
+    // ========================================
+
+    match /passwordResetTokens/{tokenId} {
+      /**
+       * Only Cloud Functions can read/write password reset tokens
+       * Client apps should use Firebase Auth's password reset
+       */
+      allow read, write: if false;
+    }
+
+    // ========================================
+    // Collection: userActivityLogs
+    // ========================================
+
+    match /userActivityLogs/{logId} {
+      /**
+       * READ: Users can read their own activity logs
+       */
+      allow read: if isAuthenticated()
+                  && resource.data.userId == request.auth.uid;
+
+      /**
+       * READ: HR and Admins can read all activity logs
+       */
+      allow read: if isHROrAdmin();
+
+      /**
+       * WRITE: Only Cloud Functions can write activity logs
+       * Client apps should not write directly
+       */
+      allow write: if false;
+    }
+
+    // ========================================
+    // Additional Collections (for future features)
+    // ========================================
+
+    // Example: User preferences (optional)
+    match /userPreferences/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Example: User notifications (optional)
+    match /userNotifications/{notificationId} {
+      allow read: if isAuthenticated()
+                  && resource.data.userId == request.auth.uid;
+      allow write: if false; // Only server writes
+    }
+  }
+}
