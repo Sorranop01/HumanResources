@@ -1,6 +1,6 @@
 import type { CallableRequest } from 'firebase-functions/v2/https';
 import { HttpsError } from 'firebase-functions/v2/https';
-import { auth } from '../config/firebase';
+import { auth } from '../config/firebase.js';
 
 /**
  * Verify Firebase Auth token

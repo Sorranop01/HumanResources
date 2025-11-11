@@ -4,7 +4,7 @@
  */
 
 // Employee functions
-export { getEmployees } from './api/employees/getEmployees';
+export { getEmployees } from './api/employees/getEmployees.js';
 
 // TODO: Add more functions
 // - Payroll functions
