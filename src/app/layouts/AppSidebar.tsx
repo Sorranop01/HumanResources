@@ -1,6 +1,7 @@
 import {
   ApartmentOutlined,
   AuditOutlined,
+  BankOutlined,
   CalendarOutlined,
   ClockCircleOutlined,
   DashboardOutlined,
@@ -82,6 +83,7 @@ export const AppSidebar: FC<AppSidebarProps> = ({ collapsed }) => {
       ? [
           getItem('บุคลากร', 'people', <TeamOutlined />, [
             getItem('พนักงาน', ROUTES.EMPLOYEES, <UserOutlined />),
+            getItem('ตำแหน่งงาน', ROUTES.POSITIONS, <BankOutlined />),
             getItem('ผู้สมัครงาน', ROUTES.CANDIDATES, <ApartmentOutlined />),
           ]),
         ]

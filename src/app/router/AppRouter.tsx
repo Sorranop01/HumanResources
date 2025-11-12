@@ -10,6 +10,13 @@ import {
   EmployeeListPage,
 } from '@/domains/people/features/employees';
 import { LeaveRequestPage } from '@/domains/people/features/leave';
+import {
+  OrgChartPage,
+  PositionCreatePage,
+  PositionDetailPage,
+  PositionEditPage,
+  PositionListPage,
+} from '@/domains/people/features/positions';
 // Payroll Pages
 import { PayrollPage, PayrollRunsPage } from '@/domains/payroll';
 // Auth Pages
@@ -112,6 +119,56 @@ export function AppRouter() {
           <ProtectedRoute>
             <AppLayout>
               <LeaveRequestPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.POSITIONS}
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <PositionListPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.POSITION_CREATE}
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <PositionCreatePage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.POSITION_ORG_CHART}
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <OrgChartPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.POSITION_DETAIL}
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <PositionDetailPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.POSITION_EDIT}
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <PositionEditPage />
             </AppLayout>
           </ProtectedRoute>
         }

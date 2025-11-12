@@ -15,6 +15,11 @@ export const ROUTES = {
   EMPLOYEE_DETAIL: '/employees/:id',
   EMPLOYEE_CREATE: '/employees/create',
   CANDIDATES: '/candidates',
+  POSITIONS: '/positions',
+  POSITION_DETAIL: '/positions/:id',
+  POSITION_CREATE: '/positions/create',
+  POSITION_EDIT: '/positions/:id/edit',
+  POSITION_ORG_CHART: '/positions/org-chart',
 
   // Attendance Domain
   ATTENDANCE: '/attendance',
