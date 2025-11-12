@@ -1,0 +1,89 @@
+/**
+ * Policy List Page
+ * Main page for managing all policies (Work Schedule, Overtime, Shifts, Penalties, Holidays)
+ */
+
+import type { FC } from 'react';
+import { Card, Tabs } from 'antd';
+import {
+  CalendarOutlined,
+  ClockCircleOutlined,
+  DollarOutlined,
+  ScheduleOutlined,
+  WarningOutlined,
+} from '@ant-design/icons';
+import { WorkSchedulePolicyTable } from '../components/WorkSchedulePolicyTable';
+import { OvertimePolicyTable } from '../components/OvertimePolicyTable';
+import { ShiftManagementTable } from '../components/ShiftManagementTable';
+import { PenaltyPolicyTable } from '../components/PenaltyPolicyTable';
+import { HolidayCalendarTable } from '../components/HolidayCalendarTable';
+
+export const PolicyListPage: FC = () => {
+  const tabItems = [
+    {
+      key: 'workSchedule',
+      label: (
+        <span>
+          <ClockCircleOutlined />
+          ตารางเวลาทำงาน
+        </span>
+      ),
+      children: <WorkSchedulePolicyTable />,
+    },
+    {
+      key: 'overtime',
+      label: (
+        <span>
+          <DollarOutlined />
+          OT Policy
+        </span>
+      ),
+      children: <OvertimePolicyTable />,
+    },
+    {
+      key: 'shifts',
+      label: (
+        <span>
+          <ScheduleOutlined />
+          กะทำงาน
+        </span>
+      ),
+      children: <ShiftManagementTable />,
+    },
+    {
+      key: 'penalties',
+      label: (
+        <span>
+          <WarningOutlined />
+          กฎการปรับ
+        </span>
+      ),
+      children: <PenaltyPolicyTable />,
+    },
+    {
+      key: 'holidays',
+      label: (
+        <span>
+          <CalendarOutlined />
+          วันหยุด
+        </span>
+      ),
+      children: <HolidayCalendarTable />,
+    },
+  ];
+
+  return (
+    <div style={{ padding: '24px' }}>
+      <Card
+        title={
+          <div style={{ fontSize: '20px', fontWeight: 600 }}>
+            <ScheduleOutlined style={{ marginRight: '8px' }} />
+            จัดการนโยบาย (Policy Management)
+          </div>
+        }
+      >
+        <Tabs items={tabItems} />
+      </Card>
+    </div>
+  );
+};
