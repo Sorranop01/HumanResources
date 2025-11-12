@@ -10,6 +10,7 @@ interface EnvConfig {
   readonly FIREBASE_STORAGE_BUCKET: string;
   readonly FIREBASE_MESSAGING_SENDER_ID: string;
   readonly FIREBASE_APP_ID: string;
+  readonly FIREBASE_MEASUREMENT_ID?: string;
   readonly ENV: 'development' | 'staging' | 'production';
 }
 
@@ -20,6 +21,7 @@ function loadEnv(): EnvConfig {
   const storageBucket = import.meta.env.VITE_FIREBASE_STORAGE_BUCKET;
   const messagingSenderId = import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID;
   const appId = import.meta.env.VITE_FIREBASE_APP_ID;
+  const measurementId = import.meta.env.VITE_FIREBASE_MEASUREMENT_ID;
   const environment = import.meta.env.VITE_ENV || 'development';
 
   // Validation
@@ -36,6 +38,7 @@ function loadEnv(): EnvConfig {
     FIREBASE_STORAGE_BUCKET: storageBucket,
     FIREBASE_MESSAGING_SENDER_ID: messagingSenderId,
     FIREBASE_APP_ID: appId,
+    FIREBASE_MEASUREMENT_ID: measurementId,
     ENV: environment as EnvConfig['ENV'],
   };
 }
@@ -51,6 +54,7 @@ declare global {
     readonly VITE_FIREBASE_STORAGE_BUCKET: string;
     readonly VITE_FIREBASE_MESSAGING_SENDER_ID: string;
     readonly VITE_FIREBASE_APP_ID: string;
+    readonly VITE_FIREBASE_MEASUREMENT_ID?: string;
     readonly VITE_ENV?: string;
   }
 
