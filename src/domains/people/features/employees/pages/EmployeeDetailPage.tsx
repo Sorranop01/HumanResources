@@ -169,6 +169,80 @@ export const EmployeeDetailPage: FC = () => {
     }
   };
 
+  // Edit handlers
+  const handleEditCompensation = async (data: EditSalaryInput): Promise<void> => {
+    if (!employee) return;
+
+    try {
+      await updateEmployee.mutateAsync({
+        id: employee.id,
+        data: {
+          salary: {
+            ...employee.salary,
+            baseSalary: data.baseSalary,
+            currency: data.currency,
+            paymentFrequency: data.paymentFrequency,
+            hourlyRate: data.hourlyRate,
+          },
+        },
+      });
+      setIsCompensationModalOpen(false);
+    } catch (_error) {
+      // Error is already handled by the mutation hook
+    }
+  };
+
+  const handleEditTax = async (data: EditTaxInput): Promise<void> => {
+    if (!employee) return;
+
+    try {
+      await updateEmployee.mutateAsync({
+        id: employee.id,
+        data: {
+          tax: {
+            ...employee.tax,
+            ...data,
+          },
+        },
+      });
+      setIsTaxModalOpen(false);
+    } catch (_error) {
+      // Error is already handled by the mutation hook
+    }
+  };
+
+  const handleEditBenefits = async (data: EditBenefitsInput): Promise<void> => {
+    if (!employee) return;
+
+    try {
+      await updateEmployee.mutateAsync({
+        id: employee.id,
+        data: {
+          benefits: data,
+        },
+      });
+      setIsBenefitsModalOpen(false);
+    } catch (_error) {
+      // Error is already handled by the mutation hook
+    }
+  };
+
+  const handleEditBankAccount = async (data: EditBankAccountInput): Promise<void> => {
+    if (!employee) return;
+
+    try {
+      await updateEmployee.mutateAsync({
+        id: employee.id,
+        data: {
+          bankAccount: data,
+        },
+      });
+      setIsBankAccountModalOpen(false);
+    } catch (_error) {
+      // Error is already handled by the mutation hook
+    }
+  };
+
   // Loading state
   if (isLoading) {
     return (
@@ -241,7 +315,9 @@ export const EmployeeDetailPage: FC = () => {
                   <Col xs={24}>
                     <Card title="ข้อมูลส่วนตัว" style={{ marginBottom: 16 }}>
                       <Descriptions column={{ xs: 1, sm: 2, md: 2, lg: 3 }} bordered>
-                        <Descriptions.Item label="ชื่อ (อังกฤษ)">{employee.firstName}</Descriptions.Item>
+                        <Descriptions.Item label="ชื่อ (อังกฤษ)">
+                          {employee.firstName}
+                        </Descriptions.Item>
                         <Descriptions.Item label="นามสกุล (อังกฤษ)">
                           {employee.lastName}
                         </Descriptions.Item>
@@ -249,12 +325,18 @@ export const EmployeeDetailPage: FC = () => {
                           {employee.nickname || '-'}
                         </Descriptions.Item>
 
-                        <Descriptions.Item label="ชื่อ (ไทย)">{employee.thaiFirstName}</Descriptions.Item>
+                        <Descriptions.Item label="ชื่อ (ไทย)">
+                          {employee.thaiFirstName}
+                        </Descriptions.Item>
                         <Descriptions.Item label="นามสกุล (ไทย)">
                           {employee.thaiLastName}
                         </Descriptions.Item>
                         <Descriptions.Item label="เพศ">
-                          {employee.gender === 'male' ? 'ชาย' : employee.gender === 'female' ? 'หญิง' : 'อื่นๆ'}
+                          {employee.gender === 'male'
+                            ? 'ชาย'
+                            : employee.gender === 'female'
+                              ? 'หญิง'
+                              : 'อื่นๆ'}
                         </Descriptions.Item>
 
                         <Descriptions.Item label="วันเกิด" span={1}>
@@ -274,7 +356,9 @@ export const EmployeeDetailPage: FC = () => {
                         </Descriptions.Item>
 
                         <Descriptions.Item label="สัญชาติ">{employee.nationality}</Descriptions.Item>
-                        <Descriptions.Item label="ศาสนา">{employee.religion || '-'}</Descriptions.Item>
+                        <Descriptions.Item label="ศาสนา">
+                          {employee.religion || '-'}
+                        </Descriptions.Item>
                         <Descriptions.Item label="เลขบัตรประชาชน">
                           {employee.nationalId}
                         </Descriptions.Item>
@@ -288,7 +372,9 @@ export const EmployeeDetailPage: FC = () => {
                         </Descriptions.Item>
                         <Descriptions.Item label="อีเมลส่วนตัว" span={1}>
                           {employee.personalEmail ? (
-                            <a href={`mailto:${employee.personalEmail}`}>{employee.personalEmail}</a>
+                            <a href={`mailto:${employee.personalEmail}`}>
+                              {employee.personalEmail}
+                            </a>
                           ) : (
                             '-'
                           )}
@@ -300,7 +386,8 @@ export const EmployeeDetailPage: FC = () => {
 
                         <Descriptions.Item label="ผู้ติดต่อฉุกเฉิน" span={2}>
                           <div>
-                            <strong>{employee.emergencyContact.name}</strong> ({employee.emergencyContact.relationship})
+                            <strong>{employee.emergencyContact.name}</strong> (
+                            {employee.emergencyContact.relationship})
                             <br />
                             <a href={`tel:${employee.emergencyContact.phoneNumber}`}>
                               {employee.emergencyContact.phoneNumber}
@@ -310,7 +397,8 @@ export const EmployeeDetailPage: FC = () => {
 
                         <Descriptions.Item label="ที่อยู่ปัจจุบัน" span={2}>
                           {employee.currentAddress.addressLine1}
-                          {employee.currentAddress.addressLine2 && ` ${employee.currentAddress.addressLine2}`}
+                          {employee.currentAddress.addressLine2 &&
+                            ` ${employee.currentAddress.addressLine2}`}
                           <br />
                           {`${employee.currentAddress.subDistrict} ${employee.currentAddress.district} ${employee.currentAddress.province} ${employee.currentAddress.postalCode}`}
                         </Descriptions.Item>
@@ -342,7 +430,9 @@ export const EmployeeDetailPage: FC = () => {
                         </Descriptions.Item>
 
                         <Descriptions.Item label="แผนก">{employee.department}</Descriptions.Item>
-                        <Descriptions.Item label="ฝ่าย">{employee.division || '-'}</Descriptions.Item>
+                        <Descriptions.Item label="ฝ่าย">
+                          {employee.division || '-'}
+                        </Descriptions.Item>
                         <Descriptions.Item label="ทีม">{employee.team || '-'}</Descriptions.Item>
 
                         <Descriptions.Item label="ตำแหน่ง">{employee.position}</Descriptions.Item>
@@ -373,7 +463,20 @@ export const EmployeeDetailPage: FC = () => {
               children: (
                 <Row gutter={[16, 16]}>
                   <Col xs={24}>
-                    <Card title="ข้อมูลเงินเดือน" style={{ marginBottom: 16 }}>
+                    <Card
+                      title="ข้อมูลเงินเดือน"
+                      style={{ marginBottom: 16 }}
+                      extra={
+                        <Button
+                          type="primary"
+                          size="small"
+                          icon={<EditOutlined />}
+                          onClick={() => setIsCompensationModalOpen(true)}
+                        >
+                          แก้ไข
+                        </Button>
+                      }
+                    >
                       <Descriptions column={{ xs: 1, sm: 2 }} bordered>
                         <Descriptions.Item label="เงินเดือนพื้นฐาน">
                           {formatMoney(employee.salary.baseSalary)} {employee.salary.currency}
@@ -413,7 +516,20 @@ export const EmployeeDetailPage: FC = () => {
                     )}
 
                     {employee.benefits && (
-                      <Card title="สวัสดิการ" style={{ marginBottom: 16 }}>
+                      <Card
+                        title="สวัสดิการ"
+                        style={{ marginBottom: 16 }}
+                        extra={
+                          <Button
+                            type="primary"
+                            size="small"
+                            icon={<EditOutlined />}
+                            onClick={() => setIsBenefitsModalOpen(true)}
+                          >
+                            แก้ไข
+                          </Button>
+                        }
+                      >
                         <Descriptions column={{ xs: 1, sm: 2 }} bordered>
                           <Descriptions.Item label="ประกันสุขภาพ">
                             {employee.benefits.healthInsurance ? '✅ มี' : '❌ ไม่มี'}
@@ -435,11 +551,12 @@ export const EmployeeDetailPage: FC = () => {
                             {employee.benefits.sickLeave} วัน/ปี
                           </Descriptions.Item>
 
-                          {employee.benefits.otherBenefits && employee.benefits.otherBenefits.length > 0 && (
-                            <Descriptions.Item label="สวัสดิการอื่นๆ" span={2}>
-                              {employee.benefits.otherBenefits.join(', ')}
-                            </Descriptions.Item>
-                          )}
+                          {employee.benefits.otherBenefits &&
+                            employee.benefits.otherBenefits.length > 0 && (
+                              <Descriptions.Item label="สวัสดิการอื่นๆ" span={2}>
+                                {employee.benefits.otherBenefits.join(', ')}
+                              </Descriptions.Item>
+                            )}
                         </Descriptions>
                       </Card>
                     )}
@@ -456,7 +573,9 @@ export const EmployeeDetailPage: FC = () => {
                     <Card title="ประกันสังคม">
                       <Descriptions column={1} bordered>
                         <Descriptions.Item label="สถานะ">
-                          {employee.socialSecurity.isEnrolled ? '✅ เข้าประกันสังคม' : '❌ ไม่ได้เข้าประกันสังคม'}
+                          {employee.socialSecurity.isEnrolled
+                            ? '✅ เข้าประกันสังคม'
+                            : '❌ ไม่ได้เข้าประกันสังคม'}
                         </Descriptions.Item>
 
                         {employee.socialSecurity.isEnrolled && (
@@ -469,7 +588,8 @@ export const EmployeeDetailPage: FC = () => {
                             {employee.socialSecurity.hospitalName && (
                               <Descriptions.Item label="โรงพยาบาล">
                                 {employee.socialSecurity.hospitalName}
-                                {employee.socialSecurity.hospitalCode && ` (${employee.socialSecurity.hospitalCode})`}
+                                {employee.socialSecurity.hospitalCode &&
+                                  ` (${employee.socialSecurity.hospitalCode})`}
                               </Descriptions.Item>
                             )}
                             {employee.socialSecurity.enrollmentDate && (
@@ -518,7 +638,9 @@ export const EmployeeDetailPage: FC = () => {
                   <Col xs={24}>
                     <Card title="บัญชีธนาคาร">
                       <Descriptions column={{ xs: 1, sm: 2 }} bordered>
-                        <Descriptions.Item label="ธนาคาร">{employee.bankAccount.bankName}</Descriptions.Item>
+                        <Descriptions.Item label="ธนาคาร">
+                          {employee.bankAccount.bankName}
+                        </Descriptions.Item>
                         <Descriptions.Item label="สาขา">
                           {employee.bankAccount.branchName || '-'}
                         </Descriptions.Item>

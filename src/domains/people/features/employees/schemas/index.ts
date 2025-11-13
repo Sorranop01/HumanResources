@@ -10,12 +10,24 @@ import { z } from 'zod';
 // ============================================
 
 export const EmployeeStatusSchema = z.enum(['active', 'on-leave', 'resigned', 'terminated']);
-export const EmploymentTypeSchema = z.enum(['permanent', 'contract', 'probation', 'freelance', 'intern']);
+export const EmploymentTypeSchema = z.enum([
+  'permanent',
+  'contract',
+  'probation',
+  'freelance',
+  'intern',
+]);
 export const WorkTypeSchema = z.enum(['full-time', 'part-time']);
 export const GenderSchema = z.enum(['male', 'female', 'other']);
 export const MaritalStatusSchema = z.enum(['single', 'married', 'divorced', 'widowed']);
 export const PaymentFrequencySchema = z.enum(['monthly', 'bi-weekly', 'weekly', 'hourly']);
-export const EducationLevelSchema = z.enum(['high-school', 'diploma', 'bachelor', 'master', 'doctorate']);
+export const EducationLevelSchema = z.enum([
+  'high-school',
+  'diploma',
+  'bachelor',
+  'master',
+  'doctorate',
+]);
 
 // ============================================
 // Sub-schemas (Building Blocks)
@@ -26,7 +38,7 @@ export const EducationLevelSchema = z.enum(['high-school', 'diploma', 'bachelor'
  */
 export const AddressSchema = z.object({
   addressLine1: z.string().min(1, 'ที่อยู่บรรทัดที่ 1 ต้องไม่ว่าง'),
-  addressLine2: z.string().optional(),
+  addressLine2: z.string().nullable().optional(),
   subDistrict: z.string().min(1, 'ตำบล/แขวง ต้องไม่ว่าง'),
   district: z.string().min(1, 'อำเภอ/เขต ต้องไม่ว่าง'),
   province: z.string().min(1, 'จังหวัด ต้องไม่ว่าง'),
@@ -51,7 +63,7 @@ export const SalaryInfoSchema = z.object({
   currency: z.string().default('THB'),
   paymentFrequency: PaymentFrequencySchema,
   effectiveDate: z.date(),
-  hourlyRate: z.number().positive('อัตราค่าจ้างต่อชั่วโมงต้องมากกว่า 0').optional(),
+  hourlyRate: z.number().positive('อัตราค่าจ้างต่อชั่วโมงต้องมากกว่า 0').nullable().optional(),
 });
 
 /**
@@ -68,10 +80,10 @@ export const AllowanceSchema = z.object({
  */
 export const SocialSecurityInfoSchema = z.object({
   isEnrolled: z.boolean(),
-  ssNumber: z.string().optional(),
-  enrollmentDate: z.date().optional(),
-  hospitalCode: z.string().optional(),
-  hospitalName: z.string().optional(),
+  ssNumber: z.string().nullable().optional(),
+  enrollmentDate: z.date().nullable().optional(),
+  hospitalCode: z.string().nullable().optional(),
+  hospitalName: z.string().nullable().optional(),
 });
 
 /**
@@ -116,9 +128,9 @@ export const ReportingToSchema = z.object({
  */
 export const WorkLocationSchema = z.object({
   office: z.string().min(1, 'สำนักงานต้องไม่ว่าง'),
-  building: z.string().optional(),
-  floor: z.string().optional(),
-  seat: z.string().optional(),
+  building: z.string().nullable().optional(),
+  floor: z.string().nullable().optional(),
+  seat: z.string().nullable().optional(),
 });
 
 /**
@@ -185,6 +197,7 @@ export const WorkScheduleSchema = z.object({
       saturday: WorkHoursSchema.optional(),
       sunday: WorkHoursSchema.optional(),
     })
+    .nullable()
     .optional(),
   currentShift: z
     .object({
@@ -192,6 +205,7 @@ export const WorkScheduleSchema = z.object({
       startTime: z.string(),
       endTime: z.string(),
     })
+    .nullable()
     .optional(),
 });
 
@@ -221,9 +235,9 @@ export const EmployeeSchema = z.object({
   lastName: z.string().min(1, 'นามสกุลต้องไม่ว่าง').max(100),
   thaiFirstName: z.string().min(1, 'ชื่อภาษาไทยต้องไม่ว่าง').max(100),
   thaiLastName: z.string().min(1, 'นามสกุลภาษาไทยต้องไม่ว่าง').max(100),
-  nickname: z.string().optional(),
+  nickname: z.string().nullable().optional(),
   email: z.string().email('รูปแบบอีเมลไม่ถูกต้อง'),
-  personalEmail: z.string().email('รูปแบบอีเมลไม่ถูกต้อง').optional(),
+  personalEmail: z.string().email('รูปแบบอีเมลไม่ถูกต้อง').nullable().optional(),
   phoneNumber: z.string().regex(/^[0-9]{9,10}$/, 'เบอร์โทรศัพท์ต้องเป็นตัวเลข 9-10 หลัก'),
   emergencyContact: EmergencyContactSchema,
 
@@ -233,37 +247,37 @@ export const EmployeeSchema = z.object({
   gender: GenderSchema,
   maritalStatus: MaritalStatusSchema,
   nationality: z.string().default('ไทย'),
-  religion: z.string().optional(),
+  religion: z.string().nullable().optional(),
 
   // National ID
   nationalId: z.string().regex(/^[0-9]{13}$/, 'เลขบัตรประชาชนต้องเป็นตัวเลข 13 หลัก'),
-  nationalIdIssueDate: z.date().optional(),
-  nationalIdExpiryDate: z.date().optional(),
+  nationalIdIssueDate: z.date().nullable().optional(),
+  nationalIdExpiryDate: z.date().nullable().optional(),
 
   // Address
   currentAddress: AddressSchema,
-  permanentAddress: AddressSchema.optional(),
+  permanentAddress: AddressSchema.nullable().optional(),
 
-  photoURL: z.string().url().optional().or(z.literal('')),
+  photoURL: z.string().url().nullable().optional().or(z.literal('')),
 
   // Employment Information
   hireDate: z.date(),
-  probationEndDate: z.date().optional(),
-  confirmationDate: z.date().optional(),
-  terminationDate: z.date().optional(),
-  lastWorkingDate: z.date().optional(),
+  probationEndDate: z.date().nullable().optional(),
+  confirmationDate: z.date().nullable().optional(),
+  terminationDate: z.date().nullable().optional(),
+  lastWorkingDate: z.date().nullable().optional(),
 
   status: EmployeeStatusSchema,
   employmentType: EmploymentTypeSchema,
   workType: WorkTypeSchema,
 
   position: z.string().min(1, 'ตำแหน่งต้องไม่ว่าง'),
-  level: z.string().optional(),
+  level: z.string().nullable().optional(),
   department: z.string().min(1, 'แผนกต้องไม่ว่าง'),
-  division: z.string().optional(),
-  team: z.string().optional(),
+  division: z.string().nullable().optional(),
+  team: z.string().nullable().optional(),
 
-  reportingTo: ReportingToSchema.optional(),
+  reportingTo: ReportingToSchema.nullable().optional(),
   workLocation: WorkLocationSchema,
 
   // Compensation & Benefits
@@ -365,13 +379,24 @@ export const EmploymentInfoFormSchema = z.object({
 });
 
 /**
- * Employee Form Schema - Step 3: Compensation
+ * Employee Form Schema - Step 3: Compensation & Benefits
  */
 export const CompensationFormSchema = z.object({
+  // Salary
   baseSalary: z.coerce.number().positive('เงินเดือนพื้นฐานต้องมากกว่า 0'),
   currency: z.string().default('THB'),
   paymentFrequency: PaymentFrequencySchema,
   hourlyRate: z.coerce.number().positive('อัตราค่าจ้างต่อชั่วโมงต้องมากกว่า 0').optional(),
+
+  // Benefits
+  healthInsurance: z.boolean().default(false),
+  lifeInsurance: z.boolean().default(false),
+  providentFundEnrolled: z.boolean().default(false),
+  providentFundEmployeeRate: z.coerce.number().min(0).max(100).optional(),
+  providentFundEmployerRate: z.coerce.number().min(0).max(100).optional(),
+  annualLeave: z.coerce.number().nonnegative().default(0),
+  sickLeave: z.coerce.number().nonnegative().default(0),
+  otherBenefits: z.array(z.string()).optional(),
 });
 
 /**
@@ -531,6 +556,18 @@ export function formDataToCreateInput(formData: EmployeeFormInput): Partial<Crea
       paymentFrequency: formData.paymentFrequency,
       effectiveDate: now,
       hourlyRate: formData.hourlyRate,
+    },
+    benefits: {
+      healthInsurance: formData.healthInsurance ?? false,
+      lifeInsurance: formData.lifeInsurance ?? false,
+      providentFund: {
+        isEnrolled: formData.providentFundEnrolled ?? false,
+        employeeContributionRate: formData.providentFundEmployeeRate,
+        employerContributionRate: formData.providentFundEmployerRate,
+      },
+      annualLeave: formData.annualLeave ?? 0,
+      sickLeave: formData.sickLeave ?? 0,
+      otherBenefits: formData.otherBenefits,
     },
     socialSecurity: {
       isEnrolled: formData.socialSecurityEnrolled,

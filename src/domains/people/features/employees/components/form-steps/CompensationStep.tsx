@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Alert, Button, Col, Form, Input, InputNumber, Row, Select, Space, Typography } from 'antd';
+import { Alert, Button, Card, Col, Form, InputNumber, Row, Select, Space, Typography } from 'antd';
 import type { FC } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import type { CompensationFormInput, EmployeeFormInput } from '../../schemas';
@@ -18,7 +18,12 @@ interface CompensationStepProps {
  * Step 3: Compensation Form
  * Collects salary, hourly rate (for part-time), and payment frequency
  */
-export const CompensationStep: FC<CompensationStepProps> = ({ initialData, onNext, onBack, onCancel }) => {
+export const CompensationStep: FC<CompensationStepProps> = ({
+  initialData,
+  onNext,
+  onBack,
+  onCancel,
+}) => {
   const {
     control,
     handleSubmit,
@@ -31,6 +36,14 @@ export const CompensationStep: FC<CompensationStepProps> = ({ initialData, onNex
       currency: initialData?.currency || 'THB',
       paymentFrequency: initialData?.paymentFrequency || 'monthly',
       hourlyRate: initialData?.hourlyRate || undefined,
+      healthInsurance: initialData?.healthInsurance ?? false,
+      lifeInsurance: initialData?.lifeInsurance ?? false,
+      providentFundEnrolled: initialData?.providentFundEnrolled ?? false,
+      providentFundEmployeeRate: initialData?.providentFundEmployeeRate || undefined,
+      providentFundEmployerRate: initialData?.providentFundEmployerRate || undefined,
+      annualLeave: initialData?.annualLeave || 0,
+      sickLeave: initialData?.sickLeave || 0,
+      otherBenefits: initialData?.otherBenefits || [],
     },
   });
 
@@ -217,12 +230,206 @@ export const CompensationStep: FC<CompensationStepProps> = ({ initialData, onNex
         />
       )}
 
-      {/* Future: Benefits Section (Optional - can be added later) */}
-      <div style={{ marginTop: '24px', padding: '16px', background: '#f5f5f5', borderRadius: '4px' }}>
-        <Text type="secondary">
-          <strong>หมายเหตุ:</strong> สวัสดิการอื่นๆ เช่น ประกันสุขภาพ, กองทุนสำรองเลี้ยงชีพ สามารถเพิ่มได้ในภายหลัง
-        </Text>
-      </div>
+      {/* Benefits Section */}
+      <Card title="สวัสดิการ" style={{ marginTop: '24px' }}>
+        <Row gutter={16}>
+          <Col xs={24} md={12}>
+            <Form.Item
+              label="ประกันสุขภาพ"
+              validateStatus={errors.healthInsurance ? 'error' : ''}
+              help={errors.healthInsurance?.message}
+            >
+              <Controller
+                name="healthInsurance"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    value={field.value ? 'true' : 'false'}
+                    onChange={(v) => field.onChange(v === 'true')}
+                  >
+                    <Select.Option value="true">มี</Select.Option>
+                    <Select.Option value="false">ไม่มี</Select.Option>
+                  </Select>
+                )}
+              />
+            </Form.Item>
+          </Col>
+          <Col xs={24} md={12}>
+            <Form.Item
+              label="ประกันชีวิต"
+              validateStatus={errors.lifeInsurance ? 'error' : ''}
+              help={errors.lifeInsurance?.message}
+            >
+              <Controller
+                name="lifeInsurance"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    value={field.value ? 'true' : 'false'}
+                    onChange={(v) => field.onChange(v === 'true')}
+                  >
+                    <Select.Option value="true">มี</Select.Option>
+                    <Select.Option value="false">ไม่มี</Select.Option>
+                  </Select>
+                )}
+              />
+            </Form.Item>
+          </Col>
+        </Row>
+
+        <Title level={5} style={{ marginTop: '16px' }}>
+          กองทุนสำรองเลี้ยงชีพ
+        </Title>
+        <Row gutter={16}>
+          <Col xs={24}>
+            <Form.Item
+              label="เข้าร่วมกองทุน"
+              validateStatus={errors.providentFundEnrolled ? 'error' : ''}
+              help={errors.providentFundEnrolled?.message}
+            >
+              <Controller
+                name="providentFundEnrolled"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    value={field.value ? 'true' : 'false'}
+                    onChange={(v) => field.onChange(v === 'true')}
+                  >
+                    <Select.Option value="true">เข้าร่วม</Select.Option>
+                    <Select.Option value="false">ไม่เข้าร่วม</Select.Option>
+                  </Select>
+                )}
+              />
+            </Form.Item>
+          </Col>
+          {watch('providentFundEnrolled') && (
+            <>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  label="อัตราส่วนพนักงาน (%)"
+                  validateStatus={errors.providentFundEmployeeRate ? 'error' : ''}
+                  help={errors.providentFundEmployeeRate?.message}
+                >
+                  <Controller
+                    name="providentFundEmployeeRate"
+                    control={control}
+                    render={({ field }) => (
+                      <InputNumber
+                        {...field}
+                        style={{ width: '100%' }}
+                        min={0}
+                        max={100}
+                        step={0.5}
+                        addonAfter="%"
+                      />
+                    )}
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  label="อัตราส่วนบริษัท (%)"
+                  validateStatus={errors.providentFundEmployerRate ? 'error' : ''}
+                  help={errors.providentFundEmployerRate?.message}
+                >
+                  <Controller
+                    name="providentFundEmployerRate"
+                    control={control}
+                    render={({ field }) => (
+                      <InputNumber
+                        {...field}
+                        style={{ width: '100%' }}
+                        min={0}
+                        max={100}
+                        step={0.5}
+                        addonAfter="%"
+                      />
+                    )}
+                  />
+                </Form.Item>
+              </Col>
+            </>
+          )}
+        </Row>
+
+        <Title level={5} style={{ marginTop: '16px' }}>
+          วันลา
+        </Title>
+        <Row gutter={16}>
+          <Col xs={24} md={12}>
+            <Form.Item
+              label="วันลาพักร้อน (วัน/ปี)"
+              validateStatus={errors.annualLeave ? 'error' : ''}
+              help={errors.annualLeave?.message}
+              required
+            >
+              <Controller
+                name="annualLeave"
+                control={control}
+                render={({ field }) => (
+                  <InputNumber
+                    {...field}
+                    style={{ width: '100%' }}
+                    min={0}
+                    step={1}
+                    addonAfter="วัน"
+                  />
+                )}
+              />
+            </Form.Item>
+          </Col>
+          <Col xs={24} md={12}>
+            <Form.Item
+              label="วันลาป่วย (วัน/ปี)"
+              validateStatus={errors.sickLeave ? 'error' : ''}
+              help={errors.sickLeave?.message}
+              required
+            >
+              <Controller
+                name="sickLeave"
+                control={control}
+                render={({ field }) => (
+                  <InputNumber
+                    {...field}
+                    style={{ width: '100%' }}
+                    min={0}
+                    step={1}
+                    addonAfter="วัน"
+                  />
+                )}
+              />
+            </Form.Item>
+          </Col>
+        </Row>
+
+        <Row gutter={16}>
+          <Col xs={24}>
+            <Form.Item
+              label="สวัสดิการอื่นๆ"
+              validateStatus={errors.otherBenefits ? 'error' : ''}
+              help={errors.otherBenefits?.message}
+              tooltip="พิมพ์และกด Enter เพื่อเพิ่มสวัสดิการ"
+            >
+              <Controller
+                name="otherBenefits"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    mode="tags"
+                    style={{ width: '100%' }}
+                    placeholder="กดพิมพ์และ Enter เพื่อเพิ่มสวัสดิการ"
+                    tokenSeparators={[',']}
+                  />
+                )}
+              />
+            </Form.Item>
+          </Col>
+        </Row>
+      </Card>
 
       {/* Form Actions */}
       <Form.Item style={{ marginTop: '32px' }}>
