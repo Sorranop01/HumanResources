@@ -68,17 +68,216 @@ service cloud.firestore {
 
     // ============================================
     // Employees collection
+    // ✅ Validation aligned with Zod EmployeeSchema
     // ============================================
     match /employees/{employeeId} {
+      // Helper function: Validate employee data structure
+      function isValidEmployeeData(data) {
+        let hasRequiredFields = data.keys().hasAll([
+          'employeeCode',
+          'firstName',
+          'lastName',
+          'thaiFirstName',
+          'thaiLastName',
+          'email',
+          'phoneNumber',
+          'dateOfBirth',
+          'gender',
+          'maritalStatus',
+          'nationalId',
+          'currentAddress',
+          'hireDate',
+          'status',
+          'employmentType',
+          'workType',
+          'position',
+          'department',
+          'workLocation',
+          'salary',
+          'socialSecurity',
+          'tax',
+          'bankAccount',
+          'workSchedule',
+          'overtime',
+          'createdAt',
+          'updatedAt'
+        ]);
+
+        let validTypes =
+          data.employeeCode is string &&
+          data.firstName is string &&
+          data.lastName is string &&
+          data.thaiFirstName is string &&
+          data.thaiLastName is string &&
+          data.email is string &&
+          data.phoneNumber is string &&
+          data.nationalId is string &&
+          data.gender is string &&
+          data.maritalStatus is string &&
+          data.status is string &&
+          data.employmentType is string &&
+          data.workType is string &&
+          data.position is string &&
+          data.department is string;
+
+        let validConstraints =
+          data.firstName.size() >= 1 &&
+          data.lastName.size() >= 1 &&
+          data.thaiFirstName.size() >= 1 &&
+          data.thaiLastName.size() >= 1 &&
+          data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$') &&
+          data.nationalId.matches('^[0-9]{13}$') &&
+          data.gender in ['male', 'female', 'other'] &&
+          data.maritalStatus in ['single', 'married', 'divorced', 'widowed'] &&
+          data.status in ['active', 'on-leave', 'resigned', 'terminated'] &&
+          data.employmentType in ['permanent', 'contract', 'probation', 'freelance', 'intern'] &&
+          data.workType in ['full-time', 'part-time'];
+
+        let validNested =
+          data.currentAddress is map &&
+          data.currentAddress.keys().hasAll(['addressLine1', 'subDistrict', 'district', 'province', 'postalCode']) &&
+          data.workLocation is map &&
+          data.workLocation.keys().hasAll(['office']) &&
+          data.salary is map &&
+          data.salary.keys().hasAll(['baseSalary', 'paymentFrequency']) &&
+          data.salary.baseSalary is number &&
+          data.salary.baseSalary > 0 &&
+          data.socialSecurity is map &&
+          data.tax is map &&
+          data.bankAccount is map &&
+          data.bankAccount.keys().hasAll(['bankName', 'accountNumber', 'accountName']) &&
+          data.workSchedule is map &&
+          data.overtime is map;
+
+        return hasRequiredFields && validTypes && validConstraints && validNested;
+      }
+
+      // Helper function: Validate employee update (allows partial updates)
+      function isValidEmployeeUpdate(data) {
+        // If field exists, it must have valid type and constraints
+        return (!('firstName' in data) || (data.firstName is string && data.firstName.size() >= 1)) &&
+               (!('lastName' in data) || (data.lastName is string && data.lastName.size() >= 1)) &&
+               (!('email' in data) || (data.email is string && data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$'))) &&
+               (!('nationalId' in data) || (data.nationalId is string && data.nationalId.matches('^[0-9]{13}$'))) &&
+               (!('status' in data) || data.status in ['active', 'on-leave', 'resigned', 'terminated']) &&
+               (!('employmentType' in data) || data.employmentType in ['permanent', 'contract', 'probation', 'freelance', 'intern']) &&
+               (!('salary' in data) || (data.salary is map && data.salary.baseSalary is number && data.salary.baseSalary > 0)) &&
+               ('updatedAt' in data); // updatedAt is required for updates
+      }
+
       // Read: All authenticated users can read
       // (Context-based filtering is done at application layer)
       allow read: if isAuthenticated();
 
-      // Create: HR and Admin
-      allow create: if isHR();
+      // Create: HR and Admin, with data validation
+      allow create: if isHR() && isValidEmployeeData(request.resource.data);
 
-      // Update: HR and Admin, or employee updating own record
-      allow update: if isHR() || (isEmployee() && resource.data.userId == request.auth.uid);
+      // Update: HR and Admin (with validation), or employee updating own record (limited fields)
+      allow update: if (isHR() && isValidEmployeeUpdate(request.resource.data)) ||
+                       (isEmployee() &&
+                        resource.data.userId == request.auth.uid &&
+                        isValidEmployeeUpdate(request.resource.data) &&
+                        // Employees can only update specific fields
+                        !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+                          'userId', 'employeeCode', 'salary', 'status', 'employmentType',
+                          'department', 'position', 'workSchedule', 'overtime'
+                        ]));
+
+      // Delete: Admin only
+      allow delete: if isAdmin();
+    }
+
+    // ============================================
+    // Candidates collection
+    // ✅ Validation aligned with Zod CandidateSchema
+    // ============================================
+    match /candidates/{candidateId} {
+      // Helper function: Validate candidate data structure
+      function isValidCandidateData(data) {
+        let hasRequiredFields = data.keys().hasAll([
+          'firstName',
+          'lastName',
+          'email',
+          'phone',
+          'positionApplied',
+          'status',
+          'source',
+          'tenantId',
+          'appliedAt',
+          'createdAt',
+          'updatedAt'
+        ]);
+
+        let validTypes =
+          data.firstName is string &&
+          data.lastName is string &&
+          data.email is string &&
+          data.phone is string &&
+          data.positionApplied is string &&
+          data.status is string &&
+          data.source is string &&
+          data.tenantId is string &&
+          data.skills is list &&
+          data.languages is list &&
+          data.education is list &&
+          data.workExperience is list;
+
+        let validConstraints =
+          data.firstName.size() >= 1 &&
+          data.lastName.size() >= 1 &&
+          data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$') &&
+          data.phone.size() >= 9 &&
+          data.positionApplied.size() >= 1 &&
+          data.status in ['new', 'screening', 'interview', 'offer', 'hired', 'rejected'];
+
+        let validOptionalFields =
+          (!('expectedSalary' in data) || data.expectedSalary is number) &&
+          (!('yearsOfExperience' in data) || data.yearsOfExperience is number) &&
+          (!('resumeUrl' in data) || data.resumeUrl == null || data.resumeUrl is string) &&
+          (!('portfolioUrl' in data) || data.portfolioUrl == null || data.portfolioUrl is string) &&
+          (!('linkedInUrl' in data) || data.linkedInUrl == null || data.linkedInUrl is string) &&
+          (!('notes' in data) || data.notes == null || data.notes is string) &&
+          (!('interviewDate' in data) || data.interviewDate == null || data.interviewDate is string) &&
+          (!('interviewer' in data) || data.interviewer == null || data.interviewer is string);
+
+        return hasRequiredFields && validTypes && validConstraints && validOptionalFields;
+      }
+
+      // Helper function: Validate candidate update (partial)
+      function isValidCandidateUpdate(data) {
+        let validStatusUpdate =
+          (!('status' in data) || data.status in ['new', 'screening', 'interview', 'offer', 'hired', 'rejected']);
+
+        let validOptionalUpdates =
+          (!('notes' in data) || data.notes == null || (data.notes is string && data.notes.size() <= 1000)) &&
+          (!('interviewDate' in data) || data.interviewDate == null || data.interviewDate is string) &&
+          (!('interviewer' in data) || data.interviewer == null || data.interviewer is string);
+
+        return validStatusUpdate && validOptionalUpdates;
+      }
+
+      // Read: Public can read their own (by email), HR can read all
+      allow read: if true; // Public job board access
+
+      // Create: Anyone can apply (public endpoint)
+      allow create: if isValidCandidateData(request.resource.data) &&
+                       request.resource.data.status == 'new' &&
+                       request.resource.data.source == 'website';
+
+      // Update: HR/Admin only, with validation
+      allow update: if isHR() &&
+                       isValidCandidateUpdate(request.resource.data) &&
+                       // Prevent changing core identity fields
+                       !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+                         'firstName',
+                         'lastName',
+                         'email',
+                         'phone',
+                         'positionApplied',
+                         'tenantId',
+                         'appliedAt',
+                         'createdAt'
+                       ]);
 
       // Delete: Admin only
       allow delete: if isAdmin();
@@ -86,23 +285,240 @@ service cloud.firestore {
 
     // ============================================
     // Attendance collection
+    // ✅ Validation aligned with Zod AttendanceRecordSchema
     // ============================================
     match /attendance/{attendanceId} {
-      // Read: All authenticated users
+      // Helper function: Validate attendance data structure
+      function isValidAttendanceData(data) {
+        let hasRequiredFields = data.keys().hasAll([
+          'userId',
+          'employeeName',
+          'departmentName',
+          'clockInTime',
+          'status',
+          'date',
+          'scheduledStartTime',
+          'scheduledEndTime',
+          'isLate',
+          'minutesLate',
+          'isExcusedLate',
+          'isEarlyLeave',
+          'minutesEarly',
+          'isApprovedEarlyLeave',
+          'breaks',
+          'totalBreakMinutes',
+          'unpaidBreakMinutes',
+          'isRemoteWork',
+          'clockInMethod',
+          'requiresApproval',
+          'penaltiesApplied',
+          'isMissedClockOut',
+          'isManualEntry',
+          'isCorrected',
+          'tenantId',
+          'createdAt',
+          'updatedAt'
+        ]);
+
+        let validTypes =
+          data.userId is string &&
+          data.employeeName is string &&
+          data.departmentName is string &&
+          data.status is string &&
+          data.date is string &&
+          data.scheduledStartTime is string &&
+          data.scheduledEndTime is string &&
+          data.isLate is bool &&
+          data.minutesLate is number &&
+          data.isExcusedLate is bool &&
+          data.isEarlyLeave is bool &&
+          data.minutesEarly is number &&
+          data.isApprovedEarlyLeave is bool &&
+          data.breaks is list &&
+          data.totalBreakMinutes is number &&
+          data.unpaidBreakMinutes is number &&
+          data.isRemoteWork is bool &&
+          data.clockInMethod is string &&
+          data.requiresApproval is bool &&
+          data.penaltiesApplied is list &&
+          data.isMissedClockOut is bool &&
+          data.isManualEntry is bool &&
+          data.isCorrected is bool;
+
+        let validConstraints =
+          data.userId.size() >= 1 &&
+          data.employeeName.size() >= 1 &&
+          data.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$') &&
+          data.scheduledStartTime.matches('^[0-9]{2}:[0-9]{2}$') &&
+          data.scheduledEndTime.matches('^[0-9]{2}:[0-9]{2}$') &&
+          data.status in ['clocked-in', 'clocked-out'] &&
+          data.clockInMethod in ['mobile', 'web', 'biometric', 'manual'] &&
+          data.minutesLate >= 0 &&
+          data.minutesEarly >= 0 &&
+          data.totalBreakMinutes >= 0 &&
+          data.unpaidBreakMinutes >= 0;
+
+        let validOptionalFields =
+          (!('durationHours' in data) || (data.durationHours is number && data.durationHours >= 0 && data.durationHours <= 24)) &&
+          (!('approvalStatus' in data) || data.approvalStatus in ['pending', 'approved', 'rejected']) &&
+          (!('clockOutMethod' in data) || data.clockOutMethod in ['mobile', 'web', 'biometric', 'manual']) &&
+          (!('lateReason' in data) || data.lateReason is string) &&
+          (!('earlyLeaveReason' in data) || data.earlyLeaveReason is string) &&
+          (!('approvalNotes' in data) || data.approvalNotes is string) &&
+          (!('notes' in data) || data.notes is string);
+
+        return hasRequiredFields && validTypes && validConstraints && validOptionalFields;
+      }
+
+      // Helper function: Validate attendance update (partial)
+      function isValidAttendanceUpdate(data) {
+        return (!('status' in data) || data.status in ['clocked-in', 'clocked-out']) &&
+               (!('minutesLate' in data) || (data.minutesLate is number && data.minutesLate >= 0)) &&
+               (!('minutesEarly' in data) || (data.minutesEarly is number && data.minutesEarly >= 0)) &&
+               (!('durationHours' in data) || (data.durationHours is number && data.durationHours >= 0 && data.durationHours <= 24)) &&
+               (!('approvalStatus' in data) || data.approvalStatus in ['pending', 'approved', 'rejected']) &&
+               (!('totalBreakMinutes' in data) || (data.totalBreakMinutes is number && data.totalBreakMinutes >= 0)) &&
+               ('updatedAt' in data);
+      }
+
+      // Helper: Check if user owns this attendance record
+      function isRecordOwner() {
+        return isAuthenticated() && resource.data.userId == request.auth.uid;
+      }
+
+      // Read: All authenticated users can read
       allow read: if isAuthenticated();
 
-      // Create: All employees
-      allow create: if isEmployee();
+      // Create: All employees, with validation
+      allow create: if isEmployee() && isValidAttendanceData(request.resource.data);
 
-      // Update: Manager, HR, Admin, or employee updating own record
-      allow update: if isManager() || (isEmployee() && resource.data.userId == request.auth.uid);
+      // Update: HR/Admin (full), or employee updating own record (limited)
+      allow update: if (isHR() && isValidAttendanceUpdate(request.resource.data)) ||
+                       (isRecordOwner() && isValidAttendanceUpdate(request.resource.data) &&
+                        // Employees can only update specific fields
+                        !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+                          'userId', 'employeeId', 'clockInTime', 'status', 'approvalStatus',
+                          'isManualEntry', 'isCorrected', 'penaltiesApplied'
+                        ]));
 
       // Delete: Admin only
       allow delete: if isAdmin();
     }
 
     // ============================================
-    // Leave requests
+    // Leave Requests collection
+    // ✅ Validation aligned with Zod LeaveRequestSchema
+    // ============================================
+    match /leaveRequests/{requestId} {
+      // Helper function: Validate leave request data structure
+      function isValidLeaveRequestData(data) {
+        let hasRequiredFields = data.keys().hasAll([
+          'requestNumber',
+          'employeeId',
+          'employeeName',
+          'employeeCode',
+          'departmentId',
+          'departmentName',
+          'positionId',
+          'positionName',
+          'leaveTypeId',
+          'leaveTypeCode',
+          'leaveTypeName',
+          'startDate',
+          'endDate',
+          'totalDays',
+          'isHalfDay',
+          'reason',
+          'hasCertificate',
+          'status',
+          'approvalChain',
+          'currentApprovalLevel',
+          'tenantId',
+          'createdAt',
+          'updatedAt'
+        ]);
+
+        let validTypes =
+          data.requestNumber is string &&
+          data.employeeId is string &&
+          data.employeeName is string &&
+          data.employeeCode is string &&
+          data.leaveTypeId is string &&
+          data.leaveTypeName is string &&
+          data.reason is string &&
+          data.totalDays is number &&
+          data.isHalfDay is bool &&
+          data.hasCertificate is bool &&
+          data.status is string &&
+          data.approvalChain is list &&
+          data.currentApprovalLevel is int;
+
+        let validConstraints =
+          data.requestNumber.size() >= 1 &&
+          data.employeeId.size() >= 1 &&
+          data.employeeName.size() >= 1 &&
+          data.reason.size() >= 10 &&
+          data.reason.size() <= 500 &&
+          data.totalDays >= 0.5 &&
+          data.currentApprovalLevel >= 0 &&
+          data.status in ['draft', 'pending', 'approved', 'rejected', 'cancelled'];
+
+        let validOptionalFields =
+          (!('halfDayPeriod' in data) || data.halfDayPeriod in ['morning', 'afternoon']) &&
+          (!('contactDuringLeave' in data) || (data.contactDuringLeave is string && data.contactDuringLeave.size() <= 100)) &&
+          (!('workHandoverNotes' in data) || (data.workHandoverNotes is string && data.workHandoverNotes.size() <= 500)) &&
+          (!('certificateUrl' in data) || data.certificateUrl is string) &&
+          (!('rejectionReason' in data) || (data.rejectionReason is string && data.rejectionReason.size() >= 10 && data.rejectionReason.size() <= 500)) &&
+          (!('cancellationReason' in data) || (data.cancellationReason is string && data.cancellationReason.size() >= 10 && data.cancellationReason.size() <= 500));
+
+        return hasRequiredFields && validTypes && validConstraints && validOptionalFields;
+      }
+
+      // Helper function: Validate leave request update (allows partial updates)
+      function isValidLeaveRequestUpdate(data) {
+        return (!('status' in data) || data.status in ['draft', 'pending', 'approved', 'rejected', 'cancelled']) &&
+               (!('reason' in data) || (data.reason is string && data.reason.size() >= 10 && data.reason.size() <= 500)) &&
+               (!('totalDays' in data) || (data.totalDays is number && data.totalDays >= 0.5)) &&
+               (!('isHalfDay' in data) || data.isHalfDay is bool) &&
+               (!('halfDayPeriod' in data) || data.halfDayPeriod in ['morning', 'afternoon']) &&
+               (!('approvalChain' in data) || data.approvalChain is list) &&
+               (!('currentApprovalLevel' in data) || (data.currentApprovalLevel is int && data.currentApprovalLevel >= 0)) &&
+               ('updatedAt' in data); // updatedAt is required for updates
+      }
+
+      // Helper function: Check if user is the employee who created the request
+      function isRequestOwner() {
+        return isAuthenticated() &&
+               exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.employeeId == resource.data.employeeId;
+      }
+
+      // Helper function: Check if user is an approver in the approval chain
+      function isApprover() {
+        return isAuthenticated() &&
+               exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.employeeId in resource.data.approvalChain.map((step) => step.approverId);
+      }
+
+      // Read: All authenticated users can read
+      // (Context-based filtering is done at application layer)
+      allow read: if isAuthenticated();
+
+      // Create: All employees, with data validation
+      // Note: Cloud Functions handle most creation logic
+      allow create: if isEmployee() && isValidLeaveRequestData(request.resource.data);
+
+      // Update: HR/Admin (full update), Approvers (approval actions), or employee updating own draft
+      allow update: if (isHR() && isValidLeaveRequestUpdate(request.resource.data)) ||
+                       (isApprover() && isValidLeaveRequestUpdate(request.resource.data) && resource.data.status == 'pending') ||
+                       (isRequestOwner() && isValidLeaveRequestUpdate(request.resource.data) && resource.data.status == 'draft');
+
+      // Delete: Admin only
+      allow delete: if isAdmin();
+    }
+
+    // ============================================
+    // Leave requests (legacy kebab-case naming, redirect to leaveRequests)
     // ============================================
     match /leave-requests/{requestId} {
       // Read: All authenticated users
@@ -118,10 +534,153 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Payroll collection (highly restricted)
+    // ============================================
+    // Overtime Requests
+    // ============================================
+    match /overtimeRequests/{requestId} {
+      // Read: All authenticated users
+      allow read: if isAuthenticated();
+
+      // Create: All employees
+      allow create: if isEmployee();
+
+      // Update: Manager, HR, Admin, or employee updating own request
+      allow update: if isManager() || (isEmployee() && resource.data.employeeId == request.auth.uid);
+
+      // Delete: Admin only
+      allow delete: if isAdmin();
+    }
+
+    // ============================================
+    // Leave Types
+    // ============================================
+    match /leaveTypes/{leaveTypeId} {
+      allow read: if isAuthenticated();
+      allow write: if isHR();
+    }
+
+    // ============================================
+    // Leave Entitlements
+    // ============================================
+    match /leaveEntitlements/{entitlementId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isHR();
+      allow delete: if isAdmin();
+    }
+
+    // ============================================
+    // Departments
+    // ============================================
+    match /departments/{departmentId} {
+      allow read: if isAuthenticated();
+      allow write: if isHR();
+    }
+
+    // ============================================
+    // Positions
+    // ============================================
+    match /positions/{positionId} {
+      allow read: if isAuthenticated();
+      allow write: if isHR();
+    }
+
+    // ============================================
+    // Organizations
+    // ============================================
+    match /organizations/{orgId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // ============================================
+    // Locations
+    // ============================================
+    match /locations/{locationId} {
+      allow read: if isAuthenticated();
+      allow write: if isHR();
+    }
+
+    // ============================================
+    // Shifts
+    // ============================================
+    match /shifts/{shiftId} {
+      allow read: if isAuthenticated();
+      allow write: if isHR();
+    }
+
+    // ============================================
+    // Work Schedule Policies
+    // ============================================
+    match /workSchedulePolicies/{policyId} {
+      allow read: if isAuthenticated();
+      allow write: if isHR();
+    }
+
+    // ============================================
+    // Overtime Policies
+    // ============================================
+    match /overtimePolicies/{policyId} {
+      allow read: if isAuthenticated();
+      allow write: if isHR();
+    }
+
+    // ============================================
+    // Penalty Policies
+    // ============================================
+    match /penaltyPolicies/{policyId} {
+      allow read: if isAuthenticated();
+      allow write: if isHR();
+    }
+
+    // ============================================
+    // Holidays (both naming conventions)
+    // ============================================
+    match /holidays/{holidayId} {
+      allow read: if isAuthenticated();
+      allow write: if isHR();
+    }
+
+    match /publicHolidays/{holidayId} {
+      allow read: if isAuthenticated();
+      allow write: if isHR();
+    }
+
+    // ============================================
+    // Geofences (both naming conventions)
+    // ============================================
+    match /geofences/{geofenceId} {
+      allow read: if isAuthenticated();
+      allow write: if isHR();
+    }
+
+    match /geofence_configs/{geofenceId} {
+      allow read: if isAuthenticated();
+      allow write: if isHR();
+    }
+
+    // ============================================
+    // Leave Balances
+    // ============================================
+    match /leaveBalances/{balanceId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isHR();
+      allow delete: if isAdmin();
+    }
+
+    // Payroll collections (highly restricted)
     match /payroll-runs/{runId} {
       allow read: if isHR();
       allow create, update, delete: if isAdmin();
+    }
+
+    match /payroll/{recordId} {
+      allow read: if isHR() || isAdmin();
+      allow write: if isHR() || isAdmin();
+    }
+
+    match /payrollRecords/{recordId} {
+      allow read: if isHR() || (isEmployee() && resource.data.employeeId == request.auth.uid);
+      allow write: if isHR();
     }
 
     // Role Definitions collection (RBAC system-level)

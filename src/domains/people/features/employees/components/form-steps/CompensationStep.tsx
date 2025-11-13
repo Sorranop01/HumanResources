@@ -2,10 +2,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Alert, Button, Card, Col, Form, InputNumber, Row, Select, Space, Typography } from 'antd';
 import type { FC } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import type { CompensationFormInput, EmployeeFormInput } from '../../schemas';
+import type { EmployeeFormInput } from '../../schemas';
 import { CompensationFormSchema } from '../../schemas';
 
 const { Title, Text } = Typography;
+
+type CompensationFormValues = (typeof CompensationFormSchema)['_input'];
 
 interface CompensationStepProps {
   initialData?: Partial<EmployeeFormInput>;
@@ -29,7 +31,7 @@ export const CompensationStep: FC<CompensationStepProps> = ({
     handleSubmit,
     watch,
     formState: { errors },
-  } = useForm<CompensationFormInput>({
+  } = useForm<CompensationFormValues>({
     resolver: zodResolver(CompensationFormSchema),
     defaultValues: {
       baseSalary: initialData?.baseSalary || 0,
@@ -50,8 +52,9 @@ export const CompensationStep: FC<CompensationStepProps> = ({
   const workType = initialData?.workType;
   const paymentFrequency = watch('paymentFrequency');
 
-  const onSubmit = (data: CompensationFormInput) => {
-    onNext(data);
+  const onSubmit = (data: CompensationFormValues) => {
+    const parsed = CompensationFormSchema.parse(data);
+    onNext(parsed);
   };
 
   return (
@@ -90,7 +93,7 @@ export const CompensationStep: FC<CompensationStepProps> = ({
                   min={0}
                   step={1000}
                   formatter={(value) => `฿ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={(value) => value?.replace(/฿\s?|(,*)/g, '') as any}
+                  parser={(value) => Number.parseFloat(value?.replace(/฿\s?|(,*)/g, '') || '0')}
                 />
               )}
             />
@@ -165,7 +168,7 @@ export const CompensationStep: FC<CompensationStepProps> = ({
                       min={0}
                       step={10}
                       formatter={(value) => `฿ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                      parser={(value) => value?.replace(/฿\s?|(,*)/g, '') as any}
+                      parser={(value) => Number.parseFloat(value?.replace(/฿\s?|(,*)/g, '') || '0')}
                     />
                   )}
                 />

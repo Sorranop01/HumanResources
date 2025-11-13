@@ -3,12 +3,12 @@
  * Table component for displaying and managing shifts
  */
 
-import type { FC } from 'react';
+import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
-import type { Shift } from '../types/shift';
+import type { FC } from 'react';
 import { useDeleteShift, useShifts } from '../hooks/useShifts';
+import type { Shift } from '../types/shift';
 
 export const ShiftManagementTable: FC = () => {
   const { data: shifts, isLoading } = useShifts({ isActive: true });
@@ -103,9 +103,7 @@ export const ShiftManagementTable: FC = () => {
       <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
         <div>
           <h3>กะทำงาน (Shift Management)</h3>
-          <p style={{ color: '#666', margin: 0 }}>
-            จัดการกะทำงาน (เช้า/บ่าย/ดึก) และมอบหมายพนักงาน
-          </p>
+          <p style={{ color: '#666', margin: 0 }}>จัดการกะทำงาน (เช้า/บ่าย/ดึก) และมอบหมายพนักงาน</p>
         </div>
         <Button type="primary" icon={<PlusOutlined />}>
           เพิ่มกะทำงาน

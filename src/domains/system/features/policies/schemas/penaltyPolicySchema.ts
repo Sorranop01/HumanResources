@@ -4,6 +4,7 @@
  */
 
 import { z } from 'zod';
+import { FirestoreTimestampSchema } from '@/shared/schemas/common.schema';
 
 /**
  * Penalty Type Schema
@@ -174,3 +175,75 @@ export const PenaltyCalculationInputSchema = z.object({
 });
 
 export type PenaltyCalculationInputValidated = z.infer<typeof PenaltyCalculationInputSchema>;
+
+/**
+ * Complete Penalty Policy Schema (for seed scripts and Firestore)
+ * Includes all fields with Firestore Timestamps
+ */
+export const PenaltyPolicySchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1).max(100),
+  nameEn: z.string().min(1).max(100),
+  description: z.string().max(500),
+  code: z.string().min(1).max(50),
+
+  // Type
+  type: PenaltyTypeSchema,
+
+  // Calculation
+  calculationType: PenaltyCalculationTypeSchema,
+  amount: z.number().min(0).optional(),
+  percentage: z.number().min(0).max(100).optional(),
+  hourlyRateMultiplier: z.number().min(0).max(10).optional(),
+  dailyRateMultiplier: z.number().min(0).max(10).optional(),
+
+  // Threshold
+  threshold: PenaltyThresholdSchema,
+
+  // Grace period
+  gracePeriodMinutes: z.number().min(0).max(120).optional(),
+  graceOccurrences: z.number().min(0).max(10).optional(),
+
+  // Progressive
+  isProgressive: z.boolean(),
+  progressiveRules: z.array(ProgressivePenaltyRuleSchema).optional(),
+
+  // Applicable to
+  applicableDepartments: z.array(z.string()),
+  applicablePositions: z.array(z.string()),
+  applicableEmploymentTypes: z.array(z.string()),
+
+  // Auto-apply
+  autoApply: z.boolean(),
+  requiresApproval: z.boolean(),
+
+  // Cap
+  maxPenaltyPerMonth: z.number().min(0).optional(),
+  maxOccurrencesPerMonth: z.number().min(1).max(100).optional(),
+
+  // Effective dates
+  effectiveDate: FirestoreTimestampSchema,
+  expiryDate: FirestoreTimestampSchema.optional(),
+
+  // Metadata
+  isActive: z.boolean(),
+  tenantId: z.string().min(1),
+  createdAt: FirestoreTimestampSchema,
+  updatedAt: FirestoreTimestampSchema,
+  createdBy: z.string().optional(),
+  updatedBy: z.string().optional(),
+});
+
+export type PenaltyPolicy = z.infer<typeof PenaltyPolicySchema>;
+
+/**
+ * Validation Helpers
+ */
+export function validatePenaltyPolicy(data: unknown) {
+  return PenaltyPolicySchema.parse(data);
+}
+
+export function safeValidatePenaltyPolicy(data: unknown) {
+  const result = PenaltyPolicySchema.safeParse(data);
+  return result.success ? result.data : null;
+}

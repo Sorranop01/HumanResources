@@ -3,9 +3,9 @@
  * Generates payroll for all active employees for a given month (batch processing)
  */
 
-import { type CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https';
-import * as logger from 'firebase-functions/logger';
 import { getFirestore } from 'firebase-admin/firestore';
+import * as logger from 'firebase-functions/logger';
+import { type CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https';
 
 const db = getFirestore();
 

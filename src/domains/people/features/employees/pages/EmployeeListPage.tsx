@@ -9,6 +9,7 @@ import type { FC } from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { EmployeeFilters } from '../components/EmployeeFilters';
+import { EmployeeStats } from '../components/EmployeeStats';
 import { EmployeeTable } from '../components/EmployeeTable';
 import { useEmployees } from '../hooks/useEmployees';
 import type { EmployeeFilters as EmployeeFiltersType } from '../schemas';
@@ -18,7 +19,7 @@ const { Title } = Typography;
 export const EmployeeListPage: FC = () => {
   const navigate = useNavigate();
   const [filters, setFilters] = useState<EmployeeFiltersType>({});
-  const { isLoading } = useEmployees(filters);
+  const { data: employees, isLoading } = useEmployees(filters);
 
   // Note: Client-side search filtering is commented out since EmployeeTable
   // currently doesn't accept filtered data. Uncomment if needed in the future.
@@ -54,6 +55,13 @@ export const EmployeeListPage: FC = () => {
               เพิ่มพนักงาน
             </Button>
           </Space>
+        </Col>
+      </Row>
+
+      {/* Employee Statistics */}
+      <Row style={{ marginBottom: 24 }}>
+        <Col span={24}>
+          <EmployeeStats employees={employees ?? []} loading={isLoading} />
         </Col>
       </Row>
 

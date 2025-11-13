@@ -21,9 +21,15 @@
  */
 
 import { getAuth } from 'firebase-admin/auth';
-import { getFirestore, Timestamp, FieldValue } from 'firebase-admin/firestore';
-import { HttpsError, onCall, type CallableRequest } from 'firebase-functions/v2/https';
+import {
+  type DocumentReference,
+  FieldValue,
+  getFirestore,
+  Timestamp,
+} from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
+import { type CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https';
+import { CloudFunctionCreateEmployeeSchema } from '@/domains/people/features/employees/schemas/index.js';
 import { ROLES } from '../../shared/constants/roles.js';
 import { checkPermission } from '../../shared/utils/permissions.js';
 import { normalizeThaiPhoneNumber } from '../../utils/phoneNumber.js';
@@ -112,7 +118,11 @@ async function validateEmailUniqueness(email: string): Promise<void> {
   }
 
   // Check Firestore employees collection
-  const employeeSnapshot = await db.collection('employees').where('email', '==', email).limit(1).get();
+  const employeeSnapshot = await db
+    .collection('employees')
+    .where('email', '==', email)
+    .limit(1)
+    .get();
 
   if (!employeeSnapshot.empty) {
     throw new HttpsError('already-exists', `อีเมล ${email} ถูกใช้งานแล้วในระบบพนักงาน`);
@@ -123,7 +133,11 @@ async function validateEmailUniqueness(email: string): Promise<void> {
  * Validate national ID uniqueness
  */
 async function validateNationalIdUniqueness(nationalId: string): Promise<void> {
-  const snapshot = await db.collection('employees').where('nationalId', '==', nationalId).limit(1).get();
+  const snapshot = await db
+    .collection('employees')
+    .where('nationalId', '==', nationalId)
+    .limit(1)
+    .get();
 
   if (!snapshot.empty) {
     throw new HttpsError('already-exists', `เลขบัตรประชาชน ${nationalId} ถูกใช้งานแล้ว`);
@@ -318,7 +332,7 @@ export const createEmployee = onCall<CreateEmployeeInput>(
         logger.warn('Permission denied for createEmployee', { userId: authContext.uid });
         throw new HttpsError('permission-denied', 'คุณไม่มีสิทธิ์ในการสร้างพนักงาน');
       }
-    } catch (error: unknown) {
+    } catch (_error: unknown) {
       // Fallback to role-based check if RBAC not fully implemented
       logger.info('Using fallback role-based check');
       const allowed = await hasRole(authContext.uid, ROLES.ADMIN, ROLES.HR);
@@ -327,66 +341,37 @@ export const createEmployee = onCall<CreateEmployeeInput>(
       }
     }
 
-    // ===== 3. Input Validation =====
-    const { email, password, displayName, employeeData, role, sendWelcomeEmail } = data;
+    // ===== 3. Input Validation with Zod =====
+    logger.info('Validating input with Zod schema');
 
-    if (!email || !password || !displayName || !employeeData) {
-      logger.error('Missing required fields', { email, displayName, hasEmployeeData: !!employeeData });
-      throw new HttpsError('invalid-argument', 'ข้อมูลไม่ครบถ้วน: email, password, displayName, employeeData');
+    const validation = CloudFunctionCreateEmployeeSchema.safeParse(data);
+
+    if (!validation.success) {
+      // Format validation errors for user-friendly messages
+      const errorMessages = validation.error.issues
+        .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+        .join(', ');
+
+      logger.error('Zod validation failed', {
+        errors: validation.error.issues,
+        errorCount: validation.error.issues.length,
+      });
+
+      throw new HttpsError(
+        'invalid-argument',
+        `การตรวจสอบข้อมูลล้มเหลว: ${errorMessages}`,
+        validation.error.issues
+      );
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      throw new HttpsError('invalid-argument', 'รูปแบบอีเมลไม่ถูกต้อง');
-    }
+    // Use validated data (100% type-safe)
+    const { email, password, displayName, employeeData, role, sendWelcomeEmail } = validation.data;
 
-    // Validate password strength (minimum 6 characters)
-    if (password.length < 6) {
-      throw new HttpsError('invalid-argument', 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร');
-    }
-
-    // Validate required employeeData fields
-    const requiredFields = [
-      'firstName',
-      'lastName',
-      'thaiFirstName',
-      'thaiLastName',
-      'phoneNumber',
-      'dateOfBirth',
-      'gender',
-      'nationalId',
-      'hireDate',
-      'employmentType',
-      'workType',
-      'position',
-      'department',
-      'currentAddress',
-      'workLocation',
-      'salary',
-      'socialSecurity',
-      'tax',
-      'bankAccount',
-      'workSchedule',
-      'overtime',
-    ];
-
-    for (const field of requiredFields) {
-      if (!employeeData[field as keyof typeof employeeData]) {
-        throw new HttpsError('invalid-argument', `ข้อมูลไม่ครบถ้วน: employeeData.${field}`);
-      }
-    }
-
-    // Validate National ID format (13 digits)
-    if (!/^[0-9]{13}$/.test(employeeData.nationalId)) {
-      throw new HttpsError('invalid-argument', 'เลขบัตรประชาชนต้องเป็นตัวเลข 13 หลัก');
-    }
-
-    // Validate phone number format
-    const phoneRegex = /^[0-9]{9,10}$/;
-    if (!phoneRegex.test(employeeData.phoneNumber.replace(/[-\s]/g, ''))) {
-      throw new HttpsError('invalid-argument', 'เบอร์โทรศัพท์ไม่ถูกต้อง');
-    }
+    logger.info('Input validation passed', {
+      email,
+      displayName,
+      hasEmployeeData: !!employeeData,
+    });
 
     // ===== 4. Duplicate Checks =====
     logger.info('Validating uniqueness constraints');
@@ -417,7 +402,9 @@ export const createEmployee = onCall<CreateEmployeeInput>(
 
     // ===== 6. Normalize Phone Numbers =====
     const normalizedPhone = normalizeThaiPhoneNumber(employeeData.phoneNumber);
-    const normalizedEmergencyPhone = normalizeThaiPhoneNumber(employeeData.emergencyContact.phoneNumber);
+    const normalizedEmergencyPhone = normalizeThaiPhoneNumber(
+      employeeData.emergencyContact.phoneNumber
+    );
 
     // ===== 7. Calculate Age =====
     const dateOfBirth =
@@ -429,7 +416,9 @@ export const createEmployee = onCall<CreateEmployeeInput>(
     // ===== 8. Prepare Timestamps =====
     const now = Timestamp.now();
     const hireDate =
-      typeof employeeData.hireDate === 'string' ? new Date(employeeData.hireDate) : employeeData.hireDate;
+      typeof employeeData.hireDate === 'string'
+        ? new Date(employeeData.hireDate)
+        : employeeData.hireDate;
 
     // ===== 9. Create Firebase Auth User =====
     let newUser: Awaited<ReturnType<typeof auth.createUser>>;
@@ -458,7 +447,7 @@ export const createEmployee = onCall<CreateEmployeeInput>(
     }
 
     // ===== 10. Create Employee Document in Firestore =====
-    let employeeRef;
+    let employeeRef: DocumentReference;
 
     try {
       employeeRef = db.collection('employees').doc();

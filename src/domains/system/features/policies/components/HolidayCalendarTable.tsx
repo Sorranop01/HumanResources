@@ -3,13 +3,13 @@
  * Table component for displaying and managing holidays
  */
 
-import type { FC } from 'react';
+import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
-import type { PublicHoliday } from '../types/holiday';
-import { useDeleteHoliday, useYearHolidays } from '../hooks/useHolidays';
 import dayjs from 'dayjs';
+import type { FC } from 'react';
+import { useDeleteHoliday, useYearHolidays } from '../hooks/useHolidays';
+import type { PublicHoliday } from '../types/holiday';
 
 export const HolidayCalendarTable: FC = () => {
   const currentYear = new Date().getFullYear();

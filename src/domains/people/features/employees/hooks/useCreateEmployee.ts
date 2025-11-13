@@ -1,13 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { App } from 'antd';
-import type { EmployeeFormInput } from '@/domains/people/features/employees/schemas';
+import type { EmployeeCreatePayload } from '@/domains/people/features/employees/schemas';
 import {
   employeeKeys,
   employeeService,
 } from '@/domains/people/features/employees/services/employeeService';
 
-interface CreateEmployeePayload {
-  employeeData: EmployeeFormInput;
+interface CreateEmployeeMutationPayload {
+  employeeData: EmployeeCreatePayload;
   password?: string;
 }
 
@@ -20,7 +20,7 @@ export function useCreateEmployee() {
   const { message } = App.useApp();
 
   return useMutation({
-    mutationFn: (payload: CreateEmployeePayload) => employeeService.create(payload),
+    mutationFn: (payload: CreateEmployeeMutationPayload) => employeeService.create(payload),
     onSuccess: () => {
       // Invalidate all employee list queries
       void queryClient.invalidateQueries({ queryKey: employeeKeys.lists() });

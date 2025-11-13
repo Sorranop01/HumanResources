@@ -1,10 +1,12 @@
 // Components
 export { AttendanceHistoryTable } from './components/AttendanceHistoryTable';
+export { BreakManagementCard } from './components/BreakManagementCard';
 export { ClockInOutCard } from './components/ClockInOutCard';
 
 // Hooks
 export { useAttendanceHistory } from './hooks/useAttendanceHistory';
 export { useAttendanceStats } from './hooks/useAttendanceStats';
+export { useCurrentBreak, useEndBreak, useStartBreak } from './hooks/useBreakManagement';
 export { useClockIn } from './hooks/useClockIn';
 export { useClockOut } from './hooks/useClockOut';
 export { useMonthlyAttendance } from './hooks/useMonthlyAttendance';

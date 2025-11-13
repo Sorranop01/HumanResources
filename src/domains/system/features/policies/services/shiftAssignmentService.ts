@@ -11,8 +11,8 @@ import {
   getDoc,
   getDocs,
   orderBy,
-  query,
   type QueryConstraint,
+  query,
   Timestamp,
   updateDoc,
   where,
@@ -33,7 +33,7 @@ const COLLECTION_NAME = 'shiftAssignments';
 /**
  * Convert Firestore document to ShiftAssignment
  */
-function docToShiftAssignment(id: string, data: any): ShiftAssignment {
+function docToShiftAssignment(id: string, data: DocumentData): ShiftAssignment {
   return {
     id,
     employeeId: data.employeeId,
@@ -59,10 +59,7 @@ function docToShiftAssignment(id: string, data: any): ShiftAssignment {
 /**
  * Calculate which shift should be active on a specific date based on rotation
  */
-function getRotationalShiftForDate(
-  assignment: ShiftAssignment,
-  date: Date
-): string | null {
+function getRotationalShiftForDate(assignment: ShiftAssignment, date: Date): string | null {
   if (!assignment.isRotational || !assignment.rotationPattern) {
     return assignment.shiftId;
   }
@@ -226,7 +223,7 @@ export const shiftAssignmentService = {
         throw new Error('Shift assignment not found');
       }
 
-      const updateData: Record<string, any> = {
+      const updateData: Record<string, unknown> = {
         updatedAt: Timestamp.now(),
       };
 

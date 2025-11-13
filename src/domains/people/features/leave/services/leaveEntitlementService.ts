@@ -11,6 +11,7 @@ import {
   getDoc,
   getDocs,
   orderBy,
+  type QueryConstraint,
   query,
   setDoc,
   Timestamp,
@@ -18,18 +19,40 @@ import {
   where,
 } from 'firebase/firestore';
 import { db } from '@/shared/lib/firebase';
+import { employeeService } from '../../employees/services/employeeService';
 import type {
   CreateLeaveEntitlementInput,
   LeaveEntitlement,
   UpdateLeaveBalanceInput,
 } from '../types';
+import { leaveTypeService } from './leaveTypeService';
 
-const COLLECTION_NAME = 'leaveEntitlements';
+const COLLECTION_NAME = 'leaveBalances';
 
 /**
  * Convert Firestore document to LeaveEntitlement
+ * Maps from leaveBalances schema to LeaveEntitlement type
  */
 function docToLeaveEntitlement(id: string, data: DocumentData): LeaveEntitlement {
+  // Handle different date field formats
+  const effectiveFrom = data.effectiveFrom
+    ? data.effectiveFrom.toDate
+      ? data.effectiveFrom.toDate()
+      : new Date(data.year, 0, 1)
+    : new Date(data.year, 0, 1);
+
+  const effectiveTo = data.effectiveTo
+    ? data.effectiveTo.toDate
+      ? data.effectiveTo.toDate()
+      : new Date(data.year, 11, 31)
+    : new Date(data.year, 11, 31);
+
+  const lastCalculatedAt = data.lastCalculatedAt
+    ? data.lastCalculatedAt.toDate
+      ? data.lastCalculatedAt.toDate()
+      : new Date()
+    : data.updatedAt?.toDate() || new Date();
+
   return {
     id,
     employeeId: data.employeeId,
@@ -39,19 +62,20 @@ function docToLeaveEntitlement(id: string, data: DocumentData): LeaveEntitlement
     leaveTypeCode: data.leaveTypeCode,
     leaveTypeName: data.leaveTypeName,
     year: data.year,
-    effectiveFrom: data.effectiveFrom.toDate(),
-    effectiveTo: data.effectiveTo.toDate(),
-    totalEntitlement: data.totalEntitlement,
-    carriedOver: data.carriedOver,
-    accrued: data.accrued,
-    used: data.used,
-    pending: data.pending,
-    remaining: data.remaining,
-    basedOnTenure: data.basedOnTenure,
-    tenureYears: data.tenureYears,
-    isActive: data.isActive,
+    effectiveFrom,
+    effectiveTo,
+    // Map field names from seed schema
+    totalEntitlement: data.totalDays || data.totalEntitlement || 0,
+    carriedOver: data.carriedForwardDays || data.carriedOver || 0,
+    accrued: data.earnedDays || data.accrued || 0,
+    used: data.usedDays || data.used || 0,
+    pending: data.pending || 0,
+    remaining: data.remainingDays || data.remaining || 0,
+    basedOnTenure: data.basedOnTenure || false,
+    tenureYears: data.tenureYears || 0,
+    isActive: data.isActive !== false, // Default to true
     notes: data.notes,
-    lastCalculatedAt: data.lastCalculatedAt.toDate(),
+    lastCalculatedAt,
     tenantId: data.tenantId,
     createdAt: data.createdAt.toDate(),
     updatedAt: data.updatedAt.toDate(),
@@ -101,21 +125,22 @@ export const leaveEntitlementService = {
    */
   async getByEmployeeId(employeeId: string, year?: number): Promise<LeaveEntitlement[]> {
     try {
-      let q = query(
-        collection(db, COLLECTION_NAME),
-        where('employeeId', '==', employeeId),
-        orderBy('year', 'desc')
-      );
+      const constraints: QueryConstraint[] = [where('employeeId', '==', employeeId)];
 
       if (year) {
-        q = query(q, where('year', '==', year));
+        constraints.push(where('year', '==', year));
       }
 
+      constraints.push(orderBy('year', 'desc'));
+
+      const q = query(collection(db, COLLECTION_NAME), ...constraints);
       const snapshot = await getDocs(q);
+
       return snapshot.docs.map((doc) => docToLeaveEntitlement(doc.id, doc.data()));
     } catch (error) {
-      console.error('Failed to fetch leave entitlements', error);
-      throw new Error('ไม่สามารถดึงข้อมูลสิทธิ์การลาได้');
+      console.error('Failed to fetch leave entitlements:', error);
+      // Return empty array instead of throwing to prevent UI break
+      return [];
     }
   },
 
@@ -203,8 +228,6 @@ export const leaveEntitlementService = {
    */
   async create(input: CreateLeaveEntitlementInput): Promise<string> {
     try {
-      // Get employee info (we need to fetch this)
-      // For now, we'll assume it's passed or we have it
       const docRef = doc(collection(db, COLLECTION_NAME));
 
       const year = input.year ?? new Date().getFullYear();
@@ -212,33 +235,41 @@ export const leaveEntitlementService = {
       const accrued = input.totalEntitlement;
       const totalEntitlement = accrued + carriedOver;
 
-      const effectiveFrom = new Date(year, 0, 1); // Jan 1
-      const effectiveTo = new Date(year, 11, 31); // Dec 31
+      // Fetch employee and leave type details
+      const [employee, leaveType] = await Promise.all([
+        employeeService.getById(input.employeeId),
+        leaveTypeService.getById(input.leaveTypeId),
+      ]);
 
+      if (!employee) {
+        throw new Error('Employee not found');
+      }
+
+      if (!leaveType) {
+        throw new Error('Leave type not found');
+      }
+
+      // Write using leaveBalances schema field names
       await setDoc(docRef, {
+        id: docRef.id,
         employeeId: input.employeeId,
-        employeeName: 'TBD', // Should be passed or fetched
-        employeeCode: 'TBD',
+        employeeName: `${employee.firstName} ${employee.lastName}`,
+        employeeCode: employee.employeeCode,
         leaveTypeId: input.leaveTypeId,
-        leaveTypeCode: 'TBD', // Should be fetched
-        leaveTypeName: 'TBD',
+        leaveTypeCode: leaveType.code,
+        leaveTypeName: leaveType.nameTh,
         year,
-        effectiveFrom: Timestamp.fromDate(effectiveFrom),
-        effectiveTo: Timestamp.fromDate(effectiveTo),
-        totalEntitlement,
-        carriedOver,
-        accrued,
-        used: 0,
-        pending: 0,
-        remaining: totalEntitlement,
-        basedOnTenure: input.basedOnTenure ?? false,
-        tenureYears: input.tenureYears ?? 0,
-        isActive: true,
-        notes: input.notes ?? null,
-        lastCalculatedAt: Timestamp.now(),
-        tenantId: 'default',
+        totalDays: totalEntitlement,
+        usedDays: 0,
+        remainingDays: totalEntitlement,
+        carriedForwardDays: carriedOver,
+        earnedDays: accrued,
+        adjustmentDays: 0,
+        tenantId: 'tenant-default',
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
+        createdBy: 'system',
+        updatedBy: 'system',
       });
 
       return docRef.id;
@@ -263,25 +294,28 @@ export const leaveEntitlementService = {
       const current = docSnap.data();
       const operation = input.operation;
 
-      let newUsed = current.used;
-      let newPending = current.pending;
+      // Map to seed schema field names
+      let newUsed = current.usedDays || 0;
+      let newPending = current.pending || 0;
 
       if (input.used !== undefined) {
-        newUsed = operation === 'add' ? current.used + input.used : current.used - input.used;
+        newUsed = operation === 'add' ? newUsed + input.used : newUsed - input.used;
       }
 
       if (input.pending !== undefined) {
-        newPending =
-          operation === 'add' ? current.pending + input.pending : current.pending - input.pending;
+        newPending = operation === 'add' ? newPending + input.pending : newPending - input.pending;
       }
 
-      const newRemaining = current.totalEntitlement - newUsed - newPending;
+      const totalDays = current.totalDays || 0;
+      const newRemaining = totalDays - newUsed - newPending;
 
+      // Write using seed schema field names
       await updateDoc(docRef, {
-        used: Math.max(0, newUsed),
+        usedDays: Math.max(0, newUsed),
         pending: Math.max(0, newPending),
-        remaining: Math.max(0, newRemaining),
+        remainingDays: Math.max(0, newRemaining),
         updatedAt: Timestamp.now(),
+        updatedBy: 'system',
       });
     } catch (error) {
       console.error('Failed to update leave balance', error);
@@ -323,13 +357,15 @@ export const leaveEntitlementService = {
         );
 
         if (nextYearEntitlement) {
-          // Update existing
+          // Update existing using seed schema field names
           const docRef = doc(db, COLLECTION_NAME, nextYearEntitlement.id);
+          const newTotal = nextYearEntitlement.accrued + carryOverAmount;
           await updateDoc(docRef, {
-            carriedOver: carryOverAmount,
-            totalEntitlement: nextYearEntitlement.accrued + carryOverAmount,
-            remaining: nextYearEntitlement.accrued + carryOverAmount - nextYearEntitlement.used,
+            carriedForwardDays: carryOverAmount,
+            totalDays: newTotal,
+            remainingDays: newTotal - nextYearEntitlement.used,
             updatedAt: Timestamp.now(),
+            updatedBy: 'system',
           });
         } else {
           // Create new entitlement for next year

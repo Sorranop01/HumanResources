@@ -141,7 +141,7 @@ users / {userId}
 $ pnpm run seed:all
 
 🚀 Starting complete data seeding...
-📡 Connected to Firestore Emulator at localhost:8080
+📡 Connected to Firestore Emulator at localhost:8888
 
 📋 STEP 1: Seeding Roles (roleDefinitions)
 
@@ -289,7 +289,7 @@ const SEED_USERS: SeedUser[] = [
 
 ### 1. Emulator Only
 Scripts เหล่านี้ทำงานกับ **emulator เท่านั้น**
-- ✅ localhost:8080 (Firestore Emulator)
+- ✅ localhost:8888 (Firestore Emulator)
 - ❌ Production database
 
 ### 2. Run Order Matters

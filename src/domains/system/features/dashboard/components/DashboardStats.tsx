@@ -50,7 +50,9 @@ export const DashboardStats: FC<DashboardStatsProps> = ({ stats, isLoading }) =>
     return (
       <Card>
         <div style={{ textAlign: 'center', padding: '48px 0' }}>
-          <Spin size="large" tip="กำลังโหลดข้อมูล..." />
+          <Spin size="large" tip="กำลังโหลดข้อมูล...">
+            <div style={{ minHeight: 100 }} />
+          </Spin>
         </div>
       </Card>
     );

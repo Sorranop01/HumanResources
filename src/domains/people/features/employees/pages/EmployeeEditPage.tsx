@@ -4,13 +4,13 @@
 
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Result, Row, Spin, Typography } from 'antd';
+import dayjs from 'dayjs';
 import type { FC } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { EmployeeForm } from '../components/EmployeeForm';
+import { EmployeeForm, type EmployeeQuickFormValues } from '../components/EmployeeForm';
 import { useEmployee } from '../hooks/useEmployee';
 import { useUpdateEmployee } from '../hooks/useUpdateEmployee';
-import type { EmployeeFormInput } from '../schemas';
-import { formDataToCreateInput } from '../schemas';
+import type { Employee } from '../types';
 
 const { Title } = Typography;
 
@@ -20,16 +20,36 @@ export const EmployeeEditPage: FC = () => {
   const { data: employee, isLoading, error } = useEmployee(id);
   const updateMutation = useUpdateEmployee();
 
-  const handleSubmit = async (formData: EmployeeFormInput): Promise<void> => {
-    if (!id) return;
+  const handleSubmit = async (formData: EmployeeQuickFormValues): Promise<void> => {
+    if (!id || !employee) return;
 
     try {
-      // Convert form data to update input
-      const updateInput = formDataToCreateInput(formData);
+      const updateData: Partial<Employee> = {
+        employeeCode: formData.employeeCode,
+        status: formData.status,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        thaiFirstName: formData.thaiFirstName,
+        thaiLastName: formData.thaiLastName,
+        email: formData.email,
+        phoneNumber: formData.phoneNumber,
+        dateOfBirth: dayjs(formData.dateOfBirth).toDate(),
+        hireDate: dayjs(formData.hireDate).toDate(),
+        position: formData.position,
+        department: formData.department,
+        salary: {
+          ...employee.salary,
+          baseSalary: formData.salary,
+        },
+      };
+
+      if (formData.photoURL) {
+        updateData.photoURL = formData.photoURL;
+      }
 
       await updateMutation.mutateAsync({
         id,
-        data: updateInput,
+        data: updateData,
       });
 
       // Navigate to detail page

@@ -35,6 +35,12 @@ database-debug.log
 pubsub-debug.log
 storage-debug.log
 
+# Firebase Credentials (IMPORTANT: Never commit these!)
+**/serviceAccountKey*.json
+**/firebase-adminsdk*.json
+**/*credentials*.json
+**/google-credentials*.json
+
 # Firebase Emulator Data
 emulator-data/
 
@@ -64,3 +70,26 @@ lerna-debug.log*
 .temp/
 .tmp/
 *.local
+
+# Generated files (should not be committed)
+**/*.js.map
+src/**/*.js
+!src/**/*.config.js
+functions/lib/
+
+# Documentation (temporary files)
+**/SEED_*.md
+**/ZOD_*.md
+**/SETTINGS_*.md
+**/FIRESTORE_*.md
+**/MCP_*.md
+**/ATTENDANCE_*.md
+**/OPTION1_*.md
+**/CANDIDATES_*.md
+**/LEAVE_*.md
+**/DEVELOPMENT_ROADMAP.md
+**/*_FIX*.md
+**/*_COMPLETE.md
+**/*_SUMMARY.md
+**/*_GUIDE.md
+console_mcp/

@@ -149,7 +149,7 @@ initializeApp({ projectId: 'human-b4c2c' });
 
 // 2. Connect to Emulator
 db.settings({
-  host: 'localhost:8080',
+  host: 'localhost:8888',
   ssl: false
 });
 

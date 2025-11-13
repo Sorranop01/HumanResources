@@ -3,8 +3,6 @@
  * Main page for managing all policies (Work Schedule, Overtime, Shifts, Penalties, Holidays)
  */
 
-import type { FC } from 'react';
-import { Card, Tabs } from 'antd';
 import {
   CalendarOutlined,
   ClockCircleOutlined,
@@ -12,11 +10,13 @@ import {
   ScheduleOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
-import { WorkSchedulePolicyTable } from '../components/WorkSchedulePolicyTable';
-import { OvertimePolicyTable } from '../components/OvertimePolicyTable';
-import { ShiftManagementTable } from '../components/ShiftManagementTable';
-import { PenaltyPolicyTable } from '../components/PenaltyPolicyTable';
+import { Card, Tabs } from 'antd';
+import type { FC } from 'react';
 import { HolidayCalendarTable } from '../components/HolidayCalendarTable';
+import { OvertimePolicyTable } from '../components/OvertimePolicyTable';
+import { PenaltyPolicyTable } from '../components/PenaltyPolicyTable';
+import { ShiftManagementTable } from '../components/ShiftManagementTable';
+import { WorkSchedulePolicyTable } from '../components/WorkSchedulePolicyTable';
 
 export const PolicyListPage: FC = () => {
   const tabItems = [

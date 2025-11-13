@@ -2,11 +2,14 @@ import { CalendarOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Modal, Row, Space, Spin, Tabs, Typography } from 'antd';
 import type { FC } from 'react';
 import { useState } from 'react';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { LeaveEntitlementCard } from '../components/LeaveEntitlementCard';
 import { LeaveRequestForm } from '../components/LeaveRequestForm';
 import { LeaveRequestList } from '../components/LeaveRequestList';
+import { useCreateLeaveRequest } from '../hooks/useCreateLeaveRequest';
 import { useLeaveEntitlements } from '../hooks/useLeaveEntitlements';
 import { useLeaveRequests } from '../hooks/useLeaveRequests';
+import { formDataToLeaveRequestInput, type LeaveRequestFormInput } from '../schemas';
 
 const { Title } = Typography;
 
@@ -17,15 +20,36 @@ const { Title } = Typography;
 export const LeaveRequestPage: FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('my-requests');
+  const { employeeId, user } = useAuth();
 
-  // Fetch current user's leave data
-  const { data: leaveRequests = [], isLoading: isLoadingRequests } = useLeaveRequests({
-    status: undefined,
+  // Fetch current user's leave requests
+  const { data: myLeaveRequests = [], isLoading: isLoadingMyRequests } = useLeaveRequests({
+    employeeId: employeeId ?? undefined,
   });
-  const { data: leaveEntitlements = [], isLoading: isLoadingEntitlements } = useLeaveEntitlements();
 
-  const handleCreateSuccess = () => {
-    setIsCreateModalOpen(false);
+  // Fetch all leave requests (for HR/Manager)
+  const { data: allLeaveRequests = [], isLoading: isLoadingAllRequests } = useLeaveRequests();
+
+  const { data: leaveEntitlements = [], isLoading: isLoadingEntitlements } =
+    useLeaveEntitlements(employeeId);
+
+  // Check if user can view all requests (HR or Manager)
+  const canViewAllRequests =
+    user?.role === 'hr' || user?.role === 'manager' || user?.role === 'admin';
+
+  const createLeaveRequestMutation = useCreateLeaveRequest();
+
+  const handleFormSubmit = (data: LeaveRequestFormInput) => {
+    if (!employeeId) {
+      // Should not happen if the form is only available for logged-in users
+      return;
+    }
+    const input = formDataToLeaveRequestInput(data, employeeId);
+    createLeaveRequestMutation.mutate(input, {
+      onSuccess: () => {
+        setIsCreateModalOpen(false);
+      },
+    });
   };
 
   return (
@@ -46,6 +70,7 @@ export const LeaveRequestPage: FC = () => {
             icon={<PlusOutlined />}
             onClick={() => setIsCreateModalOpen(true)}
             size="large"
+            disabled={!employeeId}
           >
             ขอลา
           </Button>
@@ -83,20 +108,28 @@ export const LeaveRequestPage: FC = () => {
             {
               key: 'my-requests',
               label: 'คำขอลาของฉัน',
-              children: isLoadingRequests ? (
-                <div style={{ textAlign: 'center', padding: '40px' }}>
-                  <Spin size="large" />
-                </div>
-              ) : (
-                <LeaveRequestList requests={leaveRequests} showEmployeeName={false} />
+              children: (
+                <LeaveRequestList
+                  requests={myLeaveRequests}
+                  isLoading={isLoadingMyRequests}
+                  showEmployeeName={false}
+                />
               ),
             },
             {
               key: 'all-requests',
               label: 'คำขอลาทั้งหมด',
-              children: (
+              children: canViewAllRequests ? (
+                <LeaveRequestList
+                  requests={allLeaveRequests}
+                  isLoading={isLoadingAllRequests}
+                  showEmployeeName={true}
+                />
+              ) : (
                 <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
-                  <p>ฟีเจอร์นี้สำหรับผู้จัดการและ HR เท่านั้น</p>
+                  <CalendarOutlined style={{ fontSize: '48px', marginBottom: '16px' }} />
+                  <p>คุณไม่มีสิทธิ์ดูคำขอลาทั้งหมด</p>
+                  <p style={{ fontSize: '12px' }}>ฟีเจอร์นี้สำหรับผู้จัดการ, HR และ Admin เท่านั้น</p>
                 </div>
               ),
             },
@@ -110,10 +143,14 @@ export const LeaveRequestPage: FC = () => {
         open={isCreateModalOpen}
         onCancel={() => setIsCreateModalOpen(false)}
         footer={null}
-        width={600}
-        destroyOnClose
+        width={800}
+        destroyOnHidden
       >
-        <LeaveRequestForm onSuccess={handleCreateSuccess} onCancel={() => setIsCreateModalOpen(false)} />
+        <LeaveRequestForm
+          onSubmit={handleFormSubmit}
+          onCancel={() => setIsCreateModalOpen(false)}
+          loading={createLeaveRequestMutation.isPending}
+        />
       </Modal>
     </div>
   );

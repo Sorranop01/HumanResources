@@ -1,13 +1,19 @@
 import {
   ApartmentOutlined,
   AuditOutlined,
+  BankOutlined,
+  BarChartOutlined,
   CalendarOutlined,
   ClockCircleOutlined,
   DashboardOutlined,
   DollarOutlined,
+  EnvironmentOutlined,
+  KeyOutlined,
+  ProfileOutlined,
   SafetyOutlined,
   SettingOutlined,
   TeamOutlined,
+  ThunderboltOutlined,
   UserOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
@@ -91,6 +97,14 @@ export const AppSidebar: FC<AppSidebarProps> = ({ collapsed }) => {
     getItem('เวลาทำงาน', 'time', <ClockCircleOutlined />, [
       getItem('บันทึกเวลา', ROUTES.ATTENDANCE, <ClockCircleOutlined />),
       getItem('คำขอลา', ROUTES.LEAVE_REQUESTS, <CalendarOutlined />),
+      getItem('ขอทำ OT', ROUTES.OVERTIME_REQUEST, <ThunderboltOutlined />),
+      getItem('OT ของฉัน', ROUTES.OVERTIME_LIST, <ProfileOutlined />),
+      ...(hasRequiredRole(user?.role, [ROLES.MANAGER, ROLES.HR, ROLES.ADMIN])
+        ? [
+            getItem('อนุมัติ OT', ROUTES.OVERTIME_APPROVAL, <AuditOutlined />),
+            getItem('แดชบอร์ด OT', ROUTES.OVERTIME_DASHBOARD, <BarChartOutlined />),
+          ]
+        : []),
     ]),
 
     // Payroll (for HR and Admin)
@@ -109,8 +123,16 @@ export const AppSidebar: FC<AppSidebarProps> = ({ collapsed }) => {
           getItem('ระบบ', 'system', <SettingOutlined />, [
             getItem('ผู้ใช้งาน', ROUTES.USERS, <UserOutlined />),
             getItem('บทบาทและสิทธิ์', ROUTES.ROLES, <SafetyOutlined />),
+            getItem('สิทธิ์การเข้าถึง', ROUTES.PERMISSIONS, <KeyOutlined />),
             getItem('ประวัติการใช้งาน', ROUTES.AUDIT_LOGS, <AuditOutlined />),
-            getItem('ตั้งค่า', ROUTES.SETTINGS, <SettingOutlined />),
+            getItem('ตั้งค่า', 'settings-menu', <SettingOutlined />, [
+              getItem('ข้อมูลองค์กร', ROUTES.SETTINGS_ORGANIZATION, <BankOutlined />),
+              getItem('แผนก', ROUTES.SETTINGS_DEPARTMENTS, <ApartmentOutlined />),
+              getItem('ตำแหน่งงาน', ROUTES.SETTINGS_POSITIONS, <TeamOutlined />),
+              getItem('สาขา/สถานที่', ROUTES.SETTINGS_LOCATIONS, <EnvironmentOutlined />),
+              getItem('ตั้งค่าเงินเดือน', ROUTES.SETTINGS_PAYROLL, <DollarOutlined />),
+              getItem('ตั้งค่าระบบ', ROUTES.SETTINGS_SYSTEM, <SettingOutlined />),
+            ]),
           ]),
         ]
       : []),

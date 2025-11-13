@@ -38,7 +38,7 @@ function loadEnv(): EnvConfig {
     FIREBASE_STORAGE_BUCKET: storageBucket,
     FIREBASE_MESSAGING_SENDER_ID: messagingSenderId,
     FIREBASE_APP_ID: appId,
-    FIREBASE_MEASUREMENT_ID: measurementId,
+    FIREBASE_MEASUREMENT_ID: measurementId || undefined,
     ENV: environment as EnvConfig['ENV'],
   };
 }
@@ -56,6 +56,8 @@ declare global {
     readonly VITE_FIREBASE_APP_ID: string;
     readonly VITE_FIREBASE_MEASUREMENT_ID?: string;
     readonly VITE_ENV?: string;
+    readonly DEV: boolean;
+    readonly MODE: string;
   }
 
   interface ImportMeta {

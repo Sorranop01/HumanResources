@@ -86,8 +86,12 @@ export const LeaveRequestCard: FC<LeaveRequestCardProps> = ({
         <Descriptions.Item label="พนักงาน" span={2}>
           {request.employeeName} ({request.employeeCode})
         </Descriptions.Item>
-        <Descriptions.Item label="แผนก">{request.department}</Descriptions.Item>
-        <Descriptions.Item label="ตำแหน่ง">{request.position}</Descriptions.Item>
+        <Descriptions.Item label="แผนก">
+          {request.departmentName || request.departmentId}
+        </Descriptions.Item>
+        <Descriptions.Item label="ตำแหน่ง">
+          {request.positionName || request.positionId}
+        </Descriptions.Item>
         <Descriptions.Item label="ประเภทการลา" span={2}>
           {request.leaveTypeName}
         </Descriptions.Item>

@@ -18,6 +18,11 @@ import { PasswordStep } from './form-steps/PasswordStep';
 import { PersonalInfoStep } from './form-steps/PersonalInfoStep';
 import { TaxSocialSecurityStep } from './form-steps/TaxSocialSecurityStep';
 
+export interface FinalStepData extends Partial<EmployeeFormInput> {
+  passwordOption?: 'auto' | 'manual';
+  temporaryPassword?: string;
+}
+
 /**
  * Multi-Step Employee Form Wizard
  * 5-step process for creating a complete employee record
@@ -26,7 +31,7 @@ export const EmployeeFormWizard: FC = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<Partial<EmployeeFormInput>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [_isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
   const { mutateAsync: createEmployee } = useCreateEmployee();
@@ -71,7 +76,7 @@ export const EmployeeFormWizard: FC = () => {
   };
 
   // Handle final submission (from Password Step)
-  const handleFinalSubmit = async (finalStepData: Partial<EmployeeFormInput>) => {
+  const handleFinalSubmit = async (finalStepData: FinalStepData) => {
     try {
       setIsSubmitting(true);
 
@@ -81,15 +86,16 @@ export const EmployeeFormWizard: FC = () => {
       const employeeData = formDataToCreateInput(completeFormData as EmployeeFormInput);
 
       // Get password from finalStepData
-      const passwordOption = (finalStepData as any).passwordOption || 'auto';
+      const passwordOption = finalStepData.passwordOption || 'auto';
+      const generatedPassword = `Temp${Math.random().toString(36).slice(-8)}!`;
       const temporaryPassword =
         passwordOption === 'manual'
-          ? (finalStepData as any).temporaryPassword
-          : `Temp${Math.random().toString(36).slice(-8)}!`;
+          ? (finalStepData.temporaryPassword ?? generatedPassword)
+          : generatedPassword;
 
       // Submit to API with password
       await createEmployee({
-        employeeData: employeeData as any,
+        employeeData: employeeData,
         password: temporaryPassword,
       });
 

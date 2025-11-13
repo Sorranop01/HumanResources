@@ -11,8 +11,8 @@ import {
   getDoc,
   getDocs,
   orderBy,
-  query,
   type QueryConstraint,
+  query,
   Timestamp,
   updateDoc,
   where,
@@ -32,7 +32,7 @@ const COLLECTION_NAME = 'penaltyPolicies';
 /**
  * Convert Firestore document to PenaltyPolicy
  */
-function docToPenaltyPolicy(id: string, data: any): PenaltyPolicy {
+function docToPenaltyPolicy(id: string, data: DocumentData): PenaltyPolicy {
   return {
     id,
     name: data.name,
@@ -70,10 +70,10 @@ export const penaltyPolicyService = {
   /**
    * Create penalty policy
    */
-  async create(input: CreatePenaltyPolicyInput): Promise<string> {
+  async create(tenantId: string, input: CreatePenaltyPolicyInput): Promise<string> {
     try {
       // Check if code already exists
-      const existing = await this.getByCode(input.code);
+      const existing = await this.getByCode(tenantId, input.code);
       if (existing) {
         throw new Error('Policy code already exists');
       }
@@ -109,7 +109,7 @@ export const penaltyPolicyService = {
         isActive: true,
         effectiveDate: Timestamp.fromDate(input.effectiveDate),
         expiryDate: input.expiryDate ? Timestamp.fromDate(input.expiryDate) : null,
-        tenantId: 'default',
+        tenantId,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
       });
@@ -146,9 +146,13 @@ export const penaltyPolicyService = {
   /**
    * Get policy by code
    */
-  async getByCode(code: string): Promise<PenaltyPolicy | null> {
+  async getByCode(tenantId: string, code: string): Promise<PenaltyPolicy | null> {
     try {
-      const q = query(collection(db, COLLECTION_NAME), where('code', '==', code));
+      const q = query(
+        collection(db, COLLECTION_NAME),
+        where('tenantId', '==', tenantId),
+        where('code', '==', code)
+      );
 
       const snapshot = await getDocs(q);
       if (snapshot.empty) {
@@ -170,9 +174,9 @@ export const penaltyPolicyService = {
   /**
    * Get all policies with filters
    */
-  async getAll(filters?: PenaltyPolicyFilters): Promise<PenaltyPolicy[]> {
+  async getAll(tenantId: string, filters?: PenaltyPolicyFilters): Promise<PenaltyPolicy[]> {
     try {
-      const constraints: QueryConstraint[] = [];
+      const constraints: QueryConstraint[] = [where('tenantId', '==', tenantId)];
 
       if (filters?.type) {
         constraints.push(where('type', '==', filters.type));
@@ -220,7 +224,7 @@ export const penaltyPolicyService = {
         throw new Error('Penalty policy not found');
       }
 
-      const updateData: Record<string, any> = {
+      const updateData: Record<string, unknown> = {
         updatedAt: Timestamp.now(),
       };
 
@@ -237,9 +241,11 @@ export const penaltyPolicyService = {
       if (input.threshold !== undefined) updateData.threshold = input.threshold;
       if (input.gracePeriodMinutes !== undefined)
         updateData.gracePeriodMinutes = input.gracePeriodMinutes;
-      if (input.graceOccurrences !== undefined) updateData.graceOccurrences = input.graceOccurrences;
+      if (input.graceOccurrences !== undefined)
+        updateData.graceOccurrences = input.graceOccurrences;
       if (input.isProgressive !== undefined) updateData.isProgressive = input.isProgressive;
-      if (input.progressiveRules !== undefined) updateData.progressiveRules = input.progressiveRules;
+      if (input.progressiveRules !== undefined)
+        updateData.progressiveRules = input.progressiveRules;
       if (input.applicableDepartments !== undefined)
         updateData.applicableDepartments = input.applicableDepartments;
       if (input.applicablePositions !== undefined)
@@ -247,7 +253,8 @@ export const penaltyPolicyService = {
       if (input.applicableEmploymentTypes !== undefined)
         updateData.applicableEmploymentTypes = input.applicableEmploymentTypes;
       if (input.autoApply !== undefined) updateData.autoApply = input.autoApply;
-      if (input.requiresApproval !== undefined) updateData.requiresApproval = input.requiresApproval;
+      if (input.requiresApproval !== undefined)
+        updateData.requiresApproval = input.requiresApproval;
       if (input.maxPenaltyPerMonth !== undefined)
         updateData.maxPenaltyPerMonth = input.maxPenaltyPerMonth;
       if (input.maxOccurrencesPerMonth !== undefined)

@@ -3,12 +3,12 @@
  * Table component for displaying and managing overtime policies
  */
 
-import type { FC } from 'react';
+import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
-import type { OvertimePolicy } from '../types/overtimePolicy';
+import type { FC } from 'react';
 import { useDeleteOvertimePolicy, useOvertimePolicies } from '../hooks/useOvertimePolicies';
+import type { OvertimePolicy, OvertimeRule } from '../types/overtimePolicy';
 
 export const OvertimePolicyTable: FC = () => {
   const { data: policies, isLoading } = useOvertimePolicies({ isActive: true });
@@ -39,7 +39,7 @@ export const OvertimePolicyTable: FC = () => {
       dataIndex: 'rules',
       key: 'rules',
       width: 180,
-      render: (rules: any[]) => `${rules.length} กฎ`,
+      render: (rules: OvertimeRule[]) => `${rules.length} กฎ`,
     },
     {
       title: 'Weekend Rate',

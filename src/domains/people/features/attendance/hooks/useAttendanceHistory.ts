@@ -4,8 +4,8 @@ import { attendanceService } from '@/domains/people/features/attendance/services
 import { useAuth } from '@/shared/hooks/useAuth';
 
 export const useAttendanceHistory = () => {
-  const { user } = useAuth();
-  const userId = user?.uid ?? '';
+  const { firebaseUser } = useAuth();
+  const userId = firebaseUser?.uid ?? '';
 
   return useQuery({
     queryKey: attendanceKeys.history(userId),

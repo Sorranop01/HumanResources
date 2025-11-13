@@ -1,11 +1,25 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Alert, Button, Checkbox, Col, Form, Input, InputNumber, Row, Select, Space, Typography } from 'antd';
+import {
+  Alert,
+  Button,
+  Checkbox,
+  Col,
+  Form,
+  Input,
+  InputNumber,
+  Row,
+  Select,
+  Space,
+  Typography,
+} from 'antd';
 import type { FC } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import type { EmployeeFormInput, TaxSocialSecurityFormInput } from '../../schemas';
+import type { EmployeeFormInput } from '../../schemas';
 import { TaxSocialSecurityFormSchema } from '../../schemas';
 
 const { Title, Text } = Typography;
+
+type TaxSocialSecurityFormValues = (typeof TaxSocialSecurityFormSchema)['_input'];
 
 interface TaxSocialSecurityStepProps {
   initialData?: Partial<EmployeeFormInput>;
@@ -29,7 +43,7 @@ export const TaxSocialSecurityStep: FC<TaxSocialSecurityStepProps> = ({
     handleSubmit,
     watch,
     formState: { errors },
-  } = useForm<TaxSocialSecurityFormInput>({
+  } = useForm<TaxSocialSecurityFormValues>({
     resolver: zodResolver(TaxSocialSecurityFormSchema),
     defaultValues: {
       socialSecurityEnrolled: initialData?.socialSecurityEnrolled ?? true,
@@ -49,8 +63,9 @@ export const TaxSocialSecurityStep: FC<TaxSocialSecurityStepProps> = ({
   const socialSecurityEnrolled = watch('socialSecurityEnrolled');
   const withholdingTax = watch('withholdingTax');
 
-  const handleFormSubmit = (data: TaxSocialSecurityFormInput) => {
-    onNext(data);
+  const handleFormSubmit = (data: TaxSocialSecurityFormValues) => {
+    const parsed = TaxSocialSecurityFormSchema.parse(data);
+    onNext(parsed);
   };
 
   return (
@@ -99,7 +114,9 @@ export const TaxSocialSecurityStep: FC<TaxSocialSecurityStepProps> = ({
               <Controller
                 name="socialSecurityNumber"
                 control={control}
-                render={({ field }) => <Input {...field} placeholder="1234567890123" maxLength={13} />}
+                render={({ field }) => (
+                  <Input {...field} placeholder="1234567890123" maxLength={13} />
+                )}
               />
             </Form.Item>
           </Col>
@@ -110,7 +127,11 @@ export const TaxSocialSecurityStep: FC<TaxSocialSecurityStepProps> = ({
               help={errors.hospitalCode?.message}
               tooltip="รหัสโรงพยาบาลที่ใช้สิทธิ์ประกันสังคม"
             >
-              <Controller name="hospitalCode" control={control} render={({ field }) => <Input {...field} placeholder="10234" />} />
+              <Controller
+                name="hospitalCode"
+                control={control}
+                render={({ field }) => <Input {...field} placeholder="10234" />}
+              />
             </Form.Item>
           </Col>
           <Col xs={24} md={8}>
@@ -141,7 +162,13 @@ export const TaxSocialSecurityStep: FC<TaxSocialSecurityStepProps> = ({
             help={errors.taxId?.message}
             tooltip="เลขบัตรประชาชน 13 หลัก"
           >
-            <Controller name="taxId" control={control} render={({ field }) => <Input {...field} placeholder="1234567890123" maxLength={13} />} />
+            <Controller
+              name="taxId"
+              control={control}
+              render={({ field }) => (
+                <Input {...field} placeholder="1234567890123" maxLength={13} />
+              )}
+            />
           </Form.Item>
         </Col>
       </Row>
@@ -186,7 +213,7 @@ export const TaxSocialSecurityStep: FC<TaxSocialSecurityStepProps> = ({
                     max={35}
                     step={1}
                     formatter={(value) => `${value}%`}
-                    parser={(value) => value?.replace('%', '') as any}
+                    parser={(value) => Number.parseFloat(value?.replace('%', '') || '0')}
                   />
                 )}
               />
@@ -258,7 +285,11 @@ export const TaxSocialSecurityStep: FC<TaxSocialSecurityStepProps> = ({
             help={errors.accountName?.message}
             tooltip="ชื่อบัญชีต้องตรงกับชื่อพนักงาน"
           >
-            <Controller name="accountName" control={control} render={({ field }) => <Input {...field} placeholder="นาย/นาง/นางสาว..." />} />
+            <Controller
+              name="accountName"
+              control={control}
+              render={({ field }) => <Input {...field} placeholder="นาย/นาง/นางสาว..." />}
+            />
           </Form.Item>
         </Col>
         <Col xs={24} md={12}>
@@ -267,7 +298,11 @@ export const TaxSocialSecurityStep: FC<TaxSocialSecurityStepProps> = ({
             validateStatus={errors.branchName ? 'error' : ''}
             help={errors.branchName?.message}
           >
-            <Controller name="branchName" control={control} render={({ field }) => <Input {...field} placeholder="สาขาสยาม" />} />
+            <Controller
+              name="branchName"
+              control={control}
+              render={({ field }) => <Input {...field} placeholder="สาขาสยาม" />}
+            />
           </Form.Item>
         </Col>
       </Row>

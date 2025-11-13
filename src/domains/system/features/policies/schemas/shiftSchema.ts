@@ -4,6 +4,7 @@
  */
 
 import { z } from 'zod';
+import { FirestoreTimestampSchema } from '@/shared/schemas/common.schema';
 
 /**
  * Time format validation (HH:mm)
@@ -75,7 +76,10 @@ export const CreateShiftSchema = z.object({
   applicableDays: WorkingDaysSchema,
 
   // UI
-  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Must be a valid hex color').optional(),
+  color: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/, 'Must be a valid hex color')
+    .optional(),
 
   // Effective dates
   effectiveDate: z.date(),
@@ -109,7 +113,10 @@ export const UpdateShiftSchema = z.object({
   applicableDays: WorkingDaysSchema.optional(),
 
   // UI
-  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Must be a valid hex color').optional(),
+  color: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/, 'Must be a valid hex color')
+    .optional(),
 
   // Effective dates
   effectiveDate: z.date().optional(),
@@ -194,3 +201,63 @@ export const ShiftAssignmentFiltersSchema = z.object({
 });
 
 export type ShiftAssignmentFiltersValidated = z.infer<typeof ShiftAssignmentFiltersSchema>;
+
+/**
+ * Complete Shift Schema (for seed scripts and Firestore)
+ * Includes all fields with Firestore Timestamps
+ */
+export const ShiftSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1).max(100),
+  nameEn: z.string().min(1).max(100),
+  description: z.string().max(500),
+  code: z.string().min(1).max(50),
+
+  // Time configuration
+  startTime: z.string().regex(timeFormatRegex, 'Must be in HH:mm format'),
+  endTime: z.string().regex(timeFormatRegex, 'Must be in HH:mm format'),
+  breaks: z.array(ShiftBreakSchema),
+
+  // Hours
+  workHours: z.number().min(0).max(24),
+  grossHours: z.number().min(0).max(24),
+
+  // Premium
+  premiumRate: z.number().min(0).max(5),
+  nightShiftBonus: z.number().min(0).max(10000),
+
+  // Applicable days
+  applicableDays: z.array(z.number().min(0).max(6)).min(1).max(7),
+
+  // UI
+  color: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/, 'Must be a valid hex color')
+    .optional(),
+
+  // Effective dates
+  effectiveDate: FirestoreTimestampSchema,
+  expiryDate: FirestoreTimestampSchema.optional(),
+
+  // Metadata
+  isActive: z.boolean(),
+  tenantId: z.string().min(1),
+  createdAt: FirestoreTimestampSchema,
+  updatedAt: FirestoreTimestampSchema,
+  createdBy: z.string().optional(),
+  updatedBy: z.string().optional(),
+});
+
+export type Shift = z.infer<typeof ShiftSchema>;
+
+/**
+ * Validation Helper
+ */
+export function validateShift(data: unknown) {
+  return ShiftSchema.parse(data);
+}
+
+export function safeValidateShift(data: unknown) {
+  const result = ShiftSchema.safeParse(data);
+  return result.success ? result.data : null;
+}

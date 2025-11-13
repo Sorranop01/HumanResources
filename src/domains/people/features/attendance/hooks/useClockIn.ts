@@ -1,22 +1,40 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { attendanceKeys } from '@/domains/people/features/attendance/hooks/useTodayAttendance';
+import type { ClockInInput } from '@/domains/people/features/attendance/schemas';
 import { attendanceService } from '@/domains/people/features/attendance/services/attendanceService';
 import { useAuth } from '@/shared/hooks/useAuth';
 
 export const useClockIn = () => {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { firebaseUser, employeeId } = useAuth();
 
   return useMutation({
-    mutationFn: () => {
-      if (!user) {
+    mutationFn: (input?: Partial<ClockInInput>) => {
+      if (!firebaseUser) {
         throw new Error('User not authenticated');
       }
-      return attendanceService.clockIn(user.uid);
+
+      const clockInData: ClockInInput = {
+        userId: firebaseUser.uid,
+        employeeId: employeeId || undefined,
+        clockInMethod: 'web',
+        isRemoteWork: false,
+        ...input,
+      };
+
+      return attendanceService.clockIn(clockInData);
     },
     onSuccess: () => {
-      // Invalidate and refetch the today's attendance query
-      return queryClient.invalidateQueries({ queryKey: attendanceKeys.today(user?.uid ?? '') });
+      const userId = firebaseUser?.uid ?? '';
+      // Invalidate and refetch both today's attendance and history
+      return Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: attendanceKeys.today(userId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: attendanceKeys.history(userId),
+        }),
+      ]);
     },
     onError: (error) => {
       // You can add more robust error handling here, e.g., showing a toast notification

@@ -1,14 +1,14 @@
-import { Alert, Checkbox, Form, message, Modal, Space, Typography } from 'antd';
+import { Alert, Checkbox, Form, Modal, message, Space, Typography } from 'antd';
 import type { FC } from 'react';
 import { useEffect } from 'react';
+import { useAuth } from '@/domains/system/features/auth/hooks/useAuth';
+import type { Role } from '@/shared/constants/roles';
+import { ROLE_LABELS } from '@/shared/constants/roles';
 import {
   useAssignRolePermission,
   useRolePermissionByRoleAndResource,
 } from '../hooks/usePermissions';
 import type { BasePermission, Permission, Resource } from '../utils/checkPermission';
-import type { Role } from '@/shared/constants/roles';
-import { useAuth } from '@/domains/system/features/auth/hooks/useAuth';
-import { ROLE_LABELS } from '@/shared/constants/roles';
 
 const { Text } = Typography;
 
@@ -57,7 +57,10 @@ export const EditPermissionModal: FC<EditPermissionModalProps> = ({
   const { user } = useAuth();
 
   // Fetch existing permissions
-  const { data: existingPermission, isLoading } = useRolePermissionByRoleAndResource(role, resource);
+  const { data: existingPermission, isLoading } = useRolePermissionByRoleAndResource(
+    role,
+    resource
+  );
 
   // Mutation to assign/update permissions
   const { mutate: assignPermission, isPending } = useAssignRolePermission();

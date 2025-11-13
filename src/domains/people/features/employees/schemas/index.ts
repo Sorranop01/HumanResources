@@ -4,6 +4,7 @@
  */
 
 import { z } from 'zod';
+import { FirestoreTimestampSchema } from '@/shared/schemas/common.schema';
 
 // ============================================
 // Enum Schemas
@@ -233,8 +234,10 @@ export const EmployeeSchema = z.object({
   // Personal Information
   firstName: z.string().min(1, 'ชื่อต้องไม่ว่าง').max(100),
   lastName: z.string().min(1, 'นามสกุลต้องไม่ว่าง').max(100),
+  displayName: z.string().optional(), // Denormalized
   thaiFirstName: z.string().min(1, 'ชื่อภาษาไทยต้องไม่ว่าง').max(100),
   thaiLastName: z.string().min(1, 'นามสกุลภาษาไทยต้องไม่ว่าง').max(100),
+  thaiDisplayName: z.string().optional(), // Denormalized
   nickname: z.string().nullable().optional(),
   email: z.string().email('รูปแบบอีเมลไม่ถูกต้อง'),
   personalEmail: z.string().email('รูปแบบอีเมลไม่ถูกต้อง').nullable().optional(),
@@ -272,8 +275,10 @@ export const EmployeeSchema = z.object({
   workType: WorkTypeSchema,
 
   position: z.string().min(1, 'ตำแหน่งต้องไม่ว่าง'),
-  level: z.string().nullable().optional(),
+  positionName: z.string().optional(), // Denormalized
+  level: z.string().optional(),
   department: z.string().min(1, 'แผนกต้องไม่ว่าง'),
+  departmentName: z.string().optional(), // Denormalized
   division: z.string().nullable().optional(),
   team: z.string().nullable().optional(),
 
@@ -308,15 +313,16 @@ export const EmployeeSchema = z.object({
         uploadDate: z.date(),
         uploadedBy: z.string(),
         expiryDate: z.date().optional(),
+        storagePath: z.string().optional(),
       })
     )
     .optional(),
 
   notes: z.string().optional(),
 
-  // Timestamps
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  // Timestamps (Firebase Timestamp - supports both Client and Admin SDK)
+  createdAt: FirestoreTimestampSchema,
+  updatedAt: FirestoreTimestampSchema,
 });
 
 // ============================================
@@ -462,6 +468,29 @@ export const EmployeeFiltersSchema = z.object({
   search: z.string().optional(),
 });
 
+/**
+ * Cloud Function: Create Employee Input Schema
+ * Schema for validating createEmployee Cloud Function input
+ */
+export const CloudFunctionCreateEmployeeSchema = z.object({
+  email: z.string().email('รูปแบบอีเมลไม่ถูกต้อง'),
+  password: z.string().min(6, 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร'),
+  displayName: z.string().min(1, 'ต้องระบุชื่อที่แสดง'),
+  employeeData: CreateEmployeeSchema,
+  role: z.string().optional(),
+  sendWelcomeEmail: z.boolean().optional(),
+});
+
+/**
+ * Cloud Function: Update Employee Input Schema
+ * Schema for validating updateEmployee Cloud Function input
+ */
+export const CloudFunctionUpdateEmployeeSchema = z.object({
+  employeeId: z.string().min(1, 'ต้องระบุ Employee ID'),
+  employeeData: UpdateEmployeeSchema.omit({ id: true }), // Omit id since it's in employeeId
+  updatedBy: z.string().min(1, 'ต้องระบุผู้ที่อัปเดต'),
+});
+
 // ============================================
 // Type Exports
 // ============================================
@@ -476,6 +505,8 @@ export type CreateEmployeeInput = z.infer<typeof CreateEmployeeSchema>;
 export type UpdateEmployeeInput = z.infer<typeof UpdateEmployeeSchema>;
 export type EmployeeFilters = z.infer<typeof EmployeeFiltersSchema>;
 export type EmployeeStatus = z.infer<typeof EmployeeStatusSchema>;
+export type CloudFunctionCreateEmployeeInput = z.infer<typeof CloudFunctionCreateEmployeeSchema>;
+export type CloudFunctionUpdateEmployeeInput = z.infer<typeof CloudFunctionUpdateEmployeeSchema>;
 
 // ============================================
 // Helper Functions
@@ -504,7 +535,6 @@ export function formDataToCreateInput(formData: EmployeeFormInput): Partial<Crea
   const now = new Date();
 
   return {
-    employeeCode: formData.employeeCode,
     firstName: formData.firstName,
     lastName: formData.lastName,
     thaiFirstName: formData.thaiFirstName,
@@ -519,7 +549,6 @@ export function formDataToCreateInput(formData: EmployeeFormInput): Partial<Crea
       phoneNumber: formData.emergencyContactPhone,
     },
     dateOfBirth: new Date(formData.dateOfBirth),
-    age: new Date().getFullYear() - new Date(formData.dateOfBirth).getFullYear(),
     gender: formData.gender,
     maritalStatus: formData.maritalStatus,
     nationality: formData.nationality,
@@ -597,3 +626,5 @@ export function formDataToCreateInput(formData: EmployeeFormInput): Partial<Crea
     },
   };
 }
+
+export type EmployeeCreatePayload = ReturnType<typeof formDataToCreateInput>;

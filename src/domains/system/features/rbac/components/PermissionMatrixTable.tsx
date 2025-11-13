@@ -1,10 +1,10 @@
-import { CheckCircleFilled, EditOutlined, MinusCircleFilled } from '@ant-design/icons';
+import { EditOutlined, MinusCircleFilled } from '@ant-design/icons';
 import { Button, Space, Table, Tag, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { FC } from 'react';
+import type { Role } from '@/shared/constants/roles';
 import type { RoleDefinition, RolePermission } from '../types/rbacTypes';
 import type { Permission, Resource } from '../utils/checkPermission';
-import type { Role } from '@/shared/constants/roles';
 
 const RESOURCES: Resource[] = [
   'employees',

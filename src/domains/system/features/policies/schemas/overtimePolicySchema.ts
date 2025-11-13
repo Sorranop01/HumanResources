@@ -4,6 +4,7 @@
  */
 
 import { z } from 'zod';
+import { FirestoreTimestampSchema } from '@/shared/schemas/common.schema';
 
 /**
  * Overtime Type Schema
@@ -149,3 +150,67 @@ export const OvertimeCalculationInputSchema = z.object({
 });
 
 export type OvertimeCalculationInputValidated = z.infer<typeof OvertimeCalculationInputSchema>;
+
+/**
+ * Complete Overtime Policy Schema (for seed scripts and Firestore)
+ * Includes all fields with Firestore Timestamps
+ */
+export const OvertimePolicySchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1).max(100),
+  nameEn: z.string().min(1).max(100),
+  description: z.string().max(500),
+  code: z.string().min(1).max(50),
+
+  // Eligibility
+  eligibleEmployeeTypes: z.array(z.string()),
+  eligiblePositions: z.array(z.string()),
+  eligibleDepartments: z.array(z.string()),
+
+  // Overtime rules
+  rules: z.array(OvertimeRuleSchema),
+
+  // Approval requirements
+  requiresApproval: z.boolean(),
+  approvalThresholdHours: z.number().min(0).max(24).optional(),
+  autoApproveUnder: z.number().min(0).max(24).optional(),
+
+  // Special rates
+  holidayRate: z.number().min(1).max(10),
+  weekendRate: z.number().min(1).max(10),
+  nightShiftRate: z.number().min(0).max(5).optional(),
+
+  // Tracking
+  trackBySystem: z.boolean(),
+  allowManualEntry: z.boolean(),
+
+  // Payment
+  paymentMethod: PaymentMethodSchema,
+  paymentFrequency: PaymentFrequencySchema,
+
+  // Effective dates
+  effectiveDate: FirestoreTimestampSchema,
+  expiryDate: FirestoreTimestampSchema.optional(),
+
+  // Metadata
+  isActive: z.boolean(),
+  tenantId: z.string().min(1),
+  createdAt: FirestoreTimestampSchema,
+  updatedAt: FirestoreTimestampSchema,
+  createdBy: z.string().optional(),
+  updatedBy: z.string().optional(),
+});
+
+export type OvertimePolicy = z.infer<typeof OvertimePolicySchema>;
+
+/**
+ * Validation Helpers
+ */
+export function validateOvertimePolicy(data: unknown) {
+  return OvertimePolicySchema.parse(data);
+}
+
+export function safeValidateOvertimePolicy(data: unknown) {
+  const result = OvertimePolicySchema.safeParse(data);
+  return result.success ? result.data : null;
+}

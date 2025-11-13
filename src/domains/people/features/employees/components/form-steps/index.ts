@@ -2,7 +2,7 @@
  * Form Steps Exports
  */
 
-export { PersonalInfoStep } from './PersonalInfoStep';
-export { EmploymentInfoStep } from './EmploymentInfoStep';
 export { CompensationStep } from './CompensationStep';
+export { EmploymentInfoStep } from './EmploymentInfoStep';
+export { PersonalInfoStep } from './PersonalInfoStep';
 export { TaxSocialSecurityStep } from './TaxSocialSecurityStep';

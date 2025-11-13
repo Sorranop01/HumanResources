@@ -5,13 +5,13 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
+import { holidayService } from '../services/holidayService';
 import type {
   CreatePublicHolidayInput,
   PublicHolidayFilters,
   UpdatePublicHolidayInput,
   WorkingDaysCalculationInput,
 } from '../types/holiday';
-import { holidayService } from '../services/holidayService';
 
 /**
  * Query keys for holidays
@@ -86,12 +86,7 @@ export function useHolidaysInRange(startDate: Date, endDate: Date) {
 /**
  * Check if date is a holiday
  */
-export function useIsHoliday(
-  date: Date,
-  location?: string,
-  region?: string,
-  department?: string
-) {
+export function useIsHoliday(date: Date, location?: string, region?: string, department?: string) {
   return useQuery({
     queryKey: holidayKeys.isHoliday(date, location, region, department),
     queryFn: () => holidayService.isHoliday(date, location, region, department),

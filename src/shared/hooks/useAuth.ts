@@ -8,6 +8,7 @@ import type { User } from '@/shared/types';
 interface UseAuthReturn {
   user: User | null;
   firebaseUser: FirebaseUser | null;
+  employeeId: string | null;
   loading: boolean;
   isAuthenticated: boolean;
 }
@@ -81,6 +82,7 @@ export function useAuth(): UseAuthReturn {
   return {
     user: userProfile || null,
     firebaseUser,
+    employeeId: userProfile?.employeeId || null,
     loading,
     isAuthenticated: !!firebaseUser && !!userProfile,
   };

@@ -4,6 +4,7 @@
  */
 
 import { z } from 'zod';
+import { FirestoreTimestampSchema } from '@/shared/schemas/common.schema';
 
 /**
  * Time format validation (HH:mm)
@@ -147,3 +148,73 @@ export const TimeCheckInputSchema = z.object({
 });
 
 export type TimeCheckInput = z.infer<typeof TimeCheckInputSchema>;
+
+/**
+ * Complete Work Schedule Policy Schema (for seed scripts and Firestore)
+ * Includes all fields with Firestore Timestamps
+ */
+export const WorkSchedulePolicySchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1).max(100),
+  nameEn: z.string().min(1).max(100),
+  description: z.string().max(500),
+  code: z.string().min(1).max(50),
+
+  // Working hours
+  hoursPerDay: z.number().min(1).max(24),
+  hoursPerWeek: z.number().min(1).max(168),
+  daysPerWeek: z.number().min(1).max(7),
+
+  // Working days
+  workingDays: WorkingDaysSchema,
+
+  // Time configuration
+  standardStartTime: z.string().regex(timeFormatRegex, 'Must be in HH:mm format'),
+  standardEndTime: z.string().regex(timeFormatRegex, 'Must be in HH:mm format'),
+  breakDuration: z.number().min(0).max(240),
+
+  // Late/Early rules
+  lateThresholdMinutes: z.number().min(0).max(120),
+  earlyLeaveThresholdMinutes: z.number().min(0).max(120),
+  gracePeriodMinutes: z.number().min(0).max(60),
+
+  // Flexible time
+  allowFlexibleTime: z.boolean(),
+  flexibleStartTimeRange: FlexibleTimeRangeSchema.optional(),
+  flexibleEndTimeRange: FlexibleTimeRangeSchema.optional(),
+
+  // Overtime
+  overtimeStartsAfter: z.number().min(0).max(120),
+  maxOvertimeHoursPerDay: z.number().min(0).max(12),
+
+  // Applicable to
+  applicableDepartments: z.array(z.string()),
+  applicablePositions: z.array(z.string()),
+  applicableEmploymentTypes: z.array(z.string()),
+
+  // Effective dates
+  effectiveDate: FirestoreTimestampSchema,
+  expiryDate: FirestoreTimestampSchema.optional(),
+
+  // Metadata
+  isActive: z.boolean(),
+  tenantId: z.string().min(1),
+  createdAt: FirestoreTimestampSchema,
+  updatedAt: FirestoreTimestampSchema,
+  createdBy: z.string().optional(),
+  updatedBy: z.string().optional(),
+});
+
+export type WorkSchedulePolicy = z.infer<typeof WorkSchedulePolicySchema>;
+
+/**
+ * Validation Helpers
+ */
+export function validateWorkSchedulePolicy(data: unknown) {
+  return WorkSchedulePolicySchema.parse(data);
+}
+
+export function safeValidateWorkSchedulePolicy(data: unknown) {
+  const result = WorkSchedulePolicySchema.safeParse(data);
+  return result.success ? result.data : null;
+}

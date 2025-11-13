@@ -9,8 +9,8 @@ export const attendanceKeys = {
 };
 
 export const useTodayAttendance = () => {
-  const { user } = useAuth();
-  const userId = user?.uid ?? '';
+  const { firebaseUser } = useAuth();
+  const userId = firebaseUser?.uid ?? '';
 
   return useQuery({
     queryKey: attendanceKeys.today(userId),

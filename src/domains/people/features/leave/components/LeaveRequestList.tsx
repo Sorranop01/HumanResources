@@ -5,13 +5,15 @@
 
 import { EyeOutlined } from '@ant-design/icons';
 import { Button, Space, Table, Tag } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import type { FC } from 'react';
-import { useLeaveRequests } from '../hooks/useLeaveRequests';
-import type { LeaveRequest, LeaveRequestFilters } from '../types';
+import type { LeaveRequest } from '../types';
 
 interface LeaveRequestListProps {
-  filters?: LeaveRequestFilters;
+  requests: LeaveRequest[];
+  isLoading?: boolean;
+  showEmployeeName?: boolean;
   onViewDetail?: (id: string) => void;
 }
 
@@ -23,26 +25,18 @@ const statusConfig = {
   cancelled: { color: 'default', text: 'ยกเลิกแล้ว' },
 };
 
-export const LeaveRequestList: FC<LeaveRequestListProps> = ({ filters, onViewDetail }) => {
-  const { data: requests, isLoading } = useLeaveRequests(filters);
-
-  const columns = [
+export const LeaveRequestList: FC<LeaveRequestListProps> = ({
+  requests,
+  isLoading,
+  showEmployeeName = true,
+  onViewDetail,
+}) => {
+  const baseColumns: ColumnsType<LeaveRequest> = [
     {
       title: 'เลขที่คำขอ',
       dataIndex: 'requestNumber',
       key: 'requestNumber',
       width: 150,
-    },
-    {
-      title: 'พนักงาน',
-      dataIndex: 'employeeName',
-      key: 'employeeName',
-      render: (_: string, record: LeaveRequest) => (
-        <div>
-          <div>{record.employeeName}</div>
-          <div style={{ fontSize: 12, color: '#8c8c8c' }}>{record.employeeCode}</div>
-        </div>
-      ),
     },
     {
       title: 'ประเภท',
@@ -78,7 +72,7 @@ export const LeaveRequestList: FC<LeaveRequestListProps> = ({ filters, onViewDet
       key: 'status',
       width: 120,
       render: (status: keyof typeof statusConfig) => (
-        <Tag color={statusConfig[status].color}>{statusConfig[status].text}</Tag>
+        <Tag color={statusConfig[status]?.color}>{statusConfig[status]?.text}</Tag>
       ),
     },
     {
@@ -109,6 +103,21 @@ export const LeaveRequestList: FC<LeaveRequestListProps> = ({ filters, onViewDet
       ),
     },
   ];
+
+  const columns = [...baseColumns];
+  if (showEmployeeName) {
+    columns.splice(1, 0, {
+      title: 'พนักงาน',
+      dataIndex: 'employeeName',
+      key: 'employeeName',
+      render: (_: string, record: LeaveRequest) => (
+        <div>
+          <div>{record.employeeName}</div>
+          <div style={{ fontSize: 12, color: '#8c8c8c' }}>{record.employeeCode}</div>
+        </div>
+      ),
+    });
+  }
 
   return (
     <Table

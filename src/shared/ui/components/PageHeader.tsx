@@ -17,21 +17,26 @@ interface PageHeaderProps {
 }
 
 export function PageHeader({ title, breadcrumbs, extra }: PageHeaderProps) {
-  return (
-    <div style={{ marginBottom: 24 }}>
-      {breadcrumbs && breadcrumbs.length > 0 && (
-        <Breadcrumb style={{ marginBottom: 16 }}>
-          <Breadcrumb.Item>
+  // Convert breadcrumbs to Ant Design items format
+  const breadcrumbItems = breadcrumbs
+    ? [
+        {
+          title: (
             <Link to="/dashboard">
               <HomeOutlined />
             </Link>
-          </Breadcrumb.Item>
-          {breadcrumbs.map((item) => (
-            <Breadcrumb.Item key={item.path || item.label}>
-              {item.path ? <Link to={item.path}>{item.label}</Link> : item.label}
-            </Breadcrumb.Item>
-          ))}
-        </Breadcrumb>
+          ),
+        },
+        ...breadcrumbs.map((item) => ({
+          title: item.path ? <Link to={item.path}>{item.label}</Link> : item.label,
+        })),
+      ]
+    : [];
+
+  return (
+    <div style={{ marginBottom: 24 }}>
+      {breadcrumbs && breadcrumbs.length > 0 && (
+        <Breadcrumb items={breadcrumbItems} style={{ marginBottom: 16 }} />
       )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Title level={2} style={{ margin: 0 }}>

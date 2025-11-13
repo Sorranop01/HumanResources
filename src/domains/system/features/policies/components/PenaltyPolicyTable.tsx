@@ -3,12 +3,12 @@
  * Table component for displaying and managing penalty policies
  */
 
-import type { FC } from 'react';
+import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
-import type { PenaltyPolicy } from '../types/penaltyPolicy';
+import type { FC } from 'react';
 import { useDeletePenaltyPolicy, usePenaltyPolicies } from '../hooks/usePenaltyPolicies';
+import type { PenaltyPolicy } from '../types/penaltyPolicy';
 
 export const PenaltyPolicyTable: FC = () => {
   const { data: policies, isLoading } = usePenaltyPolicies({ isActive: true });
@@ -131,9 +131,7 @@ export const PenaltyPolicyTable: FC = () => {
       <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
         <div>
           <h3>กฎการปรับ (Penalty Policies)</h3>
-          <p style={{ color: '#666', margin: 0 }}>
-            กำหนดค่าปรับสำหรับการมาสาย ขาดงาน และฝ่าฝืนกฎ
-          </p>
+          <p style={{ color: '#666', margin: 0 }}>กำหนดค่าปรับสำหรับการมาสาย ขาดงาน และฝ่าฝืนกฎ</p>
         </div>
         <Button type="primary" icon={<PlusOutlined />}>
           เพิ่ม Policy

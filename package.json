@@ -21,13 +21,16 @@
     "emulators:with-build": "pnpm run build:functions && firebase emulators:start",
     "emulators:export": "firebase emulators:export ./emulator-data",
     "emulators:import": "firebase emulators:start --import=./emulator-data",
-    "seed:roles": "tsx scripts/seed-login-users/seed-roles-admin.ts",
-    "seed:users": "tsx scripts/seed-login-users/seed-users-admin.ts",
-    "seed:employees": "tsx scripts/seed-login-users/seed-employees.ts",
-    "seed:all": "tsx scripts/seed-login-users/seed-all.ts",
-    "seed:leaveTypes": "tsx scripts/seed-login-users/seedLeaveTypes.ts",
-    "clear:emulator": "tsx scripts/seed-login-users/clear-emulator-data-admin.ts",
-    "reset:emulator": "pnpm run clear:emulator && pnpm run seed:all",
+    "seed:rbac": "cd packages/scripts && pnpm seed:rbac",
+    "seed:policies": "cd packages/scripts && pnpm seed:policies",
+    "seed:people": "cd packages/scripts && pnpm seed:people",
+    "seed:candidates": "cd packages/scripts && pnpm seed:candidates",
+    "seed:users": "cd packages/scripts && pnpm seed:users",
+    "seed:attendance": "cd packages/scripts && tsx src/seed/attendance/index.ts",
+    "seed:all": "cd packages/scripts && pnpm seed:all",
+    "clear:emulator": "cd packages/scripts && pnpm clear:emulator",
+    "reset:emulator": "pnpm clear:emulator && pnpm seed:all",
+    "clean:employees": "tsx scripts/clean-invalid-employees.ts",
     "deploy:hosting:dev": "firebase deploy --only hosting --project hr-dev",
     "deploy:functions:dev": "firebase deploy --only functions --project hr-dev"
   },
@@ -40,6 +43,7 @@
     "dayjs": "^1.11.10",
     "firebase": "^12.0.0",
     "lucide-react": "^0.542.0",
+    "pdf-lib": "^1.17.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.66.0",
@@ -54,7 +58,7 @@
     "@types/react": "^18.2.79",
     "@types/react-dom": "^18.2.25",
     "@vitejs/plugin-react": "^4.3.4",
-    "@vitest/coverage-v8": "^2.1.8",
+    "@vitest/coverage-v8": "^2.1.9",
     "@vitest/ui": "^2.1.8",
     "autoprefixer": "^10.4.20",
     "dotenv": "^17.2.3",
@@ -64,12 +68,17 @@
     "tailwindcss": "^3.4.17",
     "tsx": "^4.20.6",
     "typescript": "^5.5.4",
-    "vite": "^6.0.3",
-    "vitest": "^2.1.8"
+    "vite": "^6.4.1",
+    "vitest": "^2.1.9"
   },
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=10.0.0"
   },
-  "packageManager": "pnpm@10.0.0"
+  "packageManager": "pnpm@10.0.0",
+  "pnpm": {
+    "overrides": {
+      "esbuild": "^0.25.0"
+    }
+  }
 }

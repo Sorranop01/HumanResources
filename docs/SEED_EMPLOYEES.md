@@ -305,7 +305,7 @@ scripts/seed-login-users/
 
 ### การทำงาน
 
-1. Connect to Firestore Emulator (localhost:8080)
+1. Connect to Firestore Emulator (localhost:8888)
 2. Fetch existing users (ถ้ามี)
 3. Generate mock data สำหรับแต่ละพนักงาน
 4. Save to `employees` collection

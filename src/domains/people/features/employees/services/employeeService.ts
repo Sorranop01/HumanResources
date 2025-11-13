@@ -13,8 +13,8 @@ import {
 } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import {
+  type EmployeeCreatePayload,
   type EmployeeFilters,
-  type EmployeeFormInput,
   EmployeeSchema,
 } from '@/domains/people/features/employees/schemas';
 import type { Employee } from '@/domains/people/features/employees/types';
@@ -114,9 +114,25 @@ export const employeeService = {
         });
 
         if (result.success) {
-          employees.push(result.data);
+          const employee = result.data;
+          // Add denormalized fields if missing
+          employees.push({
+            ...employee,
+            displayName: employee.displayName || `${employee.firstName} ${employee.lastName}`,
+            thaiDisplayName:
+              employee.thaiDisplayName || `${employee.thaiFirstName} ${employee.thaiLastName}`,
+            positionName: employee.positionName || employee.position,
+            departmentName: employee.departmentName || employee.department,
+          } as Employee);
         } else {
-          console.error(`Invalid employee data for ID ${docSnap.id}:`, result.error);
+          console.warn(
+            `⚠️ Skipping invalid employee ${docSnap.id} (${data.email || 'no email'}):`,
+            'Schema validation failed. Run seed scripts to fix data.'
+          );
+          // Log detailed errors only in development
+          if (import.meta.env.DEV) {
+            console.error('Validation errors:', result.error.errors);
+          }
         }
       }
 
@@ -153,7 +169,16 @@ export const employeeService = {
         throw new Error('ข้อมูลพนักงานไม่ถูกต้อง');
       }
 
-      return result.data;
+      const employee = result.data;
+      // Add denormalized fields if missing
+      return {
+        ...employee,
+        displayName: employee.displayName || `${employee.firstName} ${employee.lastName}`,
+        thaiDisplayName:
+          employee.thaiDisplayName || `${employee.thaiFirstName} ${employee.thaiLastName}`,
+        positionName: employee.positionName || employee.position,
+        departmentName: employee.departmentName || employee.department,
+      };
     } catch (error) {
       console.error(`Failed to fetch employee ${id}:`, error);
       throw new Error('ไม่สามารถดึงข้อมูลพนักงานได้');
@@ -163,7 +188,10 @@ export const employeeService = {
   /**
    * Create new employee by calling a Cloud Function
    */
-  async create(payload: { password?: string; employeeData: EmployeeFormInput }): Promise<unknown> {
+  async create(payload: {
+    password?: string;
+    employeeData: EmployeeCreatePayload;
+  }): Promise<unknown> {
     if (!payload.password) {
       throw new Error('Password is required to create a new employee.');
     }
@@ -181,8 +209,8 @@ export const employeeService = {
         employeeData: {
           ...employeeData,
           // Convert date strings from form to Date objects
-          dateOfBirth: new Date(employeeData.dateOfBirth),
-          hireDate: new Date(employeeData.hireDate),
+          dateOfBirth: employeeData.dateOfBirth ? new Date(employeeData.dateOfBirth) : undefined,
+          hireDate: employeeData.hireDate ? new Date(employeeData.hireDate) : undefined,
         },
       });
 

@@ -2,13 +2,12 @@ import { ReloadOutlined, SafetyOutlined } from '@ant-design/icons';
 import { Alert, Button, Card, Space, Typography } from 'antd';
 import type { FC } from 'react';
 import { useState } from 'react';
+import type { Role } from '@/shared/constants/roles';
 import { EditPermissionModal } from '../components/EditPermissionModal';
 import { PermissionMatrixTable } from '../components/PermissionMatrixTable';
 import { useAllRolePermissions } from '../hooks/usePermissions';
 import { useRoles } from '../hooks/useRoles';
-import type { RolePermission } from '../types/rbacTypes';
 import type { Resource } from '../utils/checkPermission';
-import type { Role } from '@/shared/constants/roles';
 
 const { Title, Text } = Typography;
 
@@ -73,9 +72,7 @@ export const PermissionMatrixPage: FC = () => {
               <Title level={3} style={{ margin: 0, marginBottom: 8 }}>
                 <SafetyOutlined /> Permission Matrix
               </Title>
-              <Text type="secondary">
-                จัดการสิทธิ์การเข้าถึงของแต่ละบทบาทในระบบ
-              </Text>
+              <Text type="secondary">จัดการสิทธิ์การเข้าถึงของแต่ละบทบาทในระบบ</Text>
             </div>
             <Button icon={<ReloadOutlined />} onClick={handleRefresh}>
               รีเฟรช

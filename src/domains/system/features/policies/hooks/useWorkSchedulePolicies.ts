@@ -5,13 +5,12 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
+import { workSchedulePolicyService } from '../services/workSchedulePolicyService';
 import type {
   CreateWorkSchedulePolicyInput,
   UpdateWorkSchedulePolicyInput,
-  WorkSchedulePolicy,
   WorkSchedulePolicyFilters,
 } from '../types/workSchedulePolicy';
-import { workSchedulePolicyService } from '../services/workSchedulePolicyService';
 
 /**
  * Query keys for work schedule policies
@@ -19,7 +18,8 @@ import { workSchedulePolicyService } from '../services/workSchedulePolicyService
 export const workSchedulePolicyKeys = {
   all: ['workSchedulePolicies'] as const,
   lists: () => [...workSchedulePolicyKeys.all, 'list'] as const,
-  list: (filters?: WorkSchedulePolicyFilters) => [...workSchedulePolicyKeys.lists(), filters] as const,
+  list: (filters?: WorkSchedulePolicyFilters) =>
+    [...workSchedulePolicyKeys.lists(), filters] as const,
   details: () => [...workSchedulePolicyKeys.all, 'detail'] as const,
   detail: (id: string) => [...workSchedulePolicyKeys.details(), id] as const,
   byCode: (code: string) => [...workSchedulePolicyKeys.all, 'code', code] as const,
@@ -64,8 +64,7 @@ export function useCreateWorkSchedulePolicy() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: CreateWorkSchedulePolicyInput) =>
-      workSchedulePolicyService.create(input),
+    mutationFn: (input: CreateWorkSchedulePolicyInput) => workSchedulePolicyService.create(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: workSchedulePolicyKeys.lists() });
       message.success('สร้าง Work Schedule Policy สำเร็จ');

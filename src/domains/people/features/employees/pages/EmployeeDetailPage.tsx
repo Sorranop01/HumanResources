@@ -3,29 +3,59 @@
  */
 
 import { ArrowLeftOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Descriptions, Modal, Result, Row, Space, Spin, Tabs, Tag } from 'antd';
-import { type FC, useState } from 'react';
+import {
+  Button,
+  Card,
+  Col,
+  Descriptions,
+  Modal,
+  Result,
+  Row,
+  Space,
+  Spin,
+  Tabs,
+  Tag,
+  Typography,
+} from 'antd';
+import type { FC } from 'react';
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import {
+  DocumentExpiryAlert,
+  DocumentList,
+  DocumentUpload,
+} from '@/domains/people/features/employees/components/DocumentManagement';
+import type { EditBankAccountInput } from '@/domains/people/features/employees/components/EditBankAccountModal';
+import { EditBankAccountModal } from '@/domains/people/features/employees/components/EditBankAccountModal';
+import type { EditBenefitsInput } from '@/domains/people/features/employees/components/EditBenefitsModal';
+import { EditBenefitsModal } from '@/domains/people/features/employees/components/EditBenefitsModal';
+import type { EditSalaryInput } from '@/domains/people/features/employees/components/EditCompensationModal';
+import { EditCompensationModal } from '@/domains/people/features/employees/components/EditCompensationModal';
+import type { EditTaxInput } from '@/domains/people/features/employees/components/EditTaxModal';
+import { EditTaxModal } from '@/domains/people/features/employees/components/EditTaxModal';
 import { useDeleteEmployee } from '@/domains/people/features/employees/hooks/useDeleteEmployee';
 import { useEmployee } from '@/domains/people/features/employees/hooks/useEmployee';
+import { useUpdateEmployee } from '@/domains/people/features/employees/hooks/useUpdateEmployee';
 import type { EmployeeStatus } from '@/domains/people/features/employees/types';
+import type { LeaveRequestFormInput } from '@/domains/people/features/leave';
 import {
   formDataToLeaveRequestInput,
-  LeaveEntitlementCard,
   LeaveRequestForm,
-  type LeaveRequestFormInput,
   LeaveRequestList,
   useCreateLeaveRequest,
 } from '@/domains/people/features/leave';
+import type {
+  SocialSecurity,
+  SocialSecurityFormInput,
+} from '@/domains/people/features/socialSecurity';
 import {
-  type SocialSecurity,
   SocialSecurityCard,
   SocialSecurityForm,
-  type SocialSecurityFormInput,
   useCreateSocialSecurity,
   useDeleteSocialSecurity,
   useUpdateSocialSecurity,
 } from '@/domains/people/features/socialSecurity';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { formatThaiDate } from '@/shared/lib/date';
 import { formatMoney } from '@/shared/lib/format';
 
@@ -46,8 +76,11 @@ const STATUS_LABELS: Record<EmployeeStatus, string> = {
 export const EmployeeDetailPage: FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { data: employee, isLoading, error } = useEmployee(id);
   const { deleteWithConfirm, isPending: isDeleting } = useDeleteEmployee();
+  const updateEmployee = useUpdateEmployee();
+  const uploadedByName = user?.displayName || user?.email || undefined;
 
   // Social Security state
   const [isSocialSecurityModalOpen, setIsSocialSecurityModalOpen] = useState(false);
@@ -59,6 +92,12 @@ export const EmployeeDetailPage: FC = () => {
   // Leave Request state
   const [isLeaveRequestModalOpen, setIsLeaveRequestModalOpen] = useState(false);
   const createLeaveRequest = useCreateLeaveRequest();
+
+  // Edit modals state
+  const [isCompensationModalOpen, setIsCompensationModalOpen] = useState(false);
+  const [isTaxModalOpen, setIsTaxModalOpen] = useState(false);
+  const [isBenefitsModalOpen, setIsBenefitsModalOpen] = useState(false);
+  const [isBankAccountModalOpen, setIsBankAccountModalOpen] = useState(false);
 
   const handleEdit = (): void => {
     if (id) {
@@ -141,7 +180,7 @@ export const EmployeeDetailPage: FC = () => {
           employee: {
             name: `${employee.firstName} ${employee.lastName}`,
             code: employee.employeeCode,
-            salary: employee.salary,
+            salary: employee.salary.baseSalary,
           },
         });
       }
@@ -182,7 +221,7 @@ export const EmployeeDetailPage: FC = () => {
             baseSalary: data.baseSalary,
             currency: data.currency,
             paymentFrequency: data.paymentFrequency,
-            hourlyRate: data.hourlyRate,
+            ...(data.hourlyRate !== undefined ? { hourlyRate: data.hourlyRate } : {}),
           },
         },
       });
@@ -196,13 +235,27 @@ export const EmployeeDetailPage: FC = () => {
     if (!employee) return;
 
     try {
+      const updatedTax = {
+        ...employee.tax,
+        withholdingTax: data.withholdingTax,
+      };
+
+      if (data.taxId !== undefined) {
+        updatedTax.taxId = data.taxId;
+      }
+
+      if (data.withholdingRate !== undefined) {
+        updatedTax.withholdingRate = data.withholdingRate;
+      }
+
+      if (data.taxReliefs !== undefined) {
+        updatedTax.taxReliefs = data.taxReliefs;
+      }
+
       await updateEmployee.mutateAsync({
         id: employee.id,
         data: {
-          tax: {
-            ...employee.tax,
-            ...data,
-          },
+          tax: updatedTax,
         },
       });
       setIsTaxModalOpen(false);
@@ -215,10 +268,32 @@ export const EmployeeDetailPage: FC = () => {
     if (!employee) return;
 
     try {
+      const updatedBenefits = {
+        ...employee.benefits,
+        healthInsurance: data.healthInsurance,
+        lifeInsurance: data.lifeInsurance,
+        providentFund: {
+          ...employee.benefits?.providentFund,
+          isEnrolled: data.providentFund.isEnrolled,
+          ...(data.providentFund.employeeContributionRate !== undefined
+            ? { employeeContributionRate: data.providentFund.employeeContributionRate }
+            : {}),
+          ...(data.providentFund.employerContributionRate !== undefined
+            ? { employerContributionRate: data.providentFund.employerContributionRate }
+            : {}),
+        },
+        annualLeave: data.annualLeave,
+        sickLeave: data.sickLeave,
+      };
+
+      if (data.otherBenefits !== undefined) {
+        updatedBenefits.otherBenefits = data.otherBenefits;
+      }
+
       await updateEmployee.mutateAsync({
         id: employee.id,
         data: {
-          benefits: data,
+          benefits: updatedBenefits,
         },
       });
       setIsBenefitsModalOpen(false);
@@ -231,10 +306,21 @@ export const EmployeeDetailPage: FC = () => {
     if (!employee) return;
 
     try {
+      const updatedBankAccount = {
+        ...employee.bankAccount,
+        bankName: data.bankName,
+        accountNumber: data.accountNumber,
+        accountName: data.accountName,
+      };
+
+      if (data.branchName) {
+        updatedBankAccount.branchName = data.branchName;
+      }
+
       await updateEmployee.mutateAsync({
         id: employee.id,
         data: {
-          bankAccount: data,
+          bankAccount: updatedBankAccount,
         },
       });
       setIsBankAccountModalOpen(false);
@@ -507,7 +593,10 @@ export const EmployeeDetailPage: FC = () => {
                       <Card title="เบี้ยเลี้ยง" style={{ marginBottom: 16 }}>
                         <Descriptions column={1} bordered>
                           {employee.allowances.map((allowance, index) => (
-                            <Descriptions.Item key={index} label={allowance.type}>
+                            <Descriptions.Item
+                              key={`${allowance.type}-${index}`}
+                              label={allowance.type}
+                            >
                               {formatMoney(allowance.amount)} ({allowance.frequency})
                             </Descriptions.Item>
                           ))}
@@ -604,7 +693,19 @@ export const EmployeeDetailPage: FC = () => {
                   </Col>
 
                   <Col xs={24} md={12}>
-                    <Card title="ภาษี">
+                    <Card
+                      title="ภาษี"
+                      extra={
+                        <Button
+                          type="primary"
+                          size="small"
+                          icon={<EditOutlined />}
+                          onClick={() => setIsTaxModalOpen(true)}
+                        >
+                          แก้ไข
+                        </Button>
+                      }
+                    >
                       <Descriptions column={1} bordered>
                         <Descriptions.Item label="หัก ณ ที่จ่าย">
                           {employee.tax.withholdingTax ? '✅ หัก' : '❌ ไม่หัก'}
@@ -625,7 +726,7 @@ export const EmployeeDetailPage: FC = () => {
                         {employee.tax.taxReliefs && employee.tax.taxReliefs.length > 0 && (
                           <Descriptions.Item label="ลดหย่อนภาษี">
                             {employee.tax.taxReliefs.map((relief, index) => (
-                              <div key={index}>
+                              <div key={`${relief.type}-${index}`}>
                                 {relief.type}: {formatMoney(relief.amount)} THB
                               </div>
                             ))}
@@ -636,7 +737,19 @@ export const EmployeeDetailPage: FC = () => {
                   </Col>
 
                   <Col xs={24}>
-                    <Card title="บัญชีธนาคาร">
+                    <Card
+                      title="บัญชีธนาคาร"
+                      extra={
+                        <Button
+                          type="primary"
+                          size="small"
+                          icon={<EditOutlined />}
+                          onClick={() => setIsBankAccountModalOpen(true)}
+                        >
+                          แก้ไข
+                        </Button>
+                      }
+                    >
                       <Descriptions column={{ xs: 1, sm: 2 }} bordered>
                         <Descriptions.Item label="ธนาคาร">
                           {employee.bankAccount.bankName}
@@ -666,7 +779,11 @@ export const EmployeeDetailPage: FC = () => {
                     {employee.education && employee.education.length > 0 && (
                       <Card title="ประวัติการศึกษา" style={{ marginBottom: 16 }}>
                         {employee.education.map((edu, index) => (
-                          <Card key={index} type="inner" style={{ marginBottom: 8 }}>
+                          <Card
+                            key={`${edu.institution}-${index}`}
+                            type="inner"
+                            style={{ marginBottom: 8 }}
+                          >
                             <Descriptions column={{ xs: 1, sm: 2 }} bordered>
                               <Descriptions.Item label="ระดับการศึกษา">
                                 {edu.level === 'bachelor'
@@ -700,7 +817,11 @@ export const EmployeeDetailPage: FC = () => {
                     {employee.certifications && employee.certifications.length > 0 && (
                       <Card title="ใบอนุญาต / ใบรับรอง">
                         {employee.certifications.map((cert, index) => (
-                          <Card key={index} type="inner" style={{ marginBottom: 8 }}>
+                          <Card
+                            key={`${cert.name}-${index}`}
+                            type="inner"
+                            style={{ marginBottom: 8 }}
+                          >
                             <Descriptions column={{ xs: 1, sm: 2 }} bordered>
                               <Descriptions.Item label="ชื่อใบอนุญาต">{cert.name}</Descriptions.Item>
                               <Descriptions.Item label="หน่วยงานที่ออก">
@@ -731,6 +852,30 @@ export const EmployeeDetailPage: FC = () => {
               ),
             },
             {
+              key: 'documents',
+              label: 'เอกสารพนักงาน',
+              children: (
+                <Row gutter={[16, 16]}>
+                  <Col span={24}>
+                    <DocumentExpiryAlert documents={employee.documents ?? []} />
+                  </Col>
+                  <Col xs={24} lg={10}>
+                    <Card title="อัปโหลดเอกสาร" style={{ marginBottom: 16 }}>
+                      <DocumentUpload
+                        employeeId={employee.id}
+                        uploadedBy={uploadedByName ?? 'system'}
+                      />
+                    </Card>
+                  </Col>
+                  <Col xs={24} lg={14}>
+                    <Card title="รายการเอกสาร">
+                      <DocumentList employeeId={employee.id} documents={employee.documents ?? []} />
+                    </Card>
+                  </Col>
+                </Row>
+              ),
+            },
+            {
               key: 'socialSecurity',
               label: 'ประกันสังคม',
               children: (
@@ -746,9 +891,9 @@ export const EmployeeDetailPage: FC = () => {
               key: 'leaveEntitlements',
               label: 'สิทธิ์การลา',
               children: (
-                <div>
-                  <LeaveEntitlementCard employeeId={employee.id} />
-                </div>
+                <Card>
+                  <Typography.Text>ยังไม่มีข้อมูลสิทธิ์การลา</Typography.Text>
+                </Card>
               ),
             },
             {
@@ -761,7 +906,7 @@ export const EmployeeDetailPage: FC = () => {
                       สร้างคำขอลา
                     </Button>
                   </div>
-                  <LeaveRequestList filters={{ employeeId: employee.id }} />
+                  <LeaveRequestList requests={[]} showEmployeeName={false} />
                 </div>
               ),
             },
@@ -805,6 +950,81 @@ export const EmployeeDetailPage: FC = () => {
           loading={createLeaveRequest.isPending}
         />
       </Modal>
+
+      {/* Edit Compensation Modal */}
+      {employee && (
+        <EditCompensationModal
+          open={isCompensationModalOpen}
+          onClose={() => setIsCompensationModalOpen(false)}
+          onSubmit={handleEditCompensation}
+          initialData={{
+            baseSalary: employee.salary.baseSalary,
+            currency: employee.salary.currency,
+            paymentFrequency: employee.salary.paymentFrequency,
+            ...(employee.salary.hourlyRate !== undefined
+              ? { hourlyRate: employee.salary.hourlyRate }
+              : {}),
+          }}
+          loading={updateEmployee.isPending}
+        />
+      )}
+
+      {/* Edit Tax Modal */}
+      {employee && (
+        <EditTaxModal
+          open={isTaxModalOpen}
+          onClose={() => setIsTaxModalOpen(false)}
+          onSubmit={handleEditTax}
+          initialData={{
+            withholdingTax: employee.tax.withholdingTax,
+            ...(employee.tax.taxId !== undefined ? { taxId: employee.tax.taxId } : {}),
+            ...(employee.tax.withholdingRate !== undefined
+              ? { withholdingRate: employee.tax.withholdingRate }
+              : {}),
+            ...(employee.tax.taxReliefs !== undefined
+              ? { taxReliefs: employee.tax.taxReliefs }
+              : {}),
+          }}
+          loading={updateEmployee.isPending}
+        />
+      )}
+
+      {/* Edit Benefits Modal */}
+      {employee && (
+        <EditBenefitsModal
+          open={isBenefitsModalOpen}
+          onClose={() => setIsBenefitsModalOpen(false)}
+          onSubmit={handleEditBenefits}
+          initialData={
+            employee.benefits ?? {
+              healthInsurance: false,
+              lifeInsurance: false,
+              providentFund: { isEnrolled: false },
+              annualLeave: 0,
+              sickLeave: 0,
+            }
+          }
+          loading={updateEmployee.isPending}
+        />
+      )}
+
+      {/* Edit Bank Account Modal */}
+      {employee && (
+        <EditBankAccountModal
+          open={isBankAccountModalOpen}
+          onClose={() => setIsBankAccountModalOpen(false)}
+          onSubmit={handleEditBankAccount}
+          initialData={{
+            bankName: employee.bankAccount.bankName,
+            accountNumber: employee.bankAccount.accountNumber,
+            accountName: employee.bankAccount.accountName,
+            ...(employee.bankAccount.branchName
+              ? { branchName: employee.bankAccount.branchName }
+              : {}),
+          }}
+          loading={updateEmployee.isPending}
+        />
+      )}
     </div>
   );
 };

@@ -7,34 +7,43 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Button, Col, DatePicker, Form, Input, InputNumber, Row, Select } from 'antd';
 import dayjs from 'dayjs';
 import type { FC } from 'react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import {
-  type EmployeeFormInput,
-  EmployeeFormSchema,
-} from '@/domains/people/features/employees/schemas';
+import { z } from 'zod';
+import { EmployeeStatusSchema } from '@/domains/people/features/employees/schemas';
 import type { Employee } from '@/domains/people/features/employees/types';
+import { DepartmentSelect } from '@/domains/system/features/settings/departments/components/DepartmentSelect';
+import { PositionSelect } from '@/domains/system/features/settings/positions/components/PositionSelect';
 
 const { Option } = Select;
 
+const phonePattern = /^[0-9]{9,10}$/;
+
+const QuickEmployeeFormSchema = z.object({
+  employeeCode: z.string().min(1, 'กรุณากรอกรหัสพนักงาน'),
+  status: EmployeeStatusSchema,
+  firstName: z.string().min(1, 'กรุณากรอกชื่อ (อังกฤษ)'),
+  lastName: z.string().min(1, 'กรุณากรอกนามสกุล (อังกฤษ)'),
+  thaiFirstName: z.string().min(1, 'กรุณากรอกชื่อ (ไทย)'),
+  thaiLastName: z.string().min(1, 'กรุณากรอกนามสกุล (ไทย)'),
+  email: z.string().email('รูปแบบอีเมลไม่ถูกต้อง'),
+  phoneNumber: z.string().regex(phonePattern, 'เบอร์โทรศัพท์ต้องเป็นตัวเลข 9-10 หลัก'),
+  dateOfBirth: z.string().min(1, 'กรุณาเลือกวันเกิด'),
+  hireDate: z.string().min(1, 'กรุณาเลือกวันเริ่มงาน'),
+  position: z.string().min(1, 'กรุณาเลือกตำแหน่ง'),
+  department: z.string().min(1, 'กรุณาเลือกแผนก'),
+  salary: z.number().nonnegative('เงินเดือนต้องไม่ติดลบ'),
+  photoURL: z.string().url('URL รูปภาพไม่ถูกต้อง').optional().or(z.literal('')),
+});
+
+export type EmployeeQuickFormValues = z.infer<typeof QuickEmployeeFormSchema>;
+
 interface EmployeeFormProps {
   initialData?: Employee | undefined;
-  onSubmit: (data: EmployeeFormInput) => void | Promise<void>;
+  onSubmit: (data: EmployeeQuickFormValues) => void | Promise<void>;
   loading?: boolean | undefined;
   submitText?: string | undefined;
 }
-
-const DEPARTMENTS = [
-  'ฝ่ายบุคคล',
-  'ฝ่ายการเงิน',
-  'ฝ่ายขาย',
-  'ฝ่ายการตลาด',
-  'ฝ่ายไอที',
-  'ฝ่ายปฏิบัติการ',
-  'ฝ่ายผลิต',
-];
-
-const POSITIONS = ['ผู้จัดการ', 'หัวหน้าแผนก', 'พนักงานอาวุโส', 'พนักงาน', 'พนักงานฝึกหัด', 'ที่ปรึกษา'];
 
 export const EmployeeForm: FC<EmployeeFormProps> = ({
   initialData,
@@ -42,40 +51,14 @@ export const EmployeeForm: FC<EmployeeFormProps> = ({
   loading = false,
   submitText = 'บันทึก',
 }) => {
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm<EmployeeFormInput>({
-    resolver: zodResolver(EmployeeFormSchema),
-    ...(initialData
-      ? {
-          defaultValues: {
-            employeeCode: initialData.employeeCode,
-            firstName: initialData.firstName,
-            lastName: initialData.lastName,
-            thaiFirstName: initialData.thaiFirstName,
-            thaiLastName: initialData.thaiLastName,
-            email: initialData.email,
-            phoneNumber: initialData.phoneNumber,
-            dateOfBirth: dayjs(initialData.dateOfBirth).format('YYYY-MM-DD'),
-            hireDate: dayjs(initialData.hireDate).format('YYYY-MM-DD'),
-            position: initialData.position,
-            department: initialData.department,
-            salary: initialData.salary,
-            status: initialData.status,
-            photoURL: initialData.photoURL ?? '',
-          },
-        }
-      : {}),
-  });
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | undefined>(
+    initialData?.department
+  );
 
-  // Reset form when initialData changes
-  useEffect(() => {
-    if (initialData) {
-      reset({
+  const defaultValues: EmployeeQuickFormValues = initialData
+    ? {
         employeeCode: initialData.employeeCode,
+        status: initialData.status,
         firstName: initialData.firstName,
         lastName: initialData.lastName,
         thaiFirstName: initialData.thaiFirstName,
@@ -86,10 +69,56 @@ export const EmployeeForm: FC<EmployeeFormProps> = ({
         hireDate: dayjs(initialData.hireDate).format('YYYY-MM-DD'),
         position: initialData.position,
         department: initialData.department,
-        salary: initialData.salary,
+        salary: initialData.salary.baseSalary,
+        photoURL: initialData.photoURL ?? '',
+      }
+    : {
+        employeeCode: '',
+        status: 'active',
+        firstName: '',
+        lastName: '',
+        thaiFirstName: '',
+        thaiLastName: '',
+        email: '',
+        phoneNumber: '',
+        dateOfBirth: dayjs().format('YYYY-MM-DD'),
+        hireDate: dayjs().format('YYYY-MM-DD'),
+        position: '',
+        department: '',
+        salary: 0,
+        photoURL: '',
+      };
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<EmployeeQuickFormValues>({
+    resolver: zodResolver(QuickEmployeeFormSchema),
+    defaultValues,
+  });
+
+  // Reset form when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      reset({
+        employeeCode: initialData.employeeCode,
         status: initialData.status,
+        firstName: initialData.firstName,
+        lastName: initialData.lastName,
+        thaiFirstName: initialData.thaiFirstName,
+        thaiLastName: initialData.thaiLastName,
+        email: initialData.email,
+        phoneNumber: initialData.phoneNumber,
+        dateOfBirth: dayjs(initialData.dateOfBirth).format('YYYY-MM-DD'),
+        hireDate: dayjs(initialData.hireDate).format('YYYY-MM-DD'),
+        position: initialData.position,
+        department: initialData.department,
+        salary: initialData.salary.baseSalary,
         photoURL: initialData.photoURL ?? '',
       });
+      setSelectedDepartmentId(initialData.department);
     }
   }, [initialData, reset]);
 
@@ -306,13 +335,14 @@ export const EmployeeForm: FC<EmployeeFormProps> = ({
               name="department"
               control={control}
               render={({ field }) => (
-                <Select {...field} placeholder="เลือกแผนก" showSearch>
-                  {DEPARTMENTS.map((dept) => (
-                    <Option key={dept} value={dept}>
-                      {dept}
-                    </Option>
-                  ))}
-                </Select>
+                <DepartmentSelect
+                  value={field.value}
+                  onChange={(value) => {
+                    field.onChange(value);
+                    setSelectedDepartmentId(value);
+                  }}
+                  placeholder="เลือกแผนก"
+                />
               )}
             />
           </Form.Item>
@@ -330,13 +360,12 @@ export const EmployeeForm: FC<EmployeeFormProps> = ({
               name="position"
               control={control}
               render={({ field }) => (
-                <Select {...field} placeholder="เลือกตำแหน่ง" showSearch>
-                  {POSITIONS.map((pos) => (
-                    <Option key={pos} value={pos}>
-                      {pos}
-                    </Option>
-                  ))}
-                </Select>
+                <PositionSelect
+                  value={field.value}
+                  onChange={(value) => field.onChange(value)}
+                  {...(selectedDepartmentId ? { departmentId: selectedDepartmentId } : {})}
+                  placeholder="เลือกตำแหน่ง"
+                />
               )}
             />
           </Form.Item>

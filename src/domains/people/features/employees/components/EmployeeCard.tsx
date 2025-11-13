@@ -103,7 +103,7 @@ export const EmployeeCard: FC<EmployeeCardProps> = ({ employee, showDetails = tr
               </span>
             }
           >
-            {formatMoney(employee.salary)}
+            {formatMoney(employee.salary.baseSalary)}
           </Descriptions.Item>
 
           <Descriptions.Item

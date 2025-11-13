@@ -11,26 +11,21 @@ import {
   getDoc,
   getDocs,
   orderBy,
-  query,
   type QueryConstraint,
+  query,
   Timestamp,
   updateDoc,
   where,
 } from 'firebase/firestore';
 import { db } from '@/shared/lib/firebase';
-import type {
-  CreateShiftInput,
-  Shift,
-  ShiftFilters,
-  UpdateShiftInput,
-} from '../types/shift';
+import type { CreateShiftInput, Shift, ShiftFilters, UpdateShiftInput } from '../types/shift';
 
 const COLLECTION_NAME = 'shifts';
 
 /**
  * Convert Firestore document to Shift
  */
-function docToShift(id: string, data: any): Shift {
+function docToShift(id: string, data: DocumentData): Shift {
   return {
     id,
     name: data.name,
@@ -67,10 +62,10 @@ export const shiftService = {
   /**
    * Create shift
    */
-  async create(input: CreateShiftInput): Promise<string> {
+  async create(tenantId: string, input: CreateShiftInput): Promise<string> {
     try {
       // Check if code already exists
-      const existing = await this.getByCode(input.code);
+      const existing = await this.getByCode(tenantId, input.code);
       if (existing) {
         throw new Error('Shift code already exists');
       }
@@ -102,7 +97,7 @@ export const shiftService = {
         isActive: true,
         effectiveDate: Timestamp.fromDate(input.effectiveDate),
         expiryDate: input.expiryDate ? Timestamp.fromDate(input.expiryDate) : null,
-        tenantId: 'default',
+        tenantId,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
       });
@@ -139,9 +134,13 @@ export const shiftService = {
   /**
    * Get shift by code
    */
-  async getByCode(code: string): Promise<Shift | null> {
+  async getByCode(tenantId: string, code: string): Promise<Shift | null> {
     try {
-      const q = query(collection(db, COLLECTION_NAME), where('code', '==', code));
+      const q = query(
+        collection(db, COLLECTION_NAME),
+        where('tenantId', '==', tenantId),
+        where('code', '==', code)
+      );
 
       const snapshot = await getDocs(q);
       if (snapshot.empty) {
@@ -163,9 +162,9 @@ export const shiftService = {
   /**
    * Get all shifts with filters
    */
-  async getAll(filters?: ShiftFilters): Promise<Shift[]> {
+  async getAll(tenantId: string, filters?: ShiftFilters): Promise<Shift[]> {
     try {
-      const constraints: QueryConstraint[] = [];
+      const constraints: QueryConstraint[] = [where('tenantId', '==', tenantId)];
 
       if (filters?.code) {
         constraints.push(where('code', '==', filters.code));
@@ -199,7 +198,7 @@ export const shiftService = {
         throw new Error('Shift not found');
       }
 
-      const updateData: Record<string, any> = {
+      const updateData: Record<string, unknown> = {
         updatedAt: Timestamp.now(),
       };
 

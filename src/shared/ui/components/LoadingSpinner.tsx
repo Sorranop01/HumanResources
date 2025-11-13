@@ -8,14 +8,6 @@ interface LoadingSpinnerProps {
 }
 
 export function LoadingSpinner({ size = 'default', tip, fullscreen = false }: LoadingSpinnerProps) {
-  const spinner = (
-    <Spin
-      indicator={<LoadingOutlined style={{ fontSize: size === 'large' ? 48 : 24 }} spin />}
-      size={size}
-      tip={tip}
-    />
-  );
-
   if (fullscreen) {
     return (
       <div
@@ -27,10 +19,32 @@ export function LoadingSpinner({ size = 'default', tip, fullscreen = false }: Lo
           width: '100vw',
         }}
       >
-        {spinner}
+        <Spin
+          indicator={<LoadingOutlined style={{ fontSize: size === 'large' ? 48 : 24 }} spin />}
+          size={size}
+          tip={tip}
+        />
       </div>
     );
   }
 
-  return spinner;
+  // When not fullscreen, wrap in a div to use tip properly (nested pattern)
+  if (tip) {
+    return (
+      <Spin
+        indicator={<LoadingOutlined style={{ fontSize: size === 'large' ? 48 : 24 }} spin />}
+        size={size}
+        tip={tip}
+      >
+        <div style={{ minHeight: 100 }} />
+      </Spin>
+    );
+  }
+
+  return (
+    <Spin
+      indicator={<LoadingOutlined style={{ fontSize: size === 'large' ? 48 : 24 }} spin />}
+      size={size}
+    />
+  );
 }

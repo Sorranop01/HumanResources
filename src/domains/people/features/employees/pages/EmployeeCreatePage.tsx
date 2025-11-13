@@ -6,8 +6,8 @@ import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Button, Space, Typography } from 'antd';
 import type { FC } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { EmployeeFormWizard } from '../components/EmployeeFormWizard';
 import { ROUTES } from '@/shared/constants/routes';
+import { EmployeeFormWizard } from '../components/EmployeeFormWizard';
 
 const { Title } = Typography;
 

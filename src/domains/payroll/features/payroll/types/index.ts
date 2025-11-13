@@ -44,12 +44,14 @@ export interface Deductions {
  * Payroll Record Entity
  */
 export interface PayrollRecord extends BaseEntity {
-  // Employee Information (denormalized)
+  // Employee Information (denormalized for reporting/display)
   employeeId: string;
-  employeeName: string;
-  employeeCode: string;
-  department: string;
-  position: string;
+  employeeName: string; // Denormalized: from Employee.displayName
+  employeeCode: string; // Denormalized: from Employee.employeeCode
+  departmentId: string; // Reference ID
+  departmentName: string; // Denormalized: from departments collection
+  positionId: string; // Reference ID
+  positionName: string; // Denormalized: from positions collection
 
   // Period
   month: number; // 1-12

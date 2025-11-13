@@ -19,6 +19,10 @@ export const ROUTES = {
   // Attendance Domain
   ATTENDANCE: '/attendance',
   LEAVE_REQUESTS: '/leave-requests',
+  OVERTIME_REQUEST: '/overtime/request',
+  OVERTIME_LIST: '/overtime/list',
+  OVERTIME_APPROVAL: '/overtime/approval',
+  OVERTIME_DASHBOARD: '/overtime/dashboard',
 
   // Payroll Domain
   PAYROLL: '/payroll',
@@ -26,6 +30,12 @@ export const ROUTES = {
 
   // System Domain
   SETTINGS: '/settings',
+  SETTINGS_ORGANIZATION: '/settings/organization',
+  SETTINGS_DEPARTMENTS: '/settings/departments',
+  SETTINGS_POSITIONS: '/settings/positions',
+  SETTINGS_LOCATIONS: '/settings/locations',
+  SETTINGS_PAYROLL: '/settings/payroll',
+  SETTINGS_SYSTEM: '/settings/system',
   USERS: '/users',
   ROLES: '/roles',
   PERMISSIONS: '/permissions',

@@ -19,6 +19,7 @@ import {
 } from 'firebase/firestore';
 import { attendanceService } from '@/domains/people/features/attendance';
 import { employeeService } from '@/domains/people/features/employees/services/employeeService';
+import type { OvertimeRequestStatus } from '@/domains/people/features/overtime/types';
 import { db } from '@/shared/lib/firebase';
 import type {
   Allowances,
@@ -34,19 +35,33 @@ import type {
   UpdatePayrollInput,
 } from '../types';
 
-const COLLECTION_NAME = 'payroll';
+const COLLECTION_NAME = 'payrollRecords';
+const OVERTIME_COLLECTION = 'overtimeRequests';
+const APPROVED_OVERTIME_STATUSES: OvertimeRequestStatus[] = ['approved', 'completed'];
+
+interface OvertimeSummary {
+  totalHours: number;
+  weightedRate: number;
+}
 
 /**
  * Convert Firestore document to PayrollRecord
  */
 function docToPayrollRecord(id: string, data: DocumentData): PayrollRecord {
+  const departmentId = data.departmentId ?? data.department ?? '';
+  const departmentName = data.departmentName ?? data.department ?? '';
+  const positionId = data.positionId ?? data.position ?? '';
+  const positionName = data.positionName ?? data.position ?? '';
+
   return {
     id,
     employeeId: data.employeeId,
     employeeName: data.employeeName,
     employeeCode: data.employeeCode,
-    department: data.department,
-    position: data.position,
+    departmentId,
+    departmentName,
+    positionId,
+    positionName,
     month: data.month,
     year: data.year,
     periodStart: data.periodStart.toDate(),
@@ -82,6 +97,56 @@ function docToPayrollRecord(id: string, data: DocumentData): PayrollRecord {
 }
 
 export const payrollService = {
+  /**
+   * Aggregate approved/completed overtime within period
+   */
+  async getApprovedOvertimeSummary(
+    employeeId: string,
+    periodStart: Date,
+    periodEnd: Date
+  ): Promise<OvertimeSummary> {
+    try {
+      const startTimestamp = Timestamp.fromDate(new Date(periodStart));
+      const endTimestamp = Timestamp.fromDate(new Date(periodEnd));
+
+      const overtimeRef = collection(db, OVERTIME_COLLECTION);
+      const overtimeQuery = query(
+        overtimeRef,
+        where('employeeId', '==', employeeId),
+        where('status', 'in', APPROVED_OVERTIME_STATUSES),
+        where('overtimeDate', '>=', startTimestamp),
+        where('overtimeDate', '<=', endTimestamp),
+        orderBy('overtimeDate', 'asc')
+      );
+
+      const snapshot = await getDocs(overtimeQuery);
+
+      let totalHours = 0;
+      let weightedRateSum = 0;
+
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const hours = Number.parseFloat(
+          ((data.actualHours ?? data.plannedHours ?? 0) as number).toFixed(2)
+        );
+        const rate = Number.parseFloat((data.overtimeRate ?? 1.5).toFixed(2));
+
+        totalHours += hours;
+        weightedRateSum += hours * rate;
+      });
+
+      return {
+        totalHours: Number.parseFloat(totalHours.toFixed(2)),
+        weightedRate: Number.parseFloat(weightedRateSum.toFixed(2)),
+      };
+    } catch (error) {
+      console.error('Failed to aggregate overtime summary', error);
+      return {
+        totalHours: 0,
+        weightedRate: 0,
+      };
+    }
+  },
   /**
    * Calculate working days in a month (excluding weekends)
    */
@@ -321,9 +386,20 @@ export const payrollService = {
       const attendanceStats = await attendanceService.calculateStats(
         userId,
         input.employeeId,
-        startDate,
-        endDate
+        startDate ?? '',
+        endDate ?? ''
       );
+
+      const overtimeSummary = await this.getApprovedOvertimeSummary(
+        employee.id,
+        input.periodStart,
+        input.periodEnd
+      );
+      const overtimeHours = overtimeSummary.totalHours;
+      const averageOvertimeRate =
+        overtimeHours > 0 && overtimeSummary.weightedRate > 0
+          ? overtimeSummary.weightedRate / overtimeHours
+          : employee.overtime.rate;
 
       // Calculate payroll
       const calculation = await this.calculatePayroll({
@@ -333,20 +409,31 @@ export const payrollService = {
         actualWorkDays: attendanceStats.presentDays,
         absentDays: attendanceStats.absentDays,
         lateDays: attendanceStats.lateDays,
-        overtimeHours: attendanceStats.overtimeHours,
+        overtimeHours,
         onLeaveDays: attendanceStats.onLeaveDays,
         baseSalary: employee.salary.baseSalary,
         paymentFrequency: employee.salary.paymentFrequency,
-        overtimeRate: employee.overtime.rate,
+        overtimeRate: Number.isFinite(averageOvertimeRate)
+          ? Number.parseFloat(averageOvertimeRate.toFixed(2))
+          : employee.overtime.rate,
       });
+
+      const departmentId =
+        (employee as { departmentId?: string }).departmentId ?? employee.department ?? '';
+      const departmentName = employee.departmentName ?? employee.department ?? '';
+      const positionId =
+        (employee as { positionId?: string }).positionId ?? employee.position ?? '';
+      const positionName = employee.positionName ?? employee.position ?? '';
 
       // Create document
       const docRef = await addDoc(collection(db, COLLECTION_NAME), {
         employeeId: employee.id,
         employeeName: `${employee.firstName} ${employee.lastName}`,
         employeeCode: employee.employeeCode,
-        department: employee.department,
-        position: employee.position,
+        departmentId,
+        departmentName,
+        positionId,
+        positionName,
         month: input.month,
         year: input.year,
         periodStart: Timestamp.fromDate(input.periodStart),
@@ -454,7 +541,7 @@ export const payrollService = {
       }
 
       if (filters?.department) {
-        constraints.push(where('department', '==', filters.department));
+        constraints.push(where('departmentId', '==', filters.department));
       }
 
       if (filters?.month) {

@@ -1,0 +1,43 @@
+--- a/src/domains/people/features/employees/pages/EmployeeDetailPage.tsx
++++ b/src/domains/people/features/employees/pages/EmployeeDetailPage.tsx
+@@ -8,8 +8,18 @@ import { type FC, useState } from 'react';
+ import { useNavigate, useParams } from 'react-router-dom';
+ import { useDeleteEmployee } from '@/domains/people/features/employees/hooks/useDeleteEmployee';
+ import { useEmployee } from '@/domains/people/features/employees/hooks/useEmployee';
++import { useUpdateEmployee } from '@/domains/people/features/employees/hooks/useUpdateEmployee';
+ import type { EmployeeStatus } from '@/domains/people/features/employees/types';
++import { EditBankAccountModal, type EditBankAccountInput } from '@/domains/people/features/employees/components/EditBankAccountModal';
++import { EditBenefitsModal, type EditBenefitsInput } from '@/domains/people/features/employees/components/EditBenefitsModal';
++import { EditCompensationModal, type EditSalaryInput } from '@/domains/people/features/employees/components/EditCompensationModal';
++import { EditTaxModal, type EditTaxInput } from '@/domains/people/features/employees/components/EditTaxModal';
+ import {
++  formDataToLeaveRequestInput,
++  LeaveEntitlementCard,
++  LeaveRequestForm,
++  type LeaveRequestFormInput,
++  LeaveRequestList,
+   useCreateLeaveRequest,
+ } from '@/domains/people/features/leave';
+ import {
+@@ -48,11 +58,19 @@ export const EmployeeDetailPage: FC = () => {
+   const navigate = useNavigate();
+   const { data: employee, isLoading, error } = useEmployee(id);
+   const { deleteWithConfirm, isPending: isDeleting } = useDeleteEmployee();
++  const updateEmployee = useUpdateEmployee();
+
+   // Social Security state
+   const [isSocialSecurityModalOpen, setIsSocialSecurityModalOpen] = useState(false);
+   const [editingSocialSecurity, setEditingSocialSecurity] = useState<SocialSecurity | undefined>();
+   const createSocialSecurity = useCreateSocialSecurity();
+   const updateSocialSecurity = useUpdateSocialSecurity();
+   const deleteSocialSecurity = useDeleteSocialSecurity();
+
+   // Leave Request state
+   const [isLeaveRequestModalOpen, setIsLeaveRequestModalOpen] = useState(false);
+   const createLeaveRequest = useCreateLeaveRequest();
++
++  // Edit modals state
++  const [isCompensationModalOpen, setIsCompensationModalOpen] = useState(false);
++  const [isTaxModalOpen, setIsTaxModalOpen] = useState(false);
++  const [isBenefitsModalOpen, setIsBenefitsModalOpen] = useState(false);
++  const [isBankAccountModalOpen, setIsBankAccountModalOpen] = useState(false);

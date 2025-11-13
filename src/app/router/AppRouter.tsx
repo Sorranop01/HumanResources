@@ -1,5 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout } from '@/app/layouts';
+// Payroll Pages
+import { PayrollPage, PayrollRunsPage } from '@/domains/payroll';
 // People Pages
 import { AttendancePage } from '@/domains/people/features/attendance';
 import { CandidatesPage } from '@/domains/people/features/candidates';
@@ -10,8 +12,12 @@ import {
   EmployeeListPage,
 } from '@/domains/people/features/employees';
 import { LeaveRequestPage } from '@/domains/people/features/leave';
-// Payroll Pages
-import { PayrollPage, PayrollRunsPage } from '@/domains/payroll';
+import {
+  OvertimeApprovalPage,
+  OvertimeDashboardPage,
+  OvertimeListPage,
+  OvertimeRequestPage,
+} from '@/domains/people/features/overtime';
 // Auth Pages
 import { ForgotPasswordPage } from '@/domains/system/features/auth/pages/ForgotPasswordPage';
 import { LoginPage } from '@/domains/system/features/auth/pages/LoginPage';
@@ -21,6 +27,12 @@ import { DashboardPage } from '@/domains/system/features/dashboard';
 // System Pages
 import { AuditLogsPage, PermissionMatrixPage, RolesPage } from '@/domains/system/features/rbac';
 import { SettingsPage } from '@/domains/system/features/settings';
+import { DepartmentsPage } from '@/domains/system/features/settings/departments/pages/DepartmentsPage';
+import { LocationsPage } from '@/domains/system/features/settings/locations/pages/LocationsPage';
+import { OrganizationSettingsPage } from '@/domains/system/features/settings/organization/pages/OrganizationSettingsPage';
+import { PayrollSettingsPage } from '@/domains/system/features/settings/payroll/pages/PayrollSettingsPage';
+import { PositionsPage } from '@/domains/system/features/settings/positions/pages/PositionsPage';
+import { SystemConfigPage } from '@/domains/system/features/settings/system/pages/SystemConfigPage';
 import { UserManagementPage } from '@/domains/system/features/users';
 import { ROUTES } from '@/shared/constants/routes';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -116,6 +128,46 @@ export function AppRouter() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path={ROUTES.OVERTIME_REQUEST}
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <OvertimeRequestPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.OVERTIME_LIST}
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <OvertimeListPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.OVERTIME_APPROVAL}
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <OvertimeApprovalPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.OVERTIME_DASHBOARD}
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <OvertimeDashboardPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
 
       {/* Payroll Routes */}
       <Route
@@ -186,6 +238,66 @@ export function AppRouter() {
           <ProtectedRoute>
             <AppLayout>
               <SettingsPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.SETTINGS_ORGANIZATION}
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <OrganizationSettingsPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.SETTINGS_DEPARTMENTS}
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <DepartmentsPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.SETTINGS_POSITIONS}
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <PositionsPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.SETTINGS_LOCATIONS}
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <LocationsPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.SETTINGS_PAYROLL}
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <PayrollSettingsPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path={ROUTES.SETTINGS_SYSTEM}
+        element={
+          <ProtectedRoute>
+            <AppLayout>
+              <SystemConfigPage />
             </AppLayout>
           </ProtectedRoute>
         }

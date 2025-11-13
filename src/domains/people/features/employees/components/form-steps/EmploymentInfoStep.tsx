@@ -3,10 +3,12 @@ import { Button, Col, DatePicker, Form, Input, Row, Select, Space, Typography } 
 import dayjs from 'dayjs';
 import type { FC } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import type { EmployeeFormInput, EmploymentInfoFormInput } from '../../schemas';
+import type { EmployeeFormInput } from '../../schemas';
 import { EmploymentInfoFormSchema } from '../../schemas';
 
 const { Title, Text } = Typography;
+
+type EmploymentInfoFormValues = (typeof EmploymentInfoFormSchema)['_input'];
 
 interface EmploymentInfoStepProps {
   initialData?: Partial<EmployeeFormInput>;
@@ -19,13 +21,18 @@ interface EmploymentInfoStepProps {
  * Step 2: Employment Information Form
  * Collects hire date, employment type, position, department, work location
  */
-export const EmploymentInfoStep: FC<EmploymentInfoStepProps> = ({ initialData, onNext, onBack, onCancel }) => {
+export const EmploymentInfoStep: FC<EmploymentInfoStepProps> = ({
+  initialData,
+  onNext,
+  onBack,
+  onCancel,
+}) => {
   const {
     control,
     handleSubmit,
     watch,
     formState: { errors },
-  } = useForm<EmploymentInfoFormInput>({
+  } = useForm<EmploymentInfoFormValues>({
     resolver: zodResolver(EmploymentInfoFormSchema),
     defaultValues: {
       hireDate: initialData?.hireDate || '',
@@ -47,8 +54,9 @@ export const EmploymentInfoStep: FC<EmploymentInfoStepProps> = ({ initialData, o
 
   const employmentType = watch('employmentType');
 
-  const onSubmit = (data: EmploymentInfoFormInput) => {
-    onNext(data);
+  const onSubmit = (data: EmploymentInfoFormValues) => {
+    const parsed = EmploymentInfoFormSchema.parse(data);
+    onNext(parsed);
   };
 
   return (
@@ -115,7 +123,12 @@ export const EmploymentInfoStep: FC<EmploymentInfoStepProps> = ({ initialData, o
       </Title>
       <Row gutter={16}>
         <Col xs={24} md={8}>
-          <Form.Item label="สถานะ" required validateStatus={errors.status ? 'error' : ''} help={errors.status?.message}>
+          <Form.Item
+            label="สถานะ"
+            required
+            validateStatus={errors.status ? 'error' : ''}
+            help={errors.status?.message}
+          >
             <Controller
               name="status"
               control={control}
@@ -187,11 +200,19 @@ export const EmploymentInfoStep: FC<EmploymentInfoStepProps> = ({ initialData, o
             validateStatus={errors.position ? 'error' : ''}
             help={errors.position?.message}
           >
-            <Controller name="position" control={control} render={({ field }) => <Input {...field} placeholder="Software Engineer" />} />
+            <Controller
+              name="position"
+              control={control}
+              render={({ field }) => <Input {...field} placeholder="Software Engineer" />}
+            />
           </Form.Item>
         </Col>
         <Col xs={24} md={8}>
-          <Form.Item label="ระดับ" validateStatus={errors.level ? 'error' : ''} help={errors.level?.message}>
+          <Form.Item
+            label="ระดับ"
+            validateStatus={errors.level ? 'error' : ''}
+            help={errors.level?.message}
+          >
             <Controller
               name="level"
               control={control}
@@ -237,13 +258,29 @@ export const EmploymentInfoStep: FC<EmploymentInfoStepProps> = ({ initialData, o
 
       <Row gutter={16}>
         <Col xs={24} md={12}>
-          <Form.Item label="ฝ่าย" validateStatus={errors.division ? 'error' : ''} help={errors.division?.message}>
-            <Controller name="division" control={control} render={({ field }) => <Input {...field} placeholder="Technology Division" />} />
+          <Form.Item
+            label="ฝ่าย"
+            validateStatus={errors.division ? 'error' : ''}
+            help={errors.division?.message}
+          >
+            <Controller
+              name="division"
+              control={control}
+              render={({ field }) => <Input {...field} placeholder="Technology Division" />}
+            />
           </Form.Item>
         </Col>
         <Col xs={24} md={12}>
-          <Form.Item label="ทีม" validateStatus={errors.team ? 'error' : ''} help={errors.team?.message}>
-            <Controller name="team" control={control} render={({ field }) => <Input {...field} placeholder="Backend Team" />} />
+          <Form.Item
+            label="ทีม"
+            validateStatus={errors.team ? 'error' : ''}
+            help={errors.team?.message}
+          >
+            <Controller
+              name="team"
+              control={control}
+              render={({ field }) => <Input {...field} placeholder="Backend Team" />}
+            />
           </Form.Item>
         </Col>
       </Row>
@@ -293,7 +330,11 @@ export const EmploymentInfoStep: FC<EmploymentInfoStepProps> = ({ initialData, o
             validateStatus={errors.workLocationFloor ? 'error' : ''}
             help={errors.workLocationFloor?.message}
           >
-            <Controller name="workLocationFloor" control={control} render={({ field }) => <Input {...field} placeholder="5" />} />
+            <Controller
+              name="workLocationFloor"
+              control={control}
+              render={({ field }) => <Input {...field} placeholder="5" />}
+            />
           </Form.Item>
         </Col>
         <Col xs={24} md={6}>
@@ -302,7 +343,11 @@ export const EmploymentInfoStep: FC<EmploymentInfoStepProps> = ({ initialData, o
             validateStatus={errors.workLocationSeat ? 'error' : ''}
             help={errors.workLocationSeat?.message}
           >
-            <Controller name="workLocationSeat" control={control} render={({ field }) => <Input {...field} placeholder="A-501" />} />
+            <Controller
+              name="workLocationSeat"
+              control={control}
+              render={({ field }) => <Input {...field} placeholder="A-501" />}
+            />
           </Form.Item>
         </Col>
       </Row>

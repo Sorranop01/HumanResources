@@ -157,7 +157,7 @@ export const LeaveRequestForm: FC<LeaveRequestFormProps> = ({
               name="isHalfDay"
               control={control}
               render={({ field }) => (
-                <Checkbox {...field} checked={field.value}>
+                <Checkbox {...field} checked={!!field.value}>
                   ลาครึ่งวัน
                 </Checkbox>
               )}
@@ -269,7 +269,7 @@ export const LeaveRequestForm: FC<LeaveRequestFormProps> = ({
           render={({ field }) => (
             <Checkbox
               {...field}
-              checked={field.value}
+              checked={!!field.value}
               onChange={(e) => {
                 field.onChange(e.target.checked);
                 setShowCertificateUpload(e.target.checked);

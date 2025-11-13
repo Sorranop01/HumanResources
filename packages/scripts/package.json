@@ -1,0 +1,22 @@
+{
+  "name": "@human/scripts",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "seed:rbac": "tsx src/seed/rbac/seedRoles.ts && tsx src/seed/rbac/seedPermissions.ts && tsx src/seed/rbac/seedRolePermissions.ts",
+    "seed:policies": "tsx src/seed/policies/seedWorkSchedulePolicies.ts && tsx src/seed/policies/seedOvertimePolicies.ts && tsx src/seed/policies/seedShifts.ts && tsx src/seed/policies/seedPenaltyPolicies.ts && tsx src/seed/policies/seedHolidays.ts",
+    "seed:people": "tsx src/seed/people/seedDepartments.ts && tsx src/seed/people/seedPositions.ts && tsx src/seed/people/seedEmployees.ts && tsx src/seed/people/seedCandidates.ts",
+    "seed:candidates": "tsx src/seed/people/seedCandidates.ts",
+    "seed:users": "tsx src/seed/users/seedAuthUsers.ts",
+    "seed:leave": "tsx src/seed/leave/seedLeaveTypes.ts && tsx src/seed/leave/seedLeaveBalances.ts && tsx src/seed/leave/seedLeaveRequests.ts",
+    "seed:leave-requests": "tsx src/seed/leave/seedLeaveRequests.ts",
+    "seed:all": "tsx src/seed/seedAll.ts",
+    "seed:verify": "tsx src/seed/verifySeededData.ts",
+    "clear:emulator": "tsx src/seed/clearEmulatorData.ts",
+    "backfill:denormalized": "tsx src/maintenance/backfillDenormalizedFields.ts"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "tsx": "^4.7.0"
+  }
+}

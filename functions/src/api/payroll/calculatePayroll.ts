@@ -3,9 +3,9 @@
  * Calculates payroll for a single employee for a given month
  */
 
-import { type CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https';
-import * as logger from 'firebase-functions/logger';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import * as logger from 'firebase-functions/logger';
+import { type CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https';
 
 const db = getFirestore();
 
@@ -104,14 +104,14 @@ export const calculatePayroll = onCall<CalculatePayrollInput>(
 
       // Calculate attendance stats
       let actualWorkDays = 0;
-      let totalWorkHours = 0;
+      let _totalWorkHours = 0;
       let overtimeHours = 0;
 
       for (const doc of attendanceSnapshot.docs) {
         const record = doc.data();
         if (record.status === 'clocked-out' && record.durationHours) {
           actualWorkDays++;
-          totalWorkHours += record.durationHours;
+          _totalWorkHours += record.durationHours;
 
           // Calculate OT (hours worked > 8)
           const standardHours = 8;

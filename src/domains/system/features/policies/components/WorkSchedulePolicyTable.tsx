@@ -3,15 +3,15 @@
  * Table component for displaying and managing work schedule policies
  */
 
-import type { FC } from 'react';
+import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
-import type { WorkSchedulePolicy } from '../types/workSchedulePolicy';
+import type { FC } from 'react';
 import {
   useDeleteWorkSchedulePolicy,
   useWorkSchedulePolicies,
 } from '../hooks/useWorkSchedulePolicies';
+import type { WorkSchedulePolicy } from '../types/workSchedulePolicy';
 
 export const WorkSchedulePolicyTable: FC = () => {
   const { data: policies, isLoading } = useWorkSchedulePolicies({ isActive: true });
@@ -115,9 +115,7 @@ export const WorkSchedulePolicyTable: FC = () => {
       <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
         <div>
           <h3>ตารางเวลาทำงาน (Work Schedule Policies)</h3>
-          <p style={{ color: '#666', margin: 0 }}>
-            กำหนดเวลาเข้า-ออกงาน ชั่วโมงทำงาน และกฎการมาสาย
-          </p>
+          <p style={{ color: '#666', margin: 0 }}>กำหนดเวลาเข้า-ออกงาน ชั่วโมงทำงาน และกฎการมาสาย</p>
         </div>
         <Button type="primary" icon={<PlusOutlined />}>
           เพิ่ม Policy

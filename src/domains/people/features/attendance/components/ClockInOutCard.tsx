@@ -1,9 +1,11 @@
-import { Button, Card, Flex, Spin, Statistic, Typography } from 'antd';
+import { CheckCircleOutlined, ClockCircleOutlined, WarningOutlined } from '@ant-design/icons';
+import { Button, Card, Flex, Spin, Statistic, Tag, Typography } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import { useClockIn } from '@/domains/people/features/attendance/hooks/useClockIn';
 import { useClockOut } from '@/domains/people/features/attendance/hooks/useClockOut';
 import { useTodayAttendance } from '@/domains/people/features/attendance/hooks/useTodayAttendance';
+import { formatMinutesToDuration } from '@/domains/people/features/attendance/utils/timeCalculations';
 
 const { Title, Text } = Typography;
 
@@ -22,7 +24,7 @@ export const ClockInOutCard = () => {
   }, []);
 
   const handleClockIn = () => {
-    clockIn();
+    clockIn({});
   };
 
   const handleClockOut = () => {
@@ -30,13 +32,18 @@ export const ClockInOutCard = () => {
       clockOut({
         recordId: attendanceRecord.id,
         clockInTime: attendanceRecord.clockInTime,
+        scheduledEndTime: attendanceRecord.scheduledEndTime || '18:00',
       });
     }
   };
 
   const renderStatus = () => {
     if (isLoadingAttendance) {
-      return <Spin tip="Loading status..." />;
+      return (
+        <Spin tip="Loading status...">
+          <div style={{ minHeight: 50 }} />
+        </Spin>
+      );
     }
 
     if (isError) {
@@ -44,12 +51,30 @@ export const ClockInOutCard = () => {
     }
 
     if (attendanceRecord?.status === 'clocked-in') {
+      const clockInTime = dayjs(attendanceRecord.clockInTime.toDate());
+      const scheduledStart = attendanceRecord.scheduledStartTime || '09:00';
+
       return (
         <Flex vertical align="center" gap="middle">
-          <Text type="secondary">You clocked in at</Text>
+          <Flex gap="small" align="center">
+            <Text type="secondary">You clocked in at</Text>
+            {attendanceRecord.isLate && (
+              <Tag color="error" icon={<WarningOutlined />}>
+                สาย {formatMinutesToDuration(attendanceRecord.minutesLate)}
+              </Tag>
+            )}
+            {!attendanceRecord.isLate && attendanceRecord.minutesLate === 0 && (
+              <Tag color="success" icon={<CheckCircleOutlined />}>
+                ตรงเวลา
+              </Tag>
+            )}
+          </Flex>
           <Title level={3} className="!m-0">
-            {dayjs(attendanceRecord.clockInTime.toDate()).format('HH:mm:ss')}
+            {clockInTime.format('HH:mm:ss')}
           </Title>
+          <Text type="secondary" style={{ fontSize: '12px' }}>
+            กำหนดเข้างาน: {scheduledStart}
+          </Text>
           <Button
             type="primary"
             danger
@@ -57,6 +82,7 @@ export const ClockInOutCard = () => {
             onClick={handleClockOut}
             loading={isClockingOut}
             disabled={isClockingIn}
+            icon={<ClockCircleOutlined />}
           >
             Clock Out
           </Button>
@@ -65,13 +91,42 @@ export const ClockInOutCard = () => {
     }
 
     if (attendanceRecord?.status === 'clocked-out') {
+      const clockInTime = dayjs(attendanceRecord.clockInTime.toDate());
+      const clockOutTime = dayjs(attendanceRecord.clockOutTime?.toDate());
+
       return (
         <Flex vertical align="center" gap="middle">
           <Text type="success">You have clocked out for today.</Text>
-          <Text type="secondary">
-            Clocked in at {dayjs(attendanceRecord.clockInTime.toDate()).format('HH:mm')}, Clocked
-            out at {dayjs(attendanceRecord.clockOutTime?.toDate()).format('HH:mm')}
-          </Text>
+          <Flex gap="small" wrap="wrap" justify="center">
+            {attendanceRecord.isLate && (
+              <Tag color="error" icon={<WarningOutlined />}>
+                เข้างานสาย {formatMinutesToDuration(attendanceRecord.minutesLate)}
+              </Tag>
+            )}
+            {!attendanceRecord.isLate && attendanceRecord.minutesLate === 0 && (
+              <Tag color="success" icon={<CheckCircleOutlined />}>
+                เข้างานตรงเวลา
+              </Tag>
+            )}
+            {attendanceRecord.isEarlyLeave && (
+              <Tag color="warning" icon={<WarningOutlined />}>
+                ออกก่อนเวลา {formatMinutesToDuration(attendanceRecord.minutesEarly)}
+              </Tag>
+            )}
+            {!attendanceRecord.isEarlyLeave && attendanceRecord.minutesEarly === 0 && (
+              <Tag color="success" icon={<CheckCircleOutlined />}>
+                ออกตรงเวลา
+              </Tag>
+            )}
+          </Flex>
+          <Flex vertical align="center" gap="small">
+            <Text type="secondary">
+              เข้างาน: {clockInTime.format('HH:mm')} | ออกงาน: {clockOutTime.format('HH:mm')}
+            </Text>
+            <Text type="secondary" style={{ fontSize: '12px' }}>
+              รวมทำงาน: {attendanceRecord.durationHours?.toFixed(2)} ชั่วโมง
+            </Text>
+          </Flex>
         </Flex>
       );
     }

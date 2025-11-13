@@ -8,8 +8,6 @@ export { LeaveEntitlementCard } from './components/LeaveEntitlementCard';
 export { LeaveRequestCard } from './components/LeaveRequestCard';
 export { LeaveRequestForm } from './components/LeaveRequestForm';
 export { LeaveRequestList } from './components/LeaveRequestList';
-// Pages
-export { LeaveRequestPage } from './pages/LeaveRequestPage';
 export { useApproveLeaveRequest } from './hooks/useApproveLeaveRequest';
 export { useCancelLeaveRequest } from './hooks/useCancelLeaveRequest';
 export { useCreateLeaveEntitlement } from './hooks/useCreateLeaveEntitlement';
@@ -26,6 +24,8 @@ export { useLeaveTypes } from './hooks/useLeaveTypes';
 export { useRejectLeaveRequest } from './hooks/useRejectLeaveRequest';
 export { useUpdateLeaveBalance } from './hooks/useUpdateLeaveBalance';
 export { useUpdateLeaveRequest } from './hooks/useUpdateLeaveRequest';
+// Pages
+export { LeaveRequestPage } from './pages/LeaveRequestPage';
 // Schemas
 export {
   type ApprovalActionInput,

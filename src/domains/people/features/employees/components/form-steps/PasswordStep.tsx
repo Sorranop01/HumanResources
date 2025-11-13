@@ -1,20 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Alert,
-  Button,
-  Col,
-  Form,
-  Input,
-  Radio,
-  Row,
-  Space,
-  Typography,
-} from 'antd';
+import { Alert, Button, Col, Form, Input, Radio, Row, Space, Typography } from 'antd';
 import type { FC } from 'react';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import type { EmployeeFormInput } from '../../schemas';
+import type { FinalStepData } from '../EmployeeFormWizard';
 
 const { Title, Text } = Typography;
 
@@ -65,7 +56,8 @@ interface PasswordStepProps {
  * Allows HR to either auto-generate or manually set temporary password
  */
 export const PasswordStep: FC<PasswordStepProps> = ({ initialData, onNext, onBack }) => {
-  const [passwordOption, setPasswordOption] = useState<'auto' | 'manual'>('auto');
+  void initialData;
+  const [_passwordOption, setPasswordOption] = useState<'auto' | 'manual'>('auto');
 
   const {
     control,
@@ -88,7 +80,7 @@ export const PasswordStep: FC<PasswordStepProps> = ({ initialData, onNext, onBac
     onNext({
       passwordOption: data.passwordOption,
       temporaryPassword: data.passwordOption === 'manual' ? data.temporaryPassword : undefined,
-    } as any);
+    } as FinalStepData);
   };
 
   return (
@@ -149,11 +141,7 @@ export const PasswordStep: FC<PasswordStepProps> = ({ initialData, onNext, onBac
                   name="temporaryPassword"
                   control={control}
                   render={({ field }) => (
-                    <Input.Password
-                      {...field}
-                      placeholder="อย่างน้อย 6 ตัวอักษร"
-                      minLength={6}
-                    />
+                    <Input.Password {...field} placeholder="อย่างน้อย 6 ตัวอักษร" minLength={6} />
                   )}
                 />
               </Form.Item>
@@ -200,8 +188,8 @@ export const PasswordStep: FC<PasswordStepProps> = ({ initialData, onNext, onBac
             <>
               ระบบจะสร้างรหัสผ่านแบบสุ่มที่ปลอดภัย (ตัวอย่าง: Tempx7k2m9p4!)
               <br />
-              <strong>สำคัญ:</strong> รหัสผ่านจะถูกส่งให้พนักงานผ่านอีเมล และพนักงานควร
-              เปลี่ยนรหัสผ่านหลังจาก login ครั้งแรก
+              <strong>สำคัญ:</strong> รหัสผ่านจะถูกส่งให้พนักงานผ่านอีเมล และพนักงานควร เปลี่ยนรหัสผ่านหลังจาก
+              login ครั้งแรก
             </>
           }
           type="success"

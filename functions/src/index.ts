@@ -3,9 +3,31 @@
  * Region: asia-southeast1 (MANDATORY)
  */
 
-export { createEmployee } from './api/employees/createEmployee.js';
 // Employee functions
+export { createEmployee } from './api/employees/createEmployee.js';
 export { getEmployees } from './api/employees/getEmployees.js';
+// Candidate functions
+export {
+  createCandidate,
+  moveToEmployee,
+  updateCandidateStatus,
+} from './api/candidates/index.js';
+// Attendance functions
+export {
+  approveAttendance,
+  clockIn,
+  clockOut,
+  manualAttendanceEntry,
+} from './api/attendance/index.js';
+// Leave functions
+export {
+  approveLeaveRequest,
+  createLeaveRequest,
+  rejectLeaveRequest,
+} from './api/leave/index.js';
+// Payroll functions
+export { calculatePayroll } from './api/payroll/calculatePayroll.js';
+export { generateMonthlyPayroll } from './api/payroll/generateMonthlyPayroll.js';
 // RBAC functions
 export {
   assignUserRole,
@@ -23,16 +45,17 @@ export {
 // User management functions
 export { createUser } from './api/users/createUser.js';
 
-// Payroll functions
-export { calculatePayroll } from './api/payroll/calculatePayroll.js';
-export { generateMonthlyPayroll } from './api/payroll/generateMonthlyPayroll.js';
-
 // Firestore Triggers - Audit Logging & Data Sync
 export {
+  // RBAC Triggers
   onRoleDefinitionCreate,
   onRoleDefinitionUpdate,
   onRoleDefinitionWrite,
   onUserWrite,
+  syncDepartmentName,
+  // Denormalization Sync Triggers
+  syncEmployeeDenormalizedFields,
+  syncPositionName,
 } from './triggers/index.js';
 
 // TODO: Add more functions

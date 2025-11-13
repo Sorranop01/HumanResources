@@ -39,17 +39,19 @@ export interface ApprovalStep {
 export interface LeaveRequest extends BaseEntity {
   requestNumber: string;
 
-  // Employee
+  // Employee (denormalized for display/reporting)
   employeeId: string;
-  employeeName: string;
-  employeeCode: string;
-  department: string;
-  position: string;
+  employeeName: string; // Denormalized: from Employee.displayName
+  employeeCode: string; // Denormalized: from Employee.employeeCode
+  departmentId: string; // Reference ID
+  departmentName: string; // Denormalized: from departments collection
+  positionId: string; // Reference ID
+  positionName: string; // Denormalized: from positions collection
 
-  // Leave
+  // Leave Type (denormalized for display)
   leaveTypeId: string;
-  leaveTypeCode: string;
-  leaveTypeName: string;
+  leaveTypeCode: string; // Denormalized: from leaveTypes collection
+  leaveTypeName: string; // Denormalized: from leaveTypes collection
 
   // Period
   startDate: Date;

@@ -11,8 +11,8 @@ import {
   getDoc,
   getDocs,
   orderBy,
-  query,
   type QueryConstraint,
+  query,
   Timestamp,
   updateDoc,
   where,
@@ -33,7 +33,7 @@ const COLLECTION_NAME = 'overtimePolicies';
 /**
  * Convert Firestore document to OvertimePolicy
  */
-function docToOvertimePolicy(id: string, data: any): OvertimePolicy {
+function docToOvertimePolicy(id: string, data: DocumentData): OvertimePolicy {
   return {
     id,
     name: data.name,
@@ -82,10 +82,10 @@ export const overtimePolicyService = {
   /**
    * Create overtime policy
    */
-  async create(input: CreateOvertimePolicyInput): Promise<string> {
+  async create(tenantId: string, input: CreateOvertimePolicyInput): Promise<string> {
     try {
       // Check if code already exists
-      const existing = await this.getByCode(input.code);
+      const existing = await this.getByCode(tenantId, input.code);
       if (existing) {
         throw new Error('Policy code already exists');
       }
@@ -117,7 +117,7 @@ export const overtimePolicyService = {
         isActive: true,
         effectiveDate: Timestamp.fromDate(input.effectiveDate),
         expiryDate: input.expiryDate ? Timestamp.fromDate(input.expiryDate) : null,
-        tenantId: 'default',
+        tenantId,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
       });
@@ -154,9 +154,13 @@ export const overtimePolicyService = {
   /**
    * Get policy by code
    */
-  async getByCode(code: string): Promise<OvertimePolicy | null> {
+  async getByCode(tenantId: string, code: string): Promise<OvertimePolicy | null> {
     try {
-      const q = query(collection(db, COLLECTION_NAME), where('code', '==', code));
+      const q = query(
+        collection(db, COLLECTION_NAME),
+        where('tenantId', '==', tenantId),
+        where('code', '==', code)
+      );
 
       const snapshot = await getDocs(q);
       if (snapshot.empty) {
@@ -178,9 +182,9 @@ export const overtimePolicyService = {
   /**
    * Get all policies with filters
    */
-  async getAll(filters?: OvertimePolicyFilters): Promise<OvertimePolicy[]> {
+  async getAll(tenantId: string, filters?: OvertimePolicyFilters): Promise<OvertimePolicy[]> {
     try {
-      const constraints: QueryConstraint[] = [];
+      const constraints: QueryConstraint[] = [where('tenantId', '==', tenantId)];
 
       if (filters?.department) {
         constraints.push(where('eligibleDepartments', 'array-contains', filters.department));
@@ -222,7 +226,7 @@ export const overtimePolicyService = {
         throw new Error('Overtime policy not found');
       }
 
-      const updateData: Record<string, any> = {
+      const updateData: Record<string, unknown> = {
         updatedAt: Timestamp.now(),
       };
 
@@ -236,17 +240,21 @@ export const overtimePolicyService = {
       if (input.eligibleDepartments !== undefined)
         updateData.eligibleDepartments = input.eligibleDepartments;
       if (input.rules !== undefined) updateData.rules = input.rules;
-      if (input.requiresApproval !== undefined) updateData.requiresApproval = input.requiresApproval;
+      if (input.requiresApproval !== undefined)
+        updateData.requiresApproval = input.requiresApproval;
       if (input.approvalThresholdHours !== undefined)
         updateData.approvalThresholdHours = input.approvalThresholdHours;
-      if (input.autoApproveUnder !== undefined) updateData.autoApproveUnder = input.autoApproveUnder;
+      if (input.autoApproveUnder !== undefined)
+        updateData.autoApproveUnder = input.autoApproveUnder;
       if (input.holidayRate !== undefined) updateData.holidayRate = input.holidayRate;
       if (input.weekendRate !== undefined) updateData.weekendRate = input.weekendRate;
       if (input.nightShiftRate !== undefined) updateData.nightShiftRate = input.nightShiftRate;
       if (input.trackBySystem !== undefined) updateData.trackBySystem = input.trackBySystem;
-      if (input.allowManualEntry !== undefined) updateData.allowManualEntry = input.allowManualEntry;
+      if (input.allowManualEntry !== undefined)
+        updateData.allowManualEntry = input.allowManualEntry;
       if (input.paymentMethod !== undefined) updateData.paymentMethod = input.paymentMethod;
-      if (input.paymentFrequency !== undefined) updateData.paymentFrequency = input.paymentFrequency;
+      if (input.paymentFrequency !== undefined)
+        updateData.paymentFrequency = input.paymentFrequency;
       if (input.effectiveDate !== undefined)
         updateData.effectiveDate = Timestamp.fromDate(input.effectiveDate);
       if (input.expiryDate !== undefined)
@@ -279,7 +287,7 @@ export const overtimePolicyService = {
   /**
    * Calculate overtime pay based on policy
    */
-  calculateOvertimePay(input: OvertimeCalculationInput): OvertimeCalculationResult {
+  calculateOvertimePay(_input: OvertimeCalculationInput): OvertimeCalculationResult {
     // This is a placeholder that would need the full policy object
     // In real implementation, you'd fetch the policy first
     throw new Error('Use calculateOvertimePayWithPolicy instead');
@@ -293,7 +301,7 @@ export const overtimePolicyService = {
     overtimeHours: number,
     overtimeType: OvertimeType,
     hourlyRate: number,
-    date: Date
+    _date: Date
   ): OvertimeCalculationResult {
     // Find applicable rule
     const rule = policy.rules.find((r) => r.type === overtimeType);
@@ -374,10 +382,7 @@ export const overtimePolicyService = {
     }
 
     // Check department
-    if (
-      policy.eligibleDepartments.length > 0 &&
-      !policy.eligibleDepartments.includes(department)
-    ) {
+    if (policy.eligibleDepartments.length > 0 && !policy.eligibleDepartments.includes(department)) {
       return false;
     }
 

@@ -57,6 +57,8 @@ export type DocumentType =
   | 'contract'
   | 'nda'
   | 'photo'
+  | 'tax-document'
+  | 'medical-certificate'
   | 'other';
 
 // ============================================
@@ -251,6 +253,7 @@ export interface DocumentRecord {
   uploadDate: Date;
   uploadedBy: string;
   expiryDate?: Date;
+  storagePath?: string;
 }
 
 // ============================================
@@ -269,8 +272,10 @@ export interface Employee extends BaseEntity {
   // ===== Personal Information =====
   firstName: string;
   lastName: string;
+  displayName: string; // Denormalized: `${firstName} ${lastName}` (for list rendering)
   thaiFirstName: string;
   thaiLastName: string;
+  thaiDisplayName: string; // Denormalized: `${thaiFirstName} ${thaiLastName}` (for Thai UI)
   nickname?: string;
   email: string;
   personalEmail?: string;
@@ -311,8 +316,10 @@ export interface Employee extends BaseEntity {
 
   // Organization Structure
   position: string;
+  positionName: string; // Denormalized: resolved from positions collection (for display)
   level?: string; // Junior, Senior, Manager
   department: string;
+  departmentName: string; // Denormalized: resolved from departments collection (for display)
   division?: string;
   team?: string;
 

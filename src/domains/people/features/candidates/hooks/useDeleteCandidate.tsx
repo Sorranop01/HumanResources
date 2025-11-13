@@ -13,6 +13,7 @@ export const useDeleteCandidate = () => {
     mutationFn: (id: string) => candidateService.delete(id),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: candidateKeys.lists() });
+      void queryClient.invalidateQueries({ queryKey: candidateKeys.stats() });
       void message.success('ลบผู้สมัครสำเร็จ');
     },
     onError: (error: Error) => {

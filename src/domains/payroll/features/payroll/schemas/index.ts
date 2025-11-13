@@ -1,9 +1,14 @@
 /**
  * Payroll Schemas
  * Zod validation schemas for payroll feature
+ * Single Source of Truth for payroll data validation
  */
 
 import { z } from 'zod';
+
+// ============================================
+// Enum Schemas
+// ============================================
 
 /**
  * Payroll Status Schema
@@ -14,6 +19,11 @@ export const PayrollStatusSchema = z.enum(['draft', 'pending', 'approved', 'paid
  * Payment Frequency Schema
  */
 export const PaymentFrequencySchema = z.enum(['monthly', 'bi-weekly', 'weekly', 'hourly']);
+
+/**
+ * Payment Method Schema
+ */
+export const PaymentMethodSchema = z.enum(['bank-transfer', 'cash', 'cheque']);
 
 /**
  * Allowances Schema
@@ -155,3 +165,95 @@ export const BulkPayrollGenerationSchema = z.object({
 });
 
 export type BulkPayrollGenerationInput = z.infer<typeof BulkPayrollGenerationSchema>;
+
+// ============================================
+// Complete Payroll Record Schema
+// ============================================
+
+/**
+ * Complete Payroll Record Schema (for database)
+ */
+export const PayrollRecordSchema = z.object({
+  id: z.string(),
+
+  // Employee Information (denormalized)
+  employeeId: z.string().min(1, 'Employee ID is required'),
+  employeeName: z.string().min(1, 'Employee name is required'),
+  employeeCode: z.string().min(1, 'Employee code is required'),
+  department: z.string().min(1, 'Department is required'),
+  position: z.string().min(1, 'Position is required'),
+
+  // Period
+  month: z.number().min(1).max(12),
+  year: z.number().min(2000).max(2100),
+  periodStart: z.date(),
+  periodEnd: z.date(),
+  payDate: z.date(),
+
+  // Income
+  baseSalary: z.number().min(0),
+  overtimePay: z.number().min(0),
+  bonus: z.number().min(0),
+  allowances: AllowancesSchema,
+  grossIncome: z.number().min(0),
+
+  // Deductions
+  deductions: DeductionsSchema,
+  totalDeductions: z.number().min(0),
+
+  // Net Pay
+  netPay: z.number(),
+
+  // Working Days (from attendance)
+  workingDays: z.number().int().min(0),
+  actualWorkDays: z.number().int().min(0),
+  absentDays: z.number().int().min(0),
+  lateDays: z.number().int().min(0),
+  onLeaveDays: z.number().int().min(0),
+  overtimeHours: z.number().min(0),
+
+  // Status
+  status: PayrollStatusSchema,
+
+  // Approval
+  approvedBy: z.string().nullable().optional(),
+  approvedAt: z.date().nullable().optional(),
+  approvalComments: z.string().nullable().optional(),
+
+  // Payment
+  paidBy: z.string().nullable().optional(),
+  paidAt: z.date().nullable().optional(),
+  paymentMethod: PaymentMethodSchema.nullable().optional(),
+  transactionRef: z.string().nullable().optional(),
+
+  // Notes
+  notes: z.string().nullable().optional(),
+
+  // Multi-tenancy
+  tenantId: z.string(),
+
+  // Timestamps
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export type PayrollRecordValidated = z.infer<typeof PayrollRecordSchema>;
+
+// ============================================
+// Helper Functions
+// ============================================
+
+/**
+ * Validate payroll record data
+ */
+export function validatePayrollRecord(data: unknown) {
+  return PayrollRecordSchema.parse(data);
+}
+
+/**
+ * Safe validation (returns null on error)
+ */
+export function safeValidatePayrollRecord(data: unknown) {
+  const result = PayrollRecordSchema.safeParse(data);
+  return result.success ? result.data : null;
+}

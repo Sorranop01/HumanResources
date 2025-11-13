@@ -8,6 +8,7 @@
 export { EmployeeCard } from './components/EmployeeCard';
 export { EmployeeFilters as EmployeeFiltersComponent } from './components/EmployeeFilters';
 export { EmployeeForm } from './components/EmployeeForm';
+export { EmployeeStats } from './components/EmployeeStats';
 export { EmployeeTable } from './components/EmployeeTable';
 
 // Hooks
@@ -15,6 +16,10 @@ export { EmployeeTable } from './components/EmployeeTable';
 export { useCreateEmployee } from './hooks/useCreateEmployee';
 export { useDeleteEmployee } from './hooks/useDeleteEmployee';
 export { useEmployee } from './hooks/useEmployee';
+export {
+  useDeleteEmployeeDocument,
+  useUploadEmployeeDocument,
+} from './hooks/useEmployeeDocuments';
 export { useEmployees } from './hooks/useEmployees';
 export { useUpdateEmployee } from './hooks/useUpdateEmployee';
 

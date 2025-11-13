@@ -62,7 +62,7 @@ export async function initializeFirebaseForScript() {
   if (process.env.FIREBASE_EMULATOR === 'true') {
     console.log('🔧 Connecting to Firebase Emulators...');
     connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
-    connectFirestoreEmulator(db, '127.0.0.1', 8080);
+    connectFirestoreEmulator(db, '127.0.0.1', 8888);
     console.log('✅ Connected to emulators\n');
   }
 

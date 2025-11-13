@@ -44,7 +44,9 @@ export function ProtectedRoute({ children, requiredRole, loadingElement }: Prote
             minHeight: '100vh',
           }}
         >
-          <Spin size="large" tip="กำลังโหลด..." />
+          <Spin size="large" tip="กำลังโหลด...">
+            <div style={{ minHeight: 100 }} />
+          </Spin>
         </div>
       )
     );

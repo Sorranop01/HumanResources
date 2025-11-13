@@ -1,5 +1,6 @@
 /**
  * Leave Request Service
+ * ✅ Uses Zod schemas for runtime validation
  * Business logic for leave requests (คำขอลา)
  */
 
@@ -28,59 +29,72 @@ import type {
   RejectLeaveRequestInput,
   UpdateLeaveRequestInput,
 } from '../types';
+import { LeaveRequestSchema } from '../schemas';
 import { leaveEntitlementService } from './leaveEntitlementService';
 import { leaveTypeService } from './leaveTypeService';
 
 const COLLECTION_NAME = 'leaveRequests';
 
 /**
- * Convert Firestore document to LeaveRequest
+ * Convert Firestore document to LeaveRequest with Zod validation
+ * ✅ Validates data from Firestore before returning
  */
-function docToLeaveRequest(id: string, data: DocumentData): LeaveRequest {
-  return {
+function docToLeaveRequest(id: string, data: DocumentData): LeaveRequest | null {
+  // Helper to convert Timestamp to Date for validation
+  const toDate = (value: unknown): Date => {
+    if (value instanceof Date) return value;
+    if (value && typeof value === 'object' && 'toDate' in value) {
+      return (value as Timestamp).toDate();
+    }
+    return new Date(value as string);
+  };
+
+  // Convert Firestore Timestamps to Dates for Zod validation
+  const converted = {
     id,
-    requestNumber: data.requestNumber,
-    employeeId: data.employeeId,
-    employeeName: data.employeeName,
-    employeeCode: data.employeeCode,
-    department: data.department,
-    position: data.position,
-    leaveTypeId: data.leaveTypeId,
-    leaveTypeCode: data.leaveTypeCode,
-    leaveTypeName: data.leaveTypeName,
-    startDate: data.startDate.toDate(),
-    endDate: data.endDate.toDate(),
-    totalDays: data.totalDays,
-    isHalfDay: data.isHalfDay,
-    halfDayPeriod: data.halfDayPeriod ?? undefined,
-    reason: data.reason,
-    contactDuringLeave: data.contactDuringLeave ?? undefined,
-    workHandoverTo: data.workHandoverTo ?? undefined,
-    workHandoverNotes: data.workHandoverNotes ?? undefined,
-    hasCertificate: data.hasCertificate,
-    certificateUrl: data.certificateUrl ?? undefined,
-    certificateFileName: data.certificateFileName ?? undefined,
-    status: data.status,
-    submittedAt: data.submittedAt ? data.submittedAt.toDate() : undefined,
-    approvalChain: data.approvalChain.map((step: DocumentData) => ({
-      level: step.level,
-      approverId: step.approverId,
-      approverName: step.approverName,
-      approverRole: step.approverRole,
-      status: step.status,
-      actionAt: step.actionAt ? step.actionAt.toDate() : undefined,
-      comments: step.comments ?? undefined,
+    ...data,
+    startDate: toDate(data.startDate),
+    endDate: toDate(data.endDate),
+    submittedAt: data.submittedAt ? toDate(data.submittedAt) : undefined,
+    rejectedAt: data.rejectedAt ? toDate(data.rejectedAt) : undefined,
+    cancelledAt: data.cancelledAt ? toDate(data.cancelledAt) : undefined,
+    createdAt: toDate(data.createdAt),
+    updatedAt: toDate(data.updatedAt),
+    approvalChain:
+      data.approvalChain?.map((step: DocumentData) => ({
+        ...step,
+        actionAt: step.actionAt ? toDate(step.actionAt) : undefined,
+      })) || [],
+  };
+
+  // ✅ Validate with Zod schema
+  const validation = LeaveRequestSchema.safeParse(converted);
+
+  if (!validation.success) {
+    console.warn(
+      `⚠️ Skipping invalid leave request ${id}:`,
+      'Schema validation failed. Run seed scripts to fix data.'
+    );
+    if (import.meta.env.DEV) {
+      console.error('Validation errors:', validation.error.errors);
+    }
+    return null;
+  }
+
+  // Convert validated Firestore Timestamps back to Dates for the interface
+  return {
+    ...validation.data,
+    startDate: toDate(validation.data.startDate),
+    endDate: toDate(validation.data.endDate),
+    submittedAt: validation.data.submittedAt ? toDate(validation.data.submittedAt) : undefined,
+    rejectedAt: validation.data.rejectedAt ? toDate(validation.data.rejectedAt) : undefined,
+    cancelledAt: validation.data.cancelledAt ? toDate(validation.data.cancelledAt) : undefined,
+    createdAt: toDate(validation.data.createdAt),
+    updatedAt: toDate(validation.data.updatedAt),
+    approvalChain: validation.data.approvalChain.map((step) => ({
+      ...step,
+      actionAt: step.actionAt ? toDate(step.actionAt) : undefined,
     })),
-    currentApprovalLevel: data.currentApprovalLevel,
-    rejectedBy: data.rejectedBy ?? undefined,
-    rejectedAt: data.rejectedAt ? data.rejectedAt.toDate() : undefined,
-    rejectionReason: data.rejectionReason ?? undefined,
-    cancelledBy: data.cancelledBy ?? undefined,
-    cancelledAt: data.cancelledAt ? data.cancelledAt.toDate() : undefined,
-    cancellationReason: data.cancellationReason ?? undefined,
-    tenantId: data.tenantId,
-    createdAt: data.createdAt.toDate(),
-    updatedAt: data.updatedAt.toDate(),
   };
 }
 
@@ -361,8 +375,10 @@ export const leaveRequestService = {
         employeeId: employee.id,
         employeeName: `${employee.firstName} ${employee.lastName}`,
         employeeCode: employee.employeeCode,
-        department: employee.department,
-        position: employee.position,
+        departmentId: employee.department,
+        departmentName: employee.departmentName,
+        positionId: employee.position,
+        positionName: employee.positionName,
         leaveTypeId: leaveType.id,
         leaveTypeCode: leaveType.code,
         leaveTypeName: leaveType.nameTh,
@@ -464,10 +480,16 @@ export const leaveRequestService = {
       const q = query(collection(db, COLLECTION_NAME), ...constraints);
       const snapshot = await getDocs(q);
 
-      return snapshot.docs.map((doc) => docToLeaveRequest(doc.id, doc.data()));
+      // ✅ Filter out null results from failed validations
+      const results = snapshot.docs
+        .map((doc) => docToLeaveRequest(doc.id, doc.data()))
+        .filter((request): request is LeaveRequest => request !== null);
+
+      return results;
     } catch (error) {
-      console.error('Failed to fetch leave requests', error);
-      throw new Error('ไม่สามารถดึงข้อมูลคำขอลาได้');
+      console.error('Failed to fetch leave requests:', error);
+      // Return empty array instead of throwing to prevent UI break
+      return [];
     }
   },
 

@@ -11,8 +11,8 @@ import {
   getDoc,
   getDocs,
   orderBy,
-  query,
   type QueryConstraint,
+  query,
   Timestamp,
   updateDoc,
   where,
@@ -33,7 +33,7 @@ const COLLECTION_NAME = 'publicHolidays';
 /**
  * Convert Firestore document to PublicHoliday
  */
-function docToPublicHoliday(id: string, data: any): PublicHoliday {
+function docToPublicHoliday(id: string, data: DocumentData): PublicHoliday {
   return {
     id,
     name: data.name,
@@ -78,10 +78,10 @@ export const holidayService = {
   /**
    * Create public holiday
    */
-  async create(input: CreatePublicHolidayInput): Promise<string> {
+  async create(tenantId: string, input: CreatePublicHolidayInput): Promise<string> {
     try {
       // Check if holiday already exists on this date
-      const existing = await this.getByDate(input.date);
+      const existing = await this.getByDate(tenantId, input.date);
       if (existing.length > 0) {
         throw new Error('A holiday already exists on this date');
       }
@@ -102,7 +102,7 @@ export const holidayService = {
         applicableDepartments: input.applicableDepartments,
         applicablePositions: input.applicablePositions,
         isActive: true,
-        tenantId: 'default',
+        tenantId,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
       });
@@ -139,11 +139,12 @@ export const holidayService = {
   /**
    * Get holidays by date
    */
-  async getByDate(date: Date): Promise<PublicHoliday[]> {
+  async getByDate(tenantId: string, date: Date): Promise<PublicHoliday[]> {
     try {
       const normalized = normalizeDate(date);
       const q = query(
         collection(db, COLLECTION_NAME),
+        where('tenantId', '==', tenantId),
         where('date', '==', Timestamp.fromDate(normalized)),
         where('isActive', '==', true)
       );
@@ -159,9 +160,9 @@ export const holidayService = {
   /**
    * Get all holidays with filters
    */
-  async getAll(filters?: PublicHolidayFilters): Promise<PublicHoliday[]> {
+  async getAll(tenantId: string, filters?: PublicHolidayFilters): Promise<PublicHoliday[]> {
     try {
-      const constraints: QueryConstraint[] = [];
+      const constraints: QueryConstraint[] = [where('tenantId', '==', tenantId)];
 
       if (filters?.year) {
         constraints.push(where('year', '==', filters.year));
@@ -211,7 +212,7 @@ export const holidayService = {
         throw new Error('Public holiday not found');
       }
 
-      const updateData: Record<string, any> = {
+      const updateData: Record<string, unknown> = {
         updatedAt: Timestamp.now(),
       };
 
@@ -222,7 +223,9 @@ export const holidayService = {
       if (input.type !== undefined) updateData.type = input.type;
       if (input.isSubstituteDay !== undefined) updateData.isSubstituteDay = input.isSubstituteDay;
       if (input.originalDate !== undefined)
-        updateData.originalDate = input.originalDate ? Timestamp.fromDate(input.originalDate) : null;
+        updateData.originalDate = input.originalDate
+          ? Timestamp.fromDate(input.originalDate)
+          : null;
       if (input.workPolicy !== undefined) updateData.workPolicy = input.workPolicy;
       if (input.overtimeRate !== undefined) updateData.overtimeRate = input.overtimeRate;
       if (input.locations !== undefined) updateData.locations = input.locations;
@@ -260,13 +263,14 @@ export const holidayService = {
    * Check if a date is a holiday
    */
   async isHoliday(
+    tenantId: string,
     date: Date,
     location?: string,
     region?: string,
     department?: string
   ): Promise<HolidayCheckResult> {
     try {
-      const holidays = await this.getByDate(date);
+      const holidays = await this.getByDate(tenantId, date);
 
       // Find applicable holiday
       const applicableHoliday = holidays.find((holiday) => {
@@ -318,6 +322,7 @@ export const holidayService = {
    * Calculate working days between two dates
    */
   async calculateWorkingDays(
+    tenantId: string,
     input: WorkingDaysCalculationInput
   ): Promise<WorkingDaysCalculationResult> {
     try {
@@ -343,7 +348,13 @@ export const holidayService = {
         }
 
         // Check if holiday
-        const holidayCheck = await this.isHoliday(currentDate, location, region, department);
+        const holidayCheck = await this.isHoliday(
+          tenantId,
+          currentDate,
+          location,
+          region,
+          department
+        );
         if (holidayCheck.isHoliday) {
           holidayCount++;
           holidayDates.push(new Date(currentDate));
@@ -370,17 +381,26 @@ export const holidayService = {
   /**
    * Get holidays for a year
    */
-  async getYearHolidays(year: number, filters?: PublicHolidayFilters): Promise<PublicHoliday[]> {
-    return this.getAll({ ...filters, year });
+  async getYearHolidays(
+    tenantId: string,
+    year: number,
+    filters?: PublicHolidayFilters
+  ): Promise<PublicHoliday[]> {
+    return this.getAll(tenantId, { ...filters, year });
   },
 
   /**
    * Get holidays for a date range
    */
-  async getHolidaysInRange(startDate: Date, endDate: Date): Promise<PublicHoliday[]> {
+  async getHolidaysInRange(
+    tenantId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<PublicHoliday[]> {
     try {
       const q = query(
         collection(db, COLLECTION_NAME),
+        where('tenantId', '==', tenantId),
         where('date', '>=', Timestamp.fromDate(normalizeDate(startDate))),
         where('date', '<=', Timestamp.fromDate(normalizeDate(endDate))),
         where('isActive', '==', true),

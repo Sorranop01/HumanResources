@@ -3,9 +3,9 @@
  * Validates if a user has a specific permission on a resource
  */
 
-import { onCall, HttpsError, type CallableRequest } from 'firebase-functions/v2/https';
-import * as logger from 'firebase-functions/logger';
 import { getFirestore } from 'firebase-admin/firestore';
+import * as logger from 'firebase-functions/logger';
+import { type CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https';
 
 const db = getFirestore();
 

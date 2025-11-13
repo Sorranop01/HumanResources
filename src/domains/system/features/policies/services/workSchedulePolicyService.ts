@@ -11,8 +11,8 @@ import {
   getDoc,
   getDocs,
   orderBy,
-  query,
   type QueryConstraint,
+  query,
   Timestamp,
   updateDoc,
   where,
@@ -31,7 +31,7 @@ const COLLECTION_NAME = 'workSchedulePolicies';
 /**
  * Convert Firestore document to WorkSchedulePolicy
  */
-function docToWorkSchedulePolicy(id: string, data: any): WorkSchedulePolicy {
+function docToWorkSchedulePolicy(id: string, data: DocumentData): WorkSchedulePolicy {
   return {
     id,
     name: data.name,
@@ -76,7 +76,7 @@ function timeToMinutes(time: string): number {
 /**
  * Calculate time difference in minutes
  */
-function calculateTimeDifference(time1: string, time2: string): number {
+function _calculateTimeDifference(time1: string, time2: string): number {
   const minutes1 = timeToMinutes(time1);
   const minutes2 = timeToMinutes(time2);
   return minutes1 - minutes2;
@@ -86,10 +86,10 @@ export const workSchedulePolicyService = {
   /**
    * Create work schedule policy
    */
-  async create(input: CreateWorkSchedulePolicyInput): Promise<string> {
+  async create(tenantId: string, input: CreateWorkSchedulePolicyInput): Promise<string> {
     try {
       // Check if code already exists
-      const existing = await this.getByCode(input.code);
+      const existing = await this.getByCode(tenantId, input.code);
       if (existing) {
         throw new Error('Policy code already exists');
       }
@@ -130,7 +130,7 @@ export const workSchedulePolicyService = {
         isActive: true,
         effectiveDate: Timestamp.fromDate(input.effectiveDate),
         expiryDate: input.expiryDate ? Timestamp.fromDate(input.expiryDate) : null,
-        tenantId: 'default',
+        tenantId,
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
       });
@@ -167,9 +167,13 @@ export const workSchedulePolicyService = {
   /**
    * Get policy by code
    */
-  async getByCode(code: string): Promise<WorkSchedulePolicy | null> {
+  async getByCode(tenantId: string, code: string): Promise<WorkSchedulePolicy | null> {
     try {
-      const q = query(collection(db, COLLECTION_NAME), where('code', '==', code));
+      const q = query(
+        collection(db, COLLECTION_NAME),
+        where('tenantId', '==', tenantId),
+        where('code', '==', code)
+      );
 
       const snapshot = await getDocs(q);
       if (snapshot.empty) {
@@ -191,9 +195,12 @@ export const workSchedulePolicyService = {
   /**
    * Get all policies with filters
    */
-  async getAll(filters?: WorkSchedulePolicyFilters): Promise<WorkSchedulePolicy[]> {
+  async getAll(
+    tenantId: string,
+    filters?: WorkSchedulePolicyFilters
+  ): Promise<WorkSchedulePolicy[]> {
     try {
-      const constraints: QueryConstraint[] = [];
+      const constraints: QueryConstraint[] = [where('tenantId', '==', tenantId)];
 
       if (filters?.department) {
         constraints.push(where('applicableDepartments', 'array-contains', filters.department));
@@ -237,7 +244,7 @@ export const workSchedulePolicyService = {
         throw new Error('Work schedule policy not found');
       }
 
-      const updateData: Record<string, any> = {
+      const updateData: Record<string, unknown> = {
         updatedAt: Timestamp.now(),
       };
 
@@ -454,11 +461,7 @@ export const workSchedulePolicyService = {
   /**
    * Calculate working hours between two times
    */
-  calculateWorkingHours(
-    policy: WorkSchedulePolicy,
-    startTime: string,
-    endTime: string
-  ): number {
+  calculateWorkingHours(policy: WorkSchedulePolicy, startTime: string, endTime: string): number {
     const start = timeToMinutes(startTime);
     const end = timeToMinutes(endTime);
 
