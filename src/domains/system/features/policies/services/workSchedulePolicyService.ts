@@ -6,6 +6,7 @@
 import {
   addDoc,
   collection,
+  type DocumentData,
   deleteDoc,
   doc,
   getDoc,
@@ -17,6 +18,7 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore';
+import { WorkSchedulePolicySchema } from '@/domains/system/features/policies/schemas/workSchedulePolicySchema';
 import { db } from '@/shared/lib/firebase';
 import type {
   CreateWorkSchedulePolicyInput,
@@ -29,39 +31,51 @@ import type {
 const COLLECTION_NAME = 'workSchedulePolicies';
 
 /**
- * Convert Firestore document to WorkSchedulePolicy
+ * Convert Firestore document to WorkSchedulePolicy with validation
  */
-function docToWorkSchedulePolicy(id: string, data: DocumentData): WorkSchedulePolicy {
+function docToWorkSchedulePolicy(id: string, data: DocumentData): WorkSchedulePolicy | null {
+  const validation = WorkSchedulePolicySchema.safeParse({ id, ...data });
+
+  if (!validation.success) {
+    console.error('Invalid work schedule policy document', {
+      id,
+      issues: validation.error.issues,
+    });
+    return null;
+  }
+
+  const parsed = validation.data;
+
   return {
-    id,
-    name: data.name,
-    nameEn: data.nameEn,
-    description: data.description,
-    code: data.code,
-    hoursPerDay: data.hoursPerDay,
-    hoursPerWeek: data.hoursPerWeek,
-    daysPerWeek: data.daysPerWeek,
-    workingDays: data.workingDays,
-    standardStartTime: data.standardStartTime,
-    standardEndTime: data.standardEndTime,
-    breakDuration: data.breakDuration,
-    lateThresholdMinutes: data.lateThresholdMinutes,
-    earlyLeaveThresholdMinutes: data.earlyLeaveThresholdMinutes,
-    gracePeriodMinutes: data.gracePeriodMinutes,
-    allowFlexibleTime: data.allowFlexibleTime,
-    flexibleStartTimeRange: data.flexibleStartTimeRange ?? undefined,
-    flexibleEndTimeRange: data.flexibleEndTimeRange ?? undefined,
-    overtimeStartsAfter: data.overtimeStartsAfter,
-    maxOvertimeHoursPerDay: data.maxOvertimeHoursPerDay,
-    applicableDepartments: data.applicableDepartments,
-    applicablePositions: data.applicablePositions,
-    applicableEmploymentTypes: data.applicableEmploymentTypes,
-    isActive: data.isActive,
-    effectiveDate: data.effectiveDate.toDate(),
-    expiryDate: data.expiryDate ? data.expiryDate.toDate() : undefined,
-    tenantId: data.tenantId,
-    createdAt: data.createdAt.toDate(),
-    updatedAt: data.updatedAt.toDate(),
+    id: parsed.id,
+    name: parsed.name,
+    nameEn: parsed.nameEn,
+    description: parsed.description,
+    code: parsed.code,
+    hoursPerDay: parsed.hoursPerDay,
+    hoursPerWeek: parsed.hoursPerWeek,
+    daysPerWeek: parsed.daysPerWeek,
+    workingDays: parsed.workingDays,
+    standardStartTime: parsed.standardStartTime,
+    standardEndTime: parsed.standardEndTime,
+    breakDuration: parsed.breakDuration,
+    lateThresholdMinutes: parsed.lateThresholdMinutes,
+    earlyLeaveThresholdMinutes: parsed.earlyLeaveThresholdMinutes,
+    gracePeriodMinutes: parsed.gracePeriodMinutes,
+    allowFlexibleTime: parsed.allowFlexibleTime,
+    flexibleStartTimeRange: parsed.flexibleStartTimeRange ?? undefined,
+    flexibleEndTimeRange: parsed.flexibleEndTimeRange ?? undefined,
+    overtimeStartsAfter: parsed.overtimeStartsAfter,
+    maxOvertimeHoursPerDay: parsed.maxOvertimeHoursPerDay,
+    applicableDepartments: parsed.applicableDepartments,
+    applicablePositions: parsed.applicablePositions,
+    applicableEmploymentTypes: parsed.applicableEmploymentTypes,
+    isActive: parsed.isActive,
+    effectiveDate: parsed.effectiveDate,
+    expiryDate: parsed.expiryDate ?? undefined,
+    tenantId: parsed.tenantId,
+    createdAt: parsed.createdAt,
+    updatedAt: parsed.updatedAt,
   };
 }
 
@@ -225,7 +239,9 @@ export const workSchedulePolicyService = {
       const q = query(collection(db, COLLECTION_NAME), ...constraints);
       const snapshot = await getDocs(q);
 
-      return snapshot.docs.map((doc) => docToWorkSchedulePolicy(doc.id, doc.data()));
+      return snapshot.docs
+        .map((doc) => docToWorkSchedulePolicy(doc.id, doc.data()))
+        .filter((policy): policy is WorkSchedulePolicy => policy !== null);
     } catch (error) {
       console.error('Failed to fetch work schedule policies', error);
       throw new Error('Failed to fetch work schedule policies');

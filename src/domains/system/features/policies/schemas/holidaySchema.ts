@@ -4,7 +4,6 @@
  */
 
 import { z } from 'zod';
-import { FirestoreTimestampSchema } from '@/shared/schemas/common.schema';
 
 /**
  * Holiday Type Schema
@@ -116,13 +115,13 @@ export const PublicHolidaySchema = z.object({
   name: z.string().min(1).max(200),
   nameEn: z.string().min(1).max(200),
   description: z.string().max(500),
-  date: FirestoreTimestampSchema,
+  date: z.date(),
   year: z.number().min(2000).max(2100),
   type: HolidayTypeSchema,
 
   // Substitute day
   isSubstituteDay: z.boolean(),
-  originalDate: FirestoreTimestampSchema.optional(),
+  originalDate: z.date().optional(),
 
   // Work policy
   workPolicy: HolidayWorkPolicySchema,
@@ -139,8 +138,8 @@ export const PublicHolidaySchema = z.object({
   // Metadata
   isActive: z.boolean(),
   tenantId: z.string().min(1),
-  createdAt: FirestoreTimestampSchema,
-  updatedAt: FirestoreTimestampSchema,
+  createdAt: z.date(),
+  updatedAt: z.date(),
   createdBy: z.string().optional(),
   updatedBy: z.string().optional(),
 });
@@ -158,3 +157,29 @@ export function safeValidatePublicHoliday(data: unknown) {
   const result = PublicHolidaySchema.safeParse(data);
   return result.success ? result.data : null;
 }
+
+// ===== Cloud Function Schemas =====
+
+/**
+ * Cloud Function: Create Holiday Schema
+ */
+export const CloudFunctionCreateHolidaySchema = z.object({
+  holidayData: CreatePublicHolidaySchema.extend({
+    tenantId: z.string().min(1, 'ต้องระบุ Tenant ID'),
+  }),
+});
+
+/**
+ * Cloud Function: Update Holiday Schema
+ */
+export const CloudFunctionUpdateHolidaySchema = z.object({
+  holidayId: z.string().min(1, 'ต้องระบุ Holiday ID'),
+  holidayData: UpdatePublicHolidaySchema,
+});
+
+/**
+ * Cloud Function: Delete Holiday Schema
+ */
+export const CloudFunctionDeleteHolidaySchema = z.object({
+  holidayId: z.string().min(1, 'ต้องระบุ Holiday ID'),
+});

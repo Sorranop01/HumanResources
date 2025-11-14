@@ -27,6 +27,7 @@ export interface BaseEntity {
  * System user (for authentication)
  */
 export interface User extends BaseEntity {
+  uid: string; // Firebase Auth UID
   email: string;
   displayName: string;
   role: Role; // Primary key for logic & security rules
@@ -35,6 +36,8 @@ export interface User extends BaseEntity {
   photoURL?: string | undefined;
   phoneNumber?: string | undefined;
   isActive: boolean;
+  tenantId: string; // Multi-tenant support
+  employeeId?: string | undefined; // Link to employee record (if applicable)
 }
 
 // ============================================

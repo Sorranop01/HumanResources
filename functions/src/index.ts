@@ -3,15 +3,6 @@
  * Region: asia-southeast1 (MANDATORY)
  */
 
-// Employee functions
-export { createEmployee } from './api/employees/createEmployee.js';
-export { getEmployees } from './api/employees/getEmployees.js';
-// Candidate functions
-export {
-  createCandidate,
-  moveToEmployee,
-  updateCandidateStatus,
-} from './api/candidates/index.js';
 // Attendance functions
 export {
   approveAttendance,
@@ -19,6 +10,23 @@ export {
   clockOut,
   manualAttendanceEntry,
 } from './api/attendance/index.js';
+// Candidate functions
+export {
+  createCandidate,
+  moveToEmployee,
+  updateCandidateStatus,
+} from './api/candidates/index.js';
+// Department functions
+export {
+  createDepartment,
+  deleteDepartment,
+  updateDepartment,
+} from './api/departments/index.js';
+// Employee functions
+export { createEmployee } from './api/employees/createEmployee.js';
+export { getEmployees } from './api/employees/getEmployees.js';
+// Holiday functions
+export { createHoliday, deleteHoliday, updateHoliday } from './api/holidays/index.js';
 // Leave functions
 export {
   approveLeaveRequest,
@@ -28,6 +36,12 @@ export {
 // Payroll functions
 export { calculatePayroll } from './api/payroll/calculatePayroll.js';
 export { generateMonthlyPayroll } from './api/payroll/generateMonthlyPayroll.js';
+// Position functions
+export {
+  createPosition,
+  deletePosition,
+  updatePosition,
+} from './api/positions/index.js';
 // RBAC functions
 export {
   assignUserRole,

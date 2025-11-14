@@ -62,12 +62,15 @@ export const userService = {
     // Convert Timestamp to Date for return
     return {
       id: data.id,
+      uid: data.id, // Firebase Auth UID
       email: data.email,
       displayName: data.displayName,
       role: (data.role || ROLES.EMPLOYEE) as Role,
       phoneNumber: data.phoneNumber,
       photoURL: data.photoURL,
       isActive: true,
+      tenantId: 'default', // TODO: Get from organization context
+      employeeId: data.employeeId,
       createdAt: now.toDate(),
       updatedAt: now.toDate(),
     };
@@ -88,12 +91,15 @@ export const userService = {
 
     return {
       id: userSnap.id,
+      uid: userSnap.id, // Firebase Auth UID
       email: data.email,
       displayName: data.displayName,
       role: data.role,
       phoneNumber: data.phoneNumber,
       photoURL: data.photoURL,
       isActive: data.isActive ?? true,
+      tenantId: data.tenantId || 'default', // Multi-tenant support
+      employeeId: data.employeeId,
       createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : data.createdAt,
       updatedAt: data.updatedAt instanceof Timestamp ? data.updatedAt.toDate() : data.updatedAt,
     };

@@ -5,10 +5,10 @@
  * Public endpoint for candidate applications (no authentication required)
  */
 
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
+import { defineInt } from 'firebase-functions/params';
 import { logger } from 'firebase-functions/v2';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
-import { defineInt } from 'firebase-functions/params';
 import { CloudFunctionCreateCandidateSchema } from '@/domains/people/features/candidates/schemas/index.js';
 
 const timeoutSeconds = defineInt('FUNCTION_TIMEOUT_SECONDS');

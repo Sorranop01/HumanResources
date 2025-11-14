@@ -9,11 +9,11 @@ src/shared/schemas/employee.schema.ts
 
 src/shared/schemas/user.schema.ts
 
-Domain-Specific Models (in domains): If a schema is used by only one domain (e.g., Holiday is only used by Attendance), it MUST go in that domain's schema folder.
+Domain-Specific Models (in domains): If a schema is used by only one domain (e.g., Holiday is only used by Attendance), it MUST go in that domain's feature schema folder, following strict FSD rules.
 
-src/domains/attendance/schemas/holiday.schema.ts
+src/domains/attendance/features/holidays/schemas/holiday.schema.ts
 
-src/domains/people/schemas/position.schema.ts
+src/domains/people/features/positions/schemas/position.schema.ts
 
 Here is the plan to resolve the data drift between your schemas, types, services, and functions.
 
@@ -40,11 +40,14 @@ Backend (Functions): To validate incoming req.data payloads.
 Create the Core Schema in shared Core models used across multiple domains (like Employee, User, Role) must be centralized in src/shared/schemas/.
 TypeScript
 
-// 📍 Location: src/shared/schemas/employee.schema.ts import { z } from 'zod';
+// 📍 Location: src/shared/schemas/employee.schema.ts
+import { z } from 'zod';
 
-// 1. This is your SSOT. export const employeeSchema = z.object({ // Use string for Firestore Auto IDs or ULIDs id: z.string().min(1, 'ID is required'), firstName: z.string().min(2, 'First name is too short'), lastName: z.string().min(2, 'Last name is too short'), email: z.string().email('Invalid email address'), role: z.enum(['admin', 'hr', 'manager', 'employee', 'auditor']), teamId: z.string().optional(), // Use z.coerce.date() if you are storing Timestamps createdAt: z.coerce.date(), });
+// 1. This is your SSOT. export const employeeSchema = z.object({ // Use string for Firestore Auto IDs or ULIDs id: z.string().min(1, 'ID is required'), firstName: z.string().min(2, 'First name is too short'), lastName: z.string().min(2, 'Last name is too short'), email: z.string().email('Invalid email address'), role: z.enum(['admin', 'hr', 'manager', 'employee', 'auditor']), teamId: z.string().optional(),
 
-// 2. This is the Type we will use everywhere. // We no longer write "interface Employee {}" manually. export type Employee = z.infer; 2. Update Services (Firestore) to Use the Schema Your employeeService (per FSD rules) must now import this schema to guarantee that data from Firestore matches your application's expected type.
+// Use z.date(). // The Service Layer (e.g., employeeService) is responsible for // converting Firestore Timestamps to JS Date objects BEFORE validation. createdAt: z.date(), updatedAt: z.date(), });
+
+// 2. This is the Type we will use everywhere. // We no longer write "interface Employee {}" manually. export type Employee = z.infer;
 
 TypeScript
 
@@ -56,17 +59,17 @@ export const employeeService = { async getAll(): Promise<Employee[]> { const sna
 
 // Use Zod to parse the data, ensuring it matches our type.
 const parseResults = snap.docs.map(doc => {
-  const data = { id: doc.id, ...(doc.data() as DocumentData) };
+const data = { id: doc.id, ...(doc.data() as DocumentData) };
 
-  // Use .safeParse() to handle validation errors gracefully
-  const validation = employeeSchema.safeParse(data); 
-  
-  if (!validation.success) {
-    // This catches data in the DB that doesn't match our schema
-    console.error(`Invalid employee data (ID: ${doc.id}):`, validation.error);
-    return null; 
-  }
-  return validation.data;
+// Use .safeParse() to handle validation errors gracefully
+const validation = employeeSchema.safeParse(data);
+
+if (!validation.success) {
+// This catches data in the DB that doesn't match our schema
+console.error(`Invalid employee data (ID: ${doc.id}):`, validation.error);
+return null;
+}
+return validation.data;
 });
 
 // Filter out any invalid entries
@@ -77,7 +80,7 @@ return parseResults.filter(Boolean) as Employee[];
 
 TypeScript
 
-// 📍 Location: functions/src/api/system/createUser.ts import { onCall, HttpsError } from 'firebase-functions/v2/https'; import * as logger from 'firebase-functions/logger'; import { z } from 'zod';
+// 📍 Location: functions/src/api/system/createUser.ts import { onCall, HttpsError } from 'firebase-functions/v2/https'; import \* as logger from 'firebase-functions/logger'; import { z } from 'zod';
 
 // 👈 Import the schema from src // (You may need a relative path or configure TS path aliases in functions/tsconfig.json) import { employeeSchema } from '../../src/shared/schemas/employee.schema';
 
@@ -88,20 +91,20 @@ export const createUser = onCall( { region: 'asia-southeast1', enforceAppCheck: 
 // 1. Validate the input payload with Zod!
 const validation = createUserRequestSchema.safeParse(req.data);
 if (!validation.success) {
-  throw new HttpsError('invalid-argument', 'Invalid payload', validation.error.issues);
+throw new HttpsError('invalid-argument', 'Invalid payload', validation.error.issues);
 }
 
 // 2. 'data' is now 100% type-safe and validated.
 const { email, role, firstName, lastName } = validation.data;
 
 try {
-  // ... (Business Logic: Create Auth user, create Firestore doc)
-  logger.info(`Admin creating new user: ${email} (${role})`);
-  return { success: true, userId: '...' };
+// ... (Business Logic: Create Auth user, create Firestore doc)
+logger.info(`Admin creating new user: ${email} (${role})`);
+return { success: true, userId: '...' };
 
 } catch (error: unknown) {
-  logger.error('createUser failed', { error });
-  throw new HttpsError('internal', 'Failed to create user');
+logger.error('createUser failed', { error });
+throw new HttpsError('internal', 'Failed to create user');
 }
 } ); 4. Update UI Components (React) Your React components now receive data that is guaranteed to be correct, because the employeeService (which useQuery calls) has already validated it.
 
@@ -139,7 +142,7 @@ role: z.enum(['admin', 'hr', 'employee']).optional()
 Firestore Security Rule:
 
 allow write: if request.resource.data.role in ['admin', 'hr', 'employee']
-  || !('role' in request.resource.data);
+|| !('role' in request.resource.data);
 ✅ Both allow the same 3 roles AND both allow the field to be missing
 
 ❌ Wrong - Missing Optional Check
@@ -163,17 +166,17 @@ Example 1: Enum Validation
 Zod:
 
 export const PositionLevelSchema = z.enum([
-  'executive',
-  'senior-management',
-  'middle-management',
-  'supervisor',
-  'staff',
-  'junior',
+'executive',
+'senior-management',
+'middle-management',
+'supervisor',
+'staff',
+'junior',
 ]);
 Firestore Rule:
 
 function isValidPositionLevel(level) {
-  return level in ['executive', 'senior-management', 'middle-management', 'supervisor', 'staff', 'junior'];
+return level in ['executive', 'senior-management', 'middle-management', 'supervisor', 'staff', 'junior'];
 }
 ✅ Both allow exactly the same 6 values
 
@@ -182,25 +185,25 @@ Example 2: Complex Validation (SalaryRange)
 Zod:
 
 export const SalaryRangeSchema = z
-  .object({
-    min: z.number().min(0),
-    max: z.number().min(0),
-    currency: z.string().min(1),
-  })
-  .refine((data) => data.max >= data.min, {
-    message: 'เงินเดือนขั้นสูงต้องมากกว่าหรือเท่ากับเงินเดือนขั้นต่ำ',
-  });
+.object({
+min: z.number().min(0),
+max: z.number().min(0),
+currency: z.string().min(1),
+})
+.refine((data) => data.max >= data.min, {
+message: 'เงินเดือนขั้นสูงต้องมากกว่าหรือเท่ากับเงินเดือนขั้นต่ำ',
+});
 Firestore Rule:
 
 function isValidSalaryRange(range) {
-  return range.keys().hasAll(['min', 'max', 'currency'])
-    && range.min is number
-    && range.max is number
-    && range.min >= 0
-    && range.max >= 0
-    && range.max >= range.min  // Same refine logic!
-    && range.currency is string
-    && range.currency.size() > 0;
+return range.keys().hasAll(['min', 'max', 'currency'])
+&& range.min is number
+&& range.max is number
+&& range.min >= 0
+&& range.max >= 0
+&& range.max >= range.min // Same refine logic!
+&& range.currency is string
+&& range.currency.size() > 0;
 }
 ✅ Both enforce the same business rule: max >= min
 
@@ -221,22 +224,22 @@ Firestore Rule:
 Firestore Rules also enforce who can do what:
 
 match /positions/{positionId} {
-  // Read: All authenticated users
-  allow read: if isAuthenticated();
+// Read: All authenticated users
+allow read: if isAuthenticated();
 
-  // Create: HR and Admin only + data validation
-  allow create: if isHR()
-    && isValidPositionData(request.resource.data)
-    && request.resource.data.currentEmployees == 0
-    && request.resource.data.vacancy == request.resource.data.headcount;
+// Create: HR and Admin only + data validation
+allow create: if isHR()
+&& isValidPositionData(request.resource.data)
+&& request.resource.data.currentEmployees == 0
+&& request.resource.data.vacancy == request.resource.data.headcount;
 
-  // Update: HR and Admin only + business logic
-  allow update: if isHR()
-    && isValidPositionData(request.resource.data)
-    && request.resource.data.vacancy == (request.resource.data.headcount - request.resource.data.currentEmployees);
+// Update: HR and Admin only + business logic
+allow update: if isHR()
+&& isValidPositionData(request.resource.data)
+&& request.resource.data.vacancy == (request.resource.data.headcount - request.resource.data.currentEmployees);
 
-  // Delete: Admin only
-  allow delete: if isAdmin();
+// Delete: Admin only
+allow delete: if isAdmin();
 }
 This ensures:
 
@@ -248,14 +251,14 @@ This ensures:
 
 When updating Position validation rules:
 
- Update Zod schema in src/shared/schemas/position.schema.ts
- Update Firestore Rules in firestore.rules
- Update helper functions (e.g., isValidPositionLevel)
- Test both layers:
- Client-side form validation
- Service layer validation with safeParse()
- Firestore Rules validation (via emulator or real database)
- Deploy rules: firebase deploy --only firestore:rules
+Update Zod schema in src/shared/schemas/position.schema.ts
+Update Firestore Rules in firestore.rules
+Update helper functions (e.g., isValidPositionLevel)
+Test both layers:
+Client-side form validation
+Service layer validation with safeParse()
+Firestore Rules validation (via emulator or real database)
+Deploy rules: firebase deploy --only firestore:rules
 📚 See Full Documentation
 
 For complete field-by-field mapping and examples, see: docs/firestore-rules-schema-alignment.md
@@ -313,183 +316,104 @@ The updated Firestore Security Rules (Step 5) that now enforce the new rule.
 
 ---
 
-## 🔧 Step 7: Common Schemas and Shared Validation Logic
+## 🔧 Step 7: Common Schemas and Timestamp Validation Policy (Revised)
 
-**Date Added:** 2025-11-13  
-**Implemented In:** Phase 3 Zod Validation Refactor
+\*Date Added: 2025-11-14 Status: MANDATORY REVISION
 
-### The Problem: Code Duplication
+The Problem: Timestamp Inconsistency and Data Drift
+A previous version of this guide (and several auto-generated schemas) introduced a FirestoreTimestampSchema using z.custom<Timestamp>.
 
-During Phases 1-3 of the Zod validation implementation, we discovered that `FirestoreTimestampSchema` was being copied and pasted into every schema file (15-20 lines per file). This violated the DRY (Don't Repeat Yourself) principle and the Single Source of Truth strategy.
+This creates a critical conflict:
 
-**Issues:**
-- 65+ lines of duplicate code across 11 schema files
-- If we need to update the validation logic, we'd have to change it in 11 places
-- Risk of inconsistency if one file is updated but others are not
-- Harder to maintain and test
+Zod Schema (FirestoreTimestampSchema): Expects a raw Firestore Timestamp object (e.g., { \_seconds: ..., \_nanoseconds: ... }).
 
-### The Solution: Centralized Common Schemas
+Legacy Types (BaseEntity): Expects a JavaScript Date object (e.g., createdAt: Date).
 
-All common validation schemas that are used across multiple domains should be centralized in:
+Service Layer: Was forced to convert data after validation, or pass raw Timestamps to the UI, leading to errors.
 
-```
-src/shared/schemas/common.schema.ts
-```
+This inconsistency breaks the Single Source of Truth principle.
 
-### What Goes in common.schema.ts?
+The Solution: Standardize on z.date()
+To fix this permanently, we are standardizing on a single, clear rule:
 
-**✅ Include in common.schema.ts:**
-- `FirestoreTimestampSchema` - Used in every Firestore collection
-- `TenantIdSchema` - Used in all multi-tenant collections
-- `FirestoreMetadataSchema` - Common audit trail fields (createdAt, updatedAt, createdBy, etc.)
-- Other primitive validation logic used across 3+ domains
+The Golden Rule: The Service Layer (e.g., employeeService.ts) is ALWAYS responsible for converting raw Firestore Timestamp objects into JavaScript Date objects (using .toDate()) immediately after fetching data and before validation.
 
-**❌ Don't include in common.schema.ts:**
-- Domain-specific enums (e.g., `EmployeeStatusSchema`)
-- Business logic validation (e.g., salary range checks)
-- Domain-specific composite schemas
+Therefore, all Zod schemas MUST use z.date() to validate timestamps.
 
-### Implementation Example
+The FirestoreTimestampSchema (which used z.custom<Timestamp>) is DEPRECATED and must be removed from common.schema.ts and any other schema files.
 
-**Before (Duplicated):**
-```typescript
-// ❌ Copied in every schema file (employees, candidates, departments, etc.)
-const FirestoreTimestampSchema = z.custom<Timestamp>(
-  (val) => {
-    if (val && typeof val === 'object') {
-      return (
-        ('_seconds' in val && '_nanoseconds' in val) ||
-        ('seconds' in val && 'nanoseconds' in val) ||
-        (typeof val.toDate === 'function')
-      );
-    }
-    return false;
-  },
-  { message: 'Expected Firebase Timestamp' }
-);
-```
+Implementation Example (The Correct Way)
+This is how all new and refactored schemas and services must work.
 
-**After (Centralized):**
+File: src/shared/schemas/common.schema.ts (REVISED) (Notice FirestoreTimestampSchema is gone and z.date() is used)
 
-**File: `src/shared/schemas/common.schema.ts`**
-```typescript
-import type { Timestamp } from 'firebase/firestore';
+TypeScript
+
 import { z } from 'zod';
-
-/**
- * Firestore Timestamp Schema
- * Validates Firebase Timestamp objects from both Admin SDK and Client SDK
- */
-export const FirestoreTimestampSchema = z.custom<Timestamp>(
-  (val) => {
-    if (val && typeof val === 'object') {
-      return (
-        ('_seconds' in val && '_nanoseconds' in val) || // Admin SDK
-        ('seconds' in val && 'nanoseconds' in val) || // Client SDK
-        (typeof (val as { toDate?: unknown }).toDate === 'function')
-      );
-    }
-    return false;
-  },
-  { message: 'Expected Firebase Timestamp' }
-);
-
 export const TenantIdSchema = z.string().min(1, 'Tenant ID is required');
 
-export const FirestoreMetadataSchema = z.object({
-  createdAt: FirestoreTimestampSchema,
-  updatedAt: FirestoreTimestampSchema,
-  createdBy: z.string().optional(),
-  updatedBy: z.string().optional(),
-  tenantId: TenantIdSchema,
-});
-```
+/\*\*
 
-**File: `src/domains/people/features/employees/schemas/index.ts`**
-```typescript
+Defines the core metadata fields REQUIRED for most Firestore documents.
+
+IMPORTANT: Timestamps are validated as z.date(), NOT Firestore Timestamps.
+
+The service layer MUST convert Timestamps to Dates (.toDate()) before validation. \*/ export const FirestoreMetadataSchema = z.object({ createdAt: z.date(), updatedAt: z.date(), createdBy: z.string().optional(), updatedBy: z.string().optional(), tenantId: TenantIdSchema, });
+
+File: src/domains/people/features/employees/schemas/index.ts (REVISED) (This schema now correctly uses the revised FirestoreMetadataSchema)
+
+TypeScript
+
 import { z } from 'zod';
-import { FirestoreTimestampSchema } from '@/shared/schemas/common.schema';
-
-export const EmployeeSchema = z.object({
-  id: z.string(),
-  firstName: z.string(),
-  lastName: z.string(),
-  // ... other fields
-  createdAt: FirestoreTimestampSchema,  // ✅ Imported from central location
-  updatedAt: FirestoreTimestampSchema,
-});
-```
-
-### Using FirestoreMetadataSchema
-
-For schemas that include standard audit fields, you can merge with `FirestoreMetadataSchema`:
-
-```typescript
 import { FirestoreMetadataSchema } from '@/shared/schemas/common.schema';
+// Base schema for employee data fields export const EmployeeBaseSchema = z.object({ id: z.string(), firstName: z.string(), lastName: z.string(), // ... other fields });
 
-export const ArticleSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  content: z.string(),
-  // ... other fields
-}).merge(FirestoreMetadataSchema);
-// ✅ Automatically includes: createdAt, updatedAt, createdBy, updatedBy, tenantId
-```
+// Merge base fields with the standardized metadata export const EmployeeSchema = EmployeeBaseSchema.merge(FirestoreMetadataSchema);
 
-### Files Refactored
+export type Employee = z.infer;
 
-**Phase 1 & 2 & 3 Schemas (11 files total):**
-- ✅ `employees/schemas/index.ts`
-- ✅ `candidates/schemas/index.ts`
-- ✅ `departments/schemas/departmentSchemas.ts`
-- ✅ `positions/schemas/positionSchemas.ts`
-- ✅ `leave/schemas/leaveTypeSchema.ts`
-- ✅ `leave/schemas/leaveEntitlementSchema.ts`
-- ✅ `policies/schemas/shiftSchema.ts`
-- ✅ `policies/schemas/holidaySchema.ts`
-- ✅ `policies/schemas/workSchedulePolicySchema.ts`
-- ✅ `policies/schemas/overtimePolicySchema.ts`
-- ✅ `policies/schemas/penaltyPolicySchema.ts`
+File: src/domains/people/features/employees/services/employeeService.ts (CRITICAL EXAMPLE) (This shows the service layer fulfilling its new responsibility)
 
-**Result:**
-- Removed 65 lines of duplicate code
-- Single source of truth for Firestore Timestamp validation
-- Easier to maintain and update in the future
-- Consistent validation logic across all collections
+TypeScript
 
-### Benefits
+import { doc, getDoc, type DocumentData } from 'firebase/firestore';
+import { db } from '@/shared/lib/firebase';
+import { EmployeeSchema, type Employee } from '../schemas';
+/\*\*
 
-1. **Single Source of Truth:** One definition for common validation logic
-2. **DRY Principle:** No code duplication across schema files
-3. **Easier Maintenance:** Update once, affects all schemas
-4. **Better Testing:** Test common schemas once, trust everywhere
-5. **Consistency:** Guaranteed identical validation logic across domains
-6. **Cleaner Code:** Schema files are more concise and focused
+Converts Firestore Timestamps in nested data to JS Dates.
 
-### Maintenance Rules
+@param data The raw data from Firestore.
 
-**When adding new common schemas:**
-1. Ask: "Is this used by 3+ domains?"
-2. If yes → Add to `common.schema.ts`
-3. If no → Keep in domain-specific schema
+@returns Data with Timestamps converted to Dates. \*/ function convertTimestampsToDates(data: DocumentData) { // This helper function is crucial. // It finds all Timestamp objects and calls .toDate() on them. // You must implement this logic robustly. // For this example, we'll only convert the top-level fields: const converted = { ...data };
 
-**When updating FirestoreTimestampSchema:**
-1. Update only in `src/shared/schemas/common.schema.ts`
-2. All importing schemas automatically get the update
-3. No need to touch 11 different files
+if (converted.createdAt && typeof converted.createdAt.toDate === 'function') { converted.createdAt = converted.createdAt.toDate(); } if (converted.updatedAt && typeof converted.updatedAt.toDate === 'function') { converted.updatedAt = converted.updatedAt.toDate(); } // ... convert other nested timestamps (e.g., clockInTime)
 
-### Related Documentation
+return converted; }
 
-- Implementation: `docs/ZOD_VALIDATION_PHASE3_COMPLETE.md`
-- Original Plan: `docs/ZOD_VALIDATION_SEED_SCRIPTS_PLAN.md`
-- Standards: `docs/standards/02-typescript-standards.md`
+export const employeeService = { async getById(id: string): Promise<Employee | null> { const docSnap = await getDoc(doc(db, 'employees', id)); if (!docSnap.exists()) return null;
 
----
+// 1. Get raw data and convert Timestamps to Dates
+const rawData = { id: docSnap.id, ...docSnap.data() };
+const dataWithDates = convertTimestampsToDates(rawData);
+// 2. Validate the data (which now has JS Dates)
+const validation = EmployeeSchema.safeParse(dataWithDates);
+if (!validation.success) {
+console.error(`Invalid employee data (ID: ${id}):`, validation.error);
+return null;
+}
+// 3. Return the 100% type-safe data
+return validation.data;
+}, };
 
-**Summary:** Always centralize common validation logic in `src/shared/schemas/common.schema.ts` to maintain Single Source of Truth and avoid code duplication. This is a critical part of the Zod validation strategy.
+Benefits of this (Revised) Approach
+Single Source of Truth: z.date() is the clear standard in all schemas.
 
+No Data Drift: The conflict between interface (expecting Date) and schema (expecting Timestamp) is eliminated.
 
----
+UI/App-Ready Data: The service layer now returns data (like Employee) that contains standard JavaScript Date objects, which components and libraries (like date pickers) can use directly without conversion.
+
+## Clear Responsibility: The Service Layer handles data conversion; the Zod Schema handles validation. This is a clean separation of concerns.
 
 ## 🛠️ Step 8: Practical Implementation Guide
 
@@ -511,9 +435,9 @@ Let's walk through a complete implementation for the `employees` collection, cov
 **File:** `src/domains/people/features/employees/components/EmployeeForm.tsx`
 
 ```typescript
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { CreateEmployeeSchema } from '../schemas';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { CreateEmployeeSchema } from "../schemas";
 
 export function EmployeeForm() {
   const form = useForm({
@@ -530,6 +454,7 @@ export function EmployeeForm() {
 ```
 
 **Benefits:**
+
 - Immediate user feedback
 - Prevents invalid submissions
 - Type-safe form data
@@ -541,9 +466,9 @@ export function EmployeeForm() {
 **File:** `src/domains/people/features/employees/services/employeeService.ts`
 
 ```typescript
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '@/shared/lib/firebase';
-import { EmployeeSchema, type Employee } from '../schemas';
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/shared/lib/firebase";
+import { EmployeeSchema, type Employee } from "../schemas";
 
 export const employeeService = {
   /**
@@ -551,9 +476,9 @@ export const employeeService = {
    * Catches data drift from Firestore
    */
   async getAll(): Promise<Employee[]> {
-    const snap = await getDocs(collection(db, 'employees'));
+    const snap = await getDocs(collection(db, "employees"));
 
-    const results = snap.docs.map(doc => {
+    const results = snap.docs.map((doc) => {
       const data = { id: doc.id, ...doc.data() };
 
       // ✅ Validate data from Firestore
@@ -578,8 +503,8 @@ export const employeeService = {
    * Get single employee by ID
    */
   async getById(id: string): Promise<Employee | null> {
-    const docSnap = await getDoc(doc(db, 'employees', id));
-    
+    const docSnap = await getDoc(doc(db, "employees", id));
+
     if (!docSnap.exists()) return null;
 
     const data = { id: docSnap.id, ...docSnap.data() };
@@ -591,17 +516,19 @@ export const employeeService = {
     }
 
     return validation.data;
-  }
+  },
 };
 ```
 
 **Benefits:**
+
 - Catches schema drift from database
 - Prevents corrupted data from breaking UI
 - Provides debugging information
 - Type-safe return values
 
 **When to Use:**
+
 - Always on Firestore reads
 - Especially important after schema changes
 - Critical for migrated/imported data
@@ -613,39 +540,39 @@ export const employeeService = {
 **File:** `functions/src/api/employees/createEmployee.ts`
 
 ```typescript
-import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import { db } from '../../config/firebase-admin';
-import { checkUserPermission } from '../rbac/checkUserPermission';
+import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { db } from "../../config/firebase-admin";
+import { checkUserPermission } from "../rbac/checkUserPermission";
 
 // ✅ Import the same schema used in frontend
-import { CreateEmployeeSchema } from '@/domains/people/features/employees/schemas';
+import { CreateEmployeeSchema } from "@/domains/people/features/employees/schemas";
 
 /**
  * Create Employee Cloud Function
  * ✅ Validates req.data before processing
  */
 export const createEmployee = onCall(
-  { 
-    region: 'asia-southeast1',
-    enforceAppCheck: true 
+  {
+    region: "asia-southeast1",
+    enforceAppCheck: true,
   },
   async (req) => {
     // 1. Authentication check
     if (!req.auth) {
-      throw new HttpsError('unauthenticated', 'Login required');
+      throw new HttpsError("unauthenticated", "Login required");
     }
 
     // 2. Authorization check (RBAC)
     const hasPermission = await checkUserPermission(
       req.auth.uid,
-      'employees',
-      'create'
+      "employees",
+      "create"
     );
 
     if (!hasPermission) {
       throw new HttpsError(
-        'permission-denied',
-        'You do not have permission to create employees'
+        "permission-denied",
+        "You do not have permission to create employees"
       );
     }
 
@@ -655,8 +582,8 @@ export const createEmployee = onCall(
     if (!validation.success) {
       // Return detailed validation errors to client
       throw new HttpsError(
-        'invalid-argument',
-        'Invalid employee data',
+        "invalid-argument",
+        "Invalid employee data",
         validation.error.issues
       );
     }
@@ -679,32 +606,33 @@ export const createEmployee = onCall(
         ...employeeData,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        tenantId: 'default',
+        tenantId: "default",
       };
 
-      await db.collection('employees').doc(employeeDoc.id).set(employeeDoc);
+      await db.collection("employees").doc(employeeDoc.id).set(employeeDoc);
 
       return {
         success: true,
         employeeId: employeeDoc.id,
         userId: userRecord.uid,
       };
-
     } catch (error) {
-      console.error('Failed to create employee:', error);
-      throw new HttpsError('internal', 'Failed to create employee');
+      console.error("Failed to create employee:", error);
+      throw new HttpsError("internal", "Failed to create employee");
     }
   }
 );
 ```
 
 **Benefits:**
+
 - Prevents malformed data from reaching database
 - Consistent validation with frontend
 - Clear error messages for debugging
 - Type-safe business logic
 
 **Critical Notes:**
+
 - ALWAYS validate `req.data` before processing
 - Use `.safeParse()` not `.parse()` to handle errors gracefully
 - Return validation errors to client for debugging
@@ -730,7 +658,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isAuthenticated() 
+      return isAuthenticated()
         && get(/databases/$(database)/documents/users/$(request.auth.uid))
            .data.role == 'admin';
     }
@@ -762,7 +690,7 @@ service cloud.firestore {
       ]);
 
       // Field type validations
-      let validTypes = 
+      let validTypes =
         data.firstName is string &&
         data.lastName is string &&
         data.email is string &&
@@ -788,9 +716,9 @@ service cloud.firestore {
           data.salary.baseSalary >= 0
         ));
 
-      return hasRequiredFields 
-        && validTypes 
-        && validConstraints 
+      return hasRequiredFields
+        && validTypes
+        && validConstraints
         && validOptionalFields;
     }
 
@@ -822,12 +750,14 @@ service cloud.firestore {
 ```
 
 **Benefits:**
+
 - Database-level validation (last line of defense)
 - Prevents direct Firestore writes from bypassing validation
 - Enforces RBAC at database level
 - Catches bugs in Cloud Functions
 
 **Critical Notes:**
+
 - Rules MUST mirror Zod schema exactly
 - Test with emulator before deploying
 - Any mismatch causes `PERMISSION_DENIED` errors
@@ -851,6 +781,7 @@ service cloud.firestore {
 Let's say you need to make `departmentId` required (was optional):
 
 **Step 1: Update Zod Schema**
+
 ```typescript
 // ✅ src/domains/people/features/employees/schemas/index.ts
 export const EmployeeSchema = z.object({
@@ -861,18 +792,21 @@ export const EmployeeSchema = z.object({
 ```
 
 **Step 2: Frontend (Automatic)**
+
 ```typescript
 // ✅ Form validation automatically requires departmentId
 // No code changes needed if using zodResolver
 ```
 
 **Step 3: Service Layer (Automatic)**
+
 ```typescript
 // ✅ safeParse() will now reject employees without departmentId
 // No code changes needed
 ```
 
 **Step 4: Update Cloud Functions (if needed)**
+
 ```typescript
 // ✅ If using CreateEmployeeSchema.pick(), update the pick list
 const createEmployeeInput = CreateEmployeeSchema.pick({
@@ -884,6 +818,7 @@ const createEmployeeInput = CreateEmployeeSchema.pick({
 ```
 
 **Step 5: Update Firestore Rules**
+
 ```javascript
 // ✅ firestore.rules
 function isValidEmployeeData(data) {
@@ -903,6 +838,7 @@ function isValidEmployeeData(data) {
 ```
 
 **Step 6: Data Migration (if needed)**
+
 ```typescript
 // ⚠️ If existing data lacks departmentId, run migration first!
 // See Step 6: Schema Evolution & Data Migration Strategy
@@ -913,27 +849,28 @@ function isValidEmployeeData(data) {
 ### Testing All Layers
 
 **1. Unit Tests (Zod Schema)**
-```typescript
-import { EmployeeSchema } from './schemas';
 
-describe('EmployeeSchema', () => {
-  it('should accept valid employee data', () => {
+```typescript
+import { EmployeeSchema } from "./schemas";
+
+describe("EmployeeSchema", () => {
+  it("should accept valid employee data", () => {
     const validData = {
-      id: 'emp-123',
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john@example.com',
+      id: "emp-123",
+      firstName: "John",
+      lastName: "Doe",
+      email: "john@example.com",
       // ...
     };
     expect(() => EmployeeSchema.parse(validData)).not.toThrow();
   });
 
-  it('should reject invalid email', () => {
+  it("should reject invalid email", () => {
     const invalidData = {
-      id: 'emp-123',
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'not-an-email', // ❌ Invalid
+      id: "emp-123",
+      firstName: "John",
+      lastName: "Doe",
+      email: "not-an-email", // ❌ Invalid
       // ...
     };
     expect(() => EmployeeSchema.parse(invalidData)).toThrow();
@@ -942,36 +879,40 @@ describe('EmployeeSchema', () => {
 ```
 
 **2. Integration Tests (Cloud Functions)**
-```typescript
-import { createEmployee } from './createEmployee';
 
-describe('createEmployee', () => {
-  it('should reject invalid payload', async () => {
-    const invalidPayload = { firstName: 'A' }; // ❌ Too short + missing fields
+```typescript
+import { createEmployee } from "./createEmployee";
+
+describe("createEmployee", () => {
+  it("should reject invalid payload", async () => {
+    const invalidPayload = { firstName: "A" }; // ❌ Too short + missing fields
 
     await expect(
       createEmployee({ auth: mockAuth, data: invalidPayload })
-    ).rejects.toThrow('invalid-argument');
+    ).rejects.toThrow("invalid-argument");
   });
 });
 ```
 
 **3. Firestore Rules Tests**
-```typescript
-import { assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
 
-describe('Employee Rules', () => {
-  it('should allow HR to create valid employee', async () => {
-    const validEmployee = { /* valid data */ };
+```typescript
+import { assertFails, assertSucceeds } from "@firebase/rules-unit-testing";
+
+describe("Employee Rules", () => {
+  it("should allow HR to create valid employee", async () => {
+    const validEmployee = {
+      /* valid data */
+    };
     await assertSucceeds(
-      db.collection('employees').doc('emp-123').set(validEmployee)
+      db.collection("employees").doc("emp-123").set(validEmployee)
     );
   });
 
-  it('should reject invalid employee data', async () => {
-    const invalidEmployee = { firstName: 'A' }; // ❌ Missing required fields
+  it("should reject invalid employee data", async () => {
+    const invalidEmployee = { firstName: "A" }; // ❌ Missing required fields
     await assertFails(
-      db.collection('employees').doc('emp-123').set(invalidEmployee)
+      db.collection("employees").doc("emp-123").set(invalidEmployee)
     );
   });
 });
@@ -982,25 +923,30 @@ describe('Employee Rules', () => {
 ### Common Pitfalls
 
 **❌ Pitfall 1: Skipping Service Layer Validation**
+
 ```typescript
 // ❌ BAD: No validation on Firestore read
-const employees = await getDocs(collection(db, 'employees'));
-return employees.docs.map(doc => doc.data()); // Unsafe!
+const employees = await getDocs(collection(db, "employees"));
+return employees.docs.map((doc) => doc.data()); // Unsafe!
 ```
 
 **✅ Solution:**
+
 ```typescript
 // ✅ GOOD: Always validate Firestore reads
-const employees = await getDocs(collection(db, 'employees'));
-return employees.docs.map(doc => {
-  const validation = EmployeeSchema.safeParse(doc.data());
-  return validation.success ? validation.data : null;
-}).filter(Boolean);
+const employees = await getDocs(collection(db, "employees"));
+return employees.docs
+  .map((doc) => {
+    const validation = EmployeeSchema.safeParse(doc.data());
+    return validation.success ? validation.data : null;
+  })
+  .filter(Boolean);
 ```
 
 ---
 
 **❌ Pitfall 2: Firestore Rules Not Updated**
+
 ```typescript
 // ✅ Updated Zod schema (added required field)
 departmentId: z.string().min(1),
@@ -1014,17 +960,19 @@ departmentId: z.string().min(1),
 ---
 
 **❌ Pitfall 3: Using .parse() in Cloud Functions**
+
 ```typescript
 // ❌ BAD: Throws unhandled error
 const data = CreateEmployeeSchema.parse(req.data); // Crashes function!
 ```
 
 **✅ Solution:**
+
 ```typescript
 // ✅ GOOD: Use safeParse and handle errors
 const validation = CreateEmployeeSchema.safeParse(req.data);
 if (!validation.success) {
-  throw new HttpsError('invalid-argument', 'Invalid data', validation.error);
+  throw new HttpsError("invalid-argument", "Invalid data", validation.error);
 }
 ```
 

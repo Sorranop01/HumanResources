@@ -1,6 +1,7 @@
 Purpose: Define clear rules for AI to write safe, scalable, and maintainable TypeScript code in a React + Vite environment.
 
 🇬🇧 Section 1: AI Coding Rules (for AI to follow)
+
 1. General TypeScript Setup
 
 The project must run in strict mode.
@@ -12,7 +13,6 @@ Always export explicit types from domain or shared modules, e.g.:
 
 export type Employee = { id: string; name: string; position: string };
 
-
 Never rely on implicit any or type inference in API responses. Use defined interfaces.
 
 2. Type Declaration Rules
@@ -22,13 +22,11 @@ Prefer type over interface for objects and function types unless extension is re
 type Employee = { id: string; name: string };
 interface Service { getAll(): Promise<Employee[]>; }
 
-
 Use interface only when you need inheritance (extends).
 
 For unions and discriminated types:
 
 type Role = 'admin' | 'hr' | 'employee';
-
 
 Use readonly when appropriate for immutable data.
 
@@ -40,20 +38,19 @@ Always type function parameters and return values:
 
 const formatMoney = (value: number): string => value.toLocaleString('th-TH');
 
-
 For React components:
 
 import type { FC } from 'react';
 
 interface EmployeeCardProps {
-  name: string;
-  position: string;
+name: string;
+position: string;
 }
 
 export const EmployeeCard: FC<EmployeeCardProps> = ({ name, position }) => (
+
   <div>{name} — {position}</div>
 );
-
 
 Hooks:
 
@@ -64,7 +61,6 @@ export const useEmployee = (): { data: Employee[] } => { ... };
 Use generics to enforce type reusability:
 
 function fetchData<T>(endpoint: string): Promise<T> { ... }
-
 
 Built-in utilities allowed:
 Partial, Pick, Omit, Record, Readonly, ReturnType, Awaited.
@@ -78,7 +74,6 @@ type CreateEmployeeInput = Omit<Employee, 'id' | 'createdAt'>;
 Always import types using import type:
 
 import type { Employee } from '@/shared/types';
-
 
 Group all exported types at the bottom of a file:
 
@@ -100,13 +95,24 @@ Prefer union types over enum for lightweight cases:
 
 type Status = 'active' | 'inactive' | 'terminated';
 
-
 Use enum only for large constant sets that must map to numeric or string keys.
 
-8. Type File Organization
+8. Type File Organization (Revised for Zod SSOT)
 
-Shared or reusable types → @/shared/types/
+Data Model Types (e.g., Employee, Position):
 
-Domain-specific types → src/domains/<domain>/types/
+Must be defined in schemas/ files (e.g., .../schemas/employee.schema.ts).
 
-Never define types inline within large components or functions (declare separately and import).
+Must be inferred from Zod schemas using z.infer (e.g., export type Employee = z.infer<typeof EmployeeSchema>).
+
+Do not create manual interface definitions for data models in types/ folders.
+
+UI-Specific Types (e.g., EmployeeCardProps, FormState):
+
+Can be co-located with the component or placed in a types/ folder (e.g., .../features/employees/components/types.ts). This folder is only for UI-related types, not data models.
+
+Shared/Global Types:
+
+Reusable data model types (used by 2+ domains) → src/shared/schemas/ (Inferred from Zod)
+
+Reusable utility types (e.g., ApiResult, BaseEntity) → src/shared/types/

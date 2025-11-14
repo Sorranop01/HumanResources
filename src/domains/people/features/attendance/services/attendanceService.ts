@@ -12,7 +12,7 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore';
-import type { AttendanceRecord, BreakRecord } from '@/domains/people/features/attendance/types';
+import type { AttendanceRecord, BreakRecord } from '@/domains/people/features/attendance/schemas';
 import { leaveRequestService } from '@/domains/people/features/leave';
 import { geofenceService } from '@/domains/system/features/policies/services/geofenceService';
 import { shiftAssignmentService } from '@/domains/system/features/policies/services/shiftAssignmentService';
@@ -104,32 +104,8 @@ function docToAttendanceRecord(id: string, data: DocumentData): AttendanceRecord
     return null;
   }
 
-  // Convert validated data back to Date format for interface
-  return {
-    ...validation.data,
-    clockInTime: toDate(validation.data.clockInTime),
-    clockOutTime: validation.data.clockOutTime ? toDate(validation.data.clockOutTime) : null,
-    approvalDate: validation.data.approvalDate ? toDate(validation.data.approvalDate) : undefined,
-    createdAt: toDate(validation.data.createdAt),
-    updatedAt: toDate(validation.data.updatedAt),
-    clockInLocation: validation.data.clockInLocation
-      ? {
-          ...validation.data.clockInLocation,
-          timestamp: toDate(validation.data.clockInLocation.timestamp),
-        }
-      : undefined,
-    clockOutLocation: validation.data.clockOutLocation
-      ? {
-          ...validation.data.clockOutLocation,
-          timestamp: toDate(validation.data.clockOutLocation.timestamp),
-        }
-      : undefined,
-    breaks: validation.data.breaks.map((breakRecord) => ({
-      ...breakRecord,
-      startTime: toDate(breakRecord.startTime),
-      endTime: breakRecord.endTime ? toDate(breakRecord.endTime) : null,
-    })),
-  } as AttendanceRecord;
+  // Return validated data (keeps Timestamp format as per schema)
+  return validation.data;
 }
 
 /**

@@ -1,76 +1,9 @@
 /**
  * Overtime Policy Types
- * Defines overtime rules, rates, and eligibility
+ * Re-exports from schema for type consistency
  */
 
-import type { BaseEntity } from '@/shared/types';
-
-/**
- * Overtime rule type
- */
-export type OvertimeType = 'weekday' | 'weekend' | 'holiday' | 'after-hours';
-
-/**
- * Overtime Rule
- * Defines rate and conditions for specific overtime scenarios
- */
-export interface OvertimeRule {
-  type: OvertimeType;
-  rate: number; // Multiplier (1.5x, 2x, 3x)
-
-  // Optional conditions
-  conditions?: {
-    minHours?: number; // ขั้นต่ำ (e.g., 1.0)
-    maxHoursPerDay?: number; // สูงสุดต่อวัน (e.g., 4.0)
-    maxHoursPerWeek?: number; // สูงสุดต่อสัปดาห์ (e.g., 20.0)
-    maxHoursPerMonth?: number; // สูงสุดต่อเดือน (e.g., 40.0)
-    roundingMinutes?: number; // ปัดเป็น (e.g., 15, 30)
-  };
-}
-
-/**
- * Overtime Policy
- * Comprehensive overtime management rules
- */
-export interface OvertimePolicy extends BaseEntity {
-  name: string;
-  nameEn: string;
-  description: string;
-  code: string; // STANDARD_OT, MANUFACTURING_OT, etc.
-
-  // Eligibility criteria
-  eligibleEmployeeTypes: string[]; // ['permanent', 'contract']
-  eligiblePositions: string[]; // ['staff', 'supervisor']
-  eligibleDepartments: string[]; // ['Production', 'IT']
-
-  // Overtime rules by type
-  rules: OvertimeRule[];
-
-  // Approval requirements
-  requiresApproval: boolean;
-  approvalThresholdHours?: number; // OT > X ชม. ต้อง approve
-  autoApproveUnder?: number; // OT < X ชม. อนุมัติอัตโนมัติ
-
-  // Special day rates
-  holidayRate: number; // 3x for public holidays
-  weekendRate: number; // 2x for weekends
-  nightShiftRate?: number; // เพิ่มเติมสำหรับกะดึก
-
-  // Time tracking
-  trackBySystem: boolean; // คำนวณจาก clock-in/out อัตโนมัติ
-  allowManualEntry: boolean; // อนุญาตกรอก manual
-
-  // Payment
-  paymentMethod: 'cash' | 'included-in-salary' | 'separate';
-  paymentFrequency: 'monthly' | 'bi-weekly' | 'weekly';
-
-  // Status
-  isActive: boolean;
-  effectiveDate: Date;
-  expiryDate?: Date;
-
-  tenantId: string;
-}
+export type { OvertimePolicy } from '../schemas/overtimePolicySchema';
 
 /**
  * Create Overtime Policy Input

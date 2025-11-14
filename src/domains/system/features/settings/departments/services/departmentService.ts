@@ -3,17 +3,18 @@ import {
   collection,
   deleteDoc,
   doc,
+  Timestamp as FirestoreTimestamp,
   getDoc,
   getDocs,
   orderBy,
   type QueryConstraint,
   query,
   serverTimestamp,
-  type Timestamp,
   updateDoc,
   where,
 } from 'firebase/firestore';
 import { db } from '@/shared/lib/firebase';
+import { DepartmentSchema } from '../schemas/departmentSchemas';
 import type {
   CreateDepartmentInput,
   Department,
@@ -26,12 +27,57 @@ import type {
 const COLLECTION = 'departments';
 
 /**
- * Convert Firestore document to Department type
+ * Convert Firestore Timestamp to Date (recursively handles nested objects)
  */
-const mapDocToDepartment = (id: string, data: DepartmentDocument): Department => ({
-  id,
-  ...data,
-});
+function convertTimestamps(data: unknown): unknown {
+  if (data === null || data === undefined) {
+    return data;
+  }
+
+  if (data instanceof FirestoreTimestamp) {
+    return data.toDate();
+  }
+
+  if (Array.isArray(data)) {
+    return data.map((item) => convertTimestamps(item));
+  }
+
+  if (typeof data === 'object') {
+    const converted: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(data)) {
+      converted[key] = convertTimestamps(value);
+    }
+    return converted;
+  }
+
+  return data;
+}
+
+/**
+ * Convert Firestore document to Department with Zod validation
+ * ✅ Layer 2: Service Layer Validation
+ */
+function docToDepartment(id: string, data: any): Department | null {
+  const converted = {
+    id,
+    ...(convertTimestamps(data) as Record<string, unknown>),
+  };
+
+  const validation = DepartmentSchema.safeParse(converted);
+
+  if (!validation.success) {
+    console.warn(
+      `⚠️ Skipping invalid department ${id}:`,
+      'Schema validation failed. Check data integrity.'
+    );
+    if (import.meta.env.DEV) {
+      console.error('Validation errors:', validation.error.errors);
+    }
+    return null;
+  }
+
+  return validation.data;
+}
 
 /**
  * Get all departments with optional filters
@@ -66,7 +112,12 @@ export const getAllDepartments = async (
     const q = query(collection(db, COLLECTION), ...constraints);
     const snapshot = await getDocs(q);
 
-    return snapshot.docs.map((doc) => mapDocToDepartment(doc.id, doc.data() as DepartmentDocument));
+    // ✅ Use docToDepartment with validation
+    const departments = snapshot.docs
+      .map((docSnap) => docToDepartment(docSnap.id, docSnap.data()))
+      .filter((dept): dept is Department => dept !== null);
+
+    return departments;
   } catch (error) {
     console.error('❌ Failed to get departments:', error);
     throw new Error('ไม่สามารถดึงข้อมูลแผนกได้');
@@ -85,7 +136,7 @@ export const getDepartmentById = async (id: string): Promise<Department | null> 
       return null;
     }
 
-    return mapDocToDepartment(snapshot.id, snapshot.data() as DepartmentDocument);
+    return docToDepartment(snapshot.id, snapshot.data());
   } catch (error) {
     console.error('❌ Failed to get department by ID:', error);
     throw new Error('ไม่สามารถดึงข้อมูลแผนกได้');
@@ -112,8 +163,11 @@ export const getDepartmentByCode = async (
       return null;
     }
 
-    const doc = snapshot.docs[0];
-    return mapDocToDepartment(doc.id, doc.data() as DepartmentDocument);
+    const docSnap = snapshot.docs[0];
+    if (!docSnap) {
+      return null;
+    }
+    return docToDepartment(docSnap.id, docSnap.data());
   } catch (error) {
     console.error('❌ Failed to get department by code:', error);
     throw new Error('ไม่สามารถดึงข้อมูลแผนกได้');
@@ -145,11 +199,11 @@ export const createDepartment = async (
       }
     }
 
-    const data: DepartmentDocument = {
+    const data: any = {
       ...input,
       code: input.code.toUpperCase(),
-      createdAt: serverTimestamp() as Timestamp,
-      updatedAt: serverTimestamp() as Timestamp,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
       createdBy: userId,
       updatedBy: userId,
     };

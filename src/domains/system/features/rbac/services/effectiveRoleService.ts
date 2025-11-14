@@ -8,6 +8,7 @@
 import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import type { Role } from '@/shared/constants/roles';
 import { db } from '@/shared/lib/firebase';
+import { toDate, toDateRequired } from '@/shared/lib/firestore-utils';
 import type { UserRoleAssignment, UserRoleAssignmentFirestore } from '../types/rbacTypes';
 import { getActiveUserRoleAssignment } from './userRoleService';
 
@@ -129,10 +130,10 @@ export async function getUsersWithAssignments(): Promise<
         role: assignmentData.role,
         assignedBy: assignmentData.assignedBy,
         isActive: assignmentData.isActive,
-        expiresAt: assignmentData.expiresAt?.toDate(),
+        expiresAt: toDate(assignmentData.expiresAt),
         reason: assignmentData.reason,
-        createdAt: assignmentData.createdAt.toDate(),
-        updatedAt: assignmentData.updatedAt.toDate(),
+        createdAt: toDateRequired(assignmentData.createdAt, 'createdAt'),
+        updatedAt: toDateRequired(assignmentData.updatedAt, 'updatedAt'),
         createdBy: assignmentData.createdBy,
         updatedBy: assignmentData.updatedBy,
       };

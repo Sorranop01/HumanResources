@@ -4,7 +4,6 @@
  */
 
 import { z } from 'zod';
-import { FirestoreTimestampSchema } from '@/shared/schemas/common.schema';
 
 /**
  * Overtime Type Schema
@@ -189,14 +188,14 @@ export const OvertimePolicySchema = z.object({
   paymentFrequency: PaymentFrequencySchema,
 
   // Effective dates
-  effectiveDate: FirestoreTimestampSchema,
-  expiryDate: FirestoreTimestampSchema.optional(),
+  effectiveDate: z.date(),
+  expiryDate: z.date().optional(),
 
   // Metadata
   isActive: z.boolean(),
   tenantId: z.string().min(1),
-  createdAt: FirestoreTimestampSchema,
-  updatedAt: FirestoreTimestampSchema,
+  createdAt: z.date(),
+  updatedAt: z.date(),
   createdBy: z.string().optional(),
   updatedBy: z.string().optional(),
 });
@@ -214,3 +213,29 @@ export function safeValidateOvertimePolicy(data: unknown) {
   const result = OvertimePolicySchema.safeParse(data);
   return result.success ? result.data : null;
 }
+
+// ===== Cloud Function Schemas =====
+
+/**
+ * Cloud Function: Create Overtime Policy Schema
+ */
+export const CloudFunctionCreateOvertimePolicySchema = z.object({
+  policyData: CreateOvertimePolicySchema.extend({
+    tenantId: z.string().min(1, 'ต้องระบุ Tenant ID'),
+  }),
+});
+
+/**
+ * Cloud Function: Update Overtime Policy Schema
+ */
+export const CloudFunctionUpdateOvertimePolicySchema = z.object({
+  policyId: z.string().min(1, 'ต้องระบุ Policy ID'),
+  policyData: UpdateOvertimePolicySchema,
+});
+
+/**
+ * Cloud Function: Delete Overtime Policy Schema
+ */
+export const CloudFunctionDeleteOvertimePolicySchema = z.object({
+  policyId: z.string().min(1, 'ต้องระบุ Policy ID'),
+});

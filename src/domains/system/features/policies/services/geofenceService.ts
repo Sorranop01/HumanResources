@@ -1,6 +1,7 @@
 import {
   addDoc,
   collection,
+  type DocumentData,
   deleteDoc,
   doc,
   getDoc,
@@ -12,9 +13,27 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/shared/lib/firebase';
 import type { CreateGeofenceInput, UpdateGeofenceInput } from '../schemas/geofenceSchema';
+import { geofenceConfigSchema } from '../schemas/geofenceSchema';
 import type { GeofenceConfig, GeofenceValidation } from '../types/geofence';
 
 const GEOFENCE_COLLECTION = 'geofence_configs';
+
+function docToGeofenceConfig(id: string, data: DocumentData): GeofenceConfig | null {
+  const validation = geofenceConfigSchema.safeParse(data);
+
+  if (!validation.success) {
+    console.error('Invalid geofence config document', {
+      id,
+      issues: validation.error.issues,
+    });
+    return null;
+  }
+
+  return {
+    id,
+    ...validation.data,
+  };
+}
 
 /**
  * Calculate distance between two coordinates using Haversine formula
@@ -53,10 +72,9 @@ export const geofenceService = {
       }
 
       const querySnapshot = await getDocs(q);
-      return querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as GeofenceConfig[];
+      return querySnapshot.docs
+        .map((doc) => docToGeofenceConfig(doc.id, doc.data()))
+        .filter((config): config is GeofenceConfig => config !== null);
     } catch (error) {
       console.error('Failed to fetch geofence configs', error);
       throw new Error('ไม่สามารถดึงข้อมูลการตั้งค่าพื้นที่ได้');
@@ -73,10 +91,7 @@ export const geofenceService = {
         return null;
       }
 
-      return {
-        id: docSnap.id,
-        ...docSnap.data(),
-      } as GeofenceConfig;
+      return docToGeofenceConfig(docSnap.id, docSnap.data()) ?? null;
     } catch (error) {
       console.error('Failed to fetch geofence config', error);
       throw new Error('ไม่สามารถดึงข้อมูลการตั้งค่าพื้นที่ได้');

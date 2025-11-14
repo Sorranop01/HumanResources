@@ -961,7 +961,7 @@ export const EmployeeDetailPage: FC = () => {
             baseSalary: employee.salary.baseSalary,
             currency: employee.salary.currency,
             paymentFrequency: employee.salary.paymentFrequency,
-            ...(employee.salary.hourlyRate !== undefined
+            ...(employee.salary.hourlyRate != null
               ? { hourlyRate: employee.salary.hourlyRate }
               : {}),
           }}

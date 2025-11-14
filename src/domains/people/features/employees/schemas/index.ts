@@ -4,7 +4,6 @@
  */
 
 import { z } from 'zod';
-import { FirestoreTimestampSchema } from '@/shared/schemas/common.schema';
 
 // ============================================
 // Enum Schemas
@@ -320,10 +319,15 @@ export const EmployeeSchema = z.object({
 
   notes: z.string().optional(),
 
-  // Timestamps (Firebase Timestamp - supports both Client and Admin SDK)
-  createdAt: FirestoreTimestampSchema,
-  updatedAt: FirestoreTimestampSchema,
+  // Timestamps (converted to Date by service layer)
+  createdAt: z.date(),
+  updatedAt: z.date(),
 });
+
+/**
+ * Employee type inferred from schema (Single Source of Truth)
+ */
+export type Employee = z.infer<typeof EmployeeSchema>;
 
 // ============================================
 // Form Schemas (Simplified for UI)

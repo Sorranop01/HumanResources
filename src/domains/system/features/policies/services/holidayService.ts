@@ -8,16 +8,17 @@ import {
   collection,
   deleteDoc,
   doc,
+  Timestamp as FirestoreTimestamp,
   getDoc,
   getDocs,
   orderBy,
   type QueryConstraint,
   query,
-  Timestamp,
   updateDoc,
   where,
 } from 'firebase/firestore';
 import { db } from '@/shared/lib/firebase';
+import { PublicHolidaySchema } from '../schemas/holidaySchema';
 import type {
   CreatePublicHolidayInput,
   HolidayCheckResult,
@@ -28,33 +29,59 @@ import type {
   WorkingDaysCalculationResult,
 } from '../types/holiday';
 
-const COLLECTION_NAME = 'publicHolidays';
+const COLLECTION_NAME = 'holidays';
 
 /**
- * Convert Firestore document to PublicHoliday
+ * Convert Firestore Timestamp to Date (recursively)
  */
-function docToPublicHoliday(id: string, data: DocumentData): PublicHoliday {
-  return {
+function convertTimestamps(data: unknown): unknown {
+  if (data === null || data === undefined) {
+    return data;
+  }
+
+  if (data instanceof FirestoreTimestamp) {
+    return data.toDate();
+  }
+
+  if (Array.isArray(data)) {
+    return data.map((item) => convertTimestamps(item));
+  }
+
+  if (typeof data === 'object') {
+    const converted: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(data)) {
+      converted[key] = convertTimestamps(value);
+    }
+    return converted;
+  }
+
+  return data;
+}
+
+/**
+ * Convert Firestore document to PublicHoliday with Zod validation
+ * ✅ Layer 2: Service Layer Validation
+ */
+function docToPublicHoliday(id: string, data: any): PublicHoliday | null {
+  const converted = {
     id,
-    name: data.name,
-    nameEn: data.nameEn,
-    description: data.description,
-    date: data.date.toDate(),
-    year: data.year,
-    type: data.type,
-    isSubstituteDay: data.isSubstituteDay,
-    originalDate: data.originalDate ? data.originalDate.toDate() : undefined,
-    workPolicy: data.workPolicy,
-    overtimeRate: data.overtimeRate,
-    locations: data.locations,
-    regions: data.regions,
-    applicableDepartments: data.applicableDepartments,
-    applicablePositions: data.applicablePositions,
-    isActive: data.isActive,
-    tenantId: data.tenantId,
-    createdAt: data.createdAt.toDate(),
-    updatedAt: data.updatedAt.toDate(),
+    ...(convertTimestamps(data) as Record<string, unknown>),
   };
+
+  const validation = PublicHolidaySchema.safeParse(converted);
+
+  if (!validation.success) {
+    console.warn(
+      `⚠️ Skipping invalid holiday ${id}:`,
+      'Schema validation failed. Check data integrity.'
+    );
+    if (import.meta.env.DEV) {
+      console.error('Validation errors:', validation.error.errors);
+    }
+    return null;
+  }
+
+  return validation.data;
 }
 
 /**
@@ -90,11 +117,11 @@ export const holidayService = {
         name: input.name,
         nameEn: input.nameEn,
         description: input.description,
-        date: Timestamp.fromDate(normalizeDate(input.date)),
+        date: FirestoreTimestamp.fromDate(normalizeDate(input.date)),
         year: input.year,
         type: input.type,
         isSubstituteDay: input.isSubstituteDay,
-        originalDate: input.originalDate ? Timestamp.fromDate(input.originalDate) : null,
+        originalDate: input.originalDate ? FirestoreTimestamp.fromDate(input.originalDate) : null,
         workPolicy: input.workPolicy,
         overtimeRate: input.overtimeRate,
         locations: input.locations,
@@ -103,8 +130,8 @@ export const holidayService = {
         applicablePositions: input.applicablePositions,
         isActive: true,
         tenantId,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
+        createdAt: FirestoreTimestamp.now(),
+        updatedAt: FirestoreTimestamp.now(),
       });
 
       return docRef.id;
@@ -129,6 +156,7 @@ export const holidayService = {
         return null;
       }
 
+      // ✅ Use validation
       return docToPublicHoliday(docSnap.id, docSnap.data());
     } catch (error) {
       console.error('Failed to fetch public holiday', error);
@@ -145,12 +173,15 @@ export const holidayService = {
       const q = query(
         collection(db, COLLECTION_NAME),
         where('tenantId', '==', tenantId),
-        where('date', '==', Timestamp.fromDate(normalized)),
+        where('date', '==', FirestoreTimestamp.fromDate(normalized)),
         where('isActive', '==', true)
       );
 
       const snapshot = await getDocs(q);
-      return snapshot.docs.map((doc) => docToPublicHoliday(doc.id, doc.data()));
+      // ✅ Filter null results from validation
+      return snapshot.docs
+        .map((doc) => docToPublicHoliday(doc.id, doc.data()))
+        .filter((h): h is PublicHoliday => h !== null);
     } catch (error) {
       console.error('Failed to fetch holidays by date', error);
       throw new Error('Failed to fetch holidays');
@@ -193,7 +224,10 @@ export const holidayService = {
       const q = query(collection(db, COLLECTION_NAME), ...constraints);
       const snapshot = await getDocs(q);
 
-      return snapshot.docs.map((doc) => docToPublicHoliday(doc.id, doc.data()));
+      // ✅ Filter null results from validation
+      return snapshot.docs
+        .map((doc) => docToPublicHoliday(doc.id, doc.data()))
+        .filter((h): h is PublicHoliday => h !== null);
     } catch (error) {
       console.error('Failed to fetch public holidays', error);
       throw new Error('Failed to fetch public holidays');
@@ -213,18 +247,19 @@ export const holidayService = {
       }
 
       const updateData: Record<string, unknown> = {
-        updatedAt: Timestamp.now(),
+        updatedAt: FirestoreTimestamp.now(),
       };
 
       if (input.name !== undefined) updateData.name = input.name;
       if (input.nameEn !== undefined) updateData.nameEn = input.nameEn;
       if (input.description !== undefined) updateData.description = input.description;
-      if (input.date !== undefined) updateData.date = Timestamp.fromDate(normalizeDate(input.date));
+      if (input.date !== undefined)
+        updateData.date = FirestoreTimestamp.fromDate(normalizeDate(input.date));
       if (input.type !== undefined) updateData.type = input.type;
       if (input.isSubstituteDay !== undefined) updateData.isSubstituteDay = input.isSubstituteDay;
       if (input.originalDate !== undefined)
         updateData.originalDate = input.originalDate
-          ? Timestamp.fromDate(input.originalDate)
+          ? FirestoreTimestamp.fromDate(input.originalDate)
           : null;
       if (input.workPolicy !== undefined) updateData.workPolicy = input.workPolicy;
       if (input.overtimeRate !== undefined) updateData.overtimeRate = input.overtimeRate;
@@ -401,14 +436,17 @@ export const holidayService = {
       const q = query(
         collection(db, COLLECTION_NAME),
         where('tenantId', '==', tenantId),
-        where('date', '>=', Timestamp.fromDate(normalizeDate(startDate))),
-        where('date', '<=', Timestamp.fromDate(normalizeDate(endDate))),
+        where('date', '>=', FirestoreTimestamp.fromDate(normalizeDate(startDate))),
+        where('date', '<=', FirestoreTimestamp.fromDate(normalizeDate(endDate))),
         where('isActive', '==', true),
         orderBy('date', 'asc')
       );
 
       const snapshot = await getDocs(q);
-      return snapshot.docs.map((doc) => docToPublicHoliday(doc.id, doc.data()));
+      // ✅ Filter null results from validation
+      return snapshot.docs
+        .map((doc) => docToPublicHoliday(doc.id, doc.data()))
+        .filter((h): h is PublicHoliday => h !== null);
     } catch (error) {
       console.error('Failed to fetch holidays in range', error);
       throw new Error('Failed to fetch holidays in range');

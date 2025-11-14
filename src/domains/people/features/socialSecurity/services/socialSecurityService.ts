@@ -17,6 +17,10 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore';
+import {
+  SocialSecurityContributionSchema,
+  SocialSecuritySchema,
+} from '@/domains/people/features/socialSecurity/schemas';
 import { db } from '@/shared/lib/firebase';
 import type {
   CreateSocialSecurityInput,
@@ -32,31 +36,85 @@ const MAX_SS_BASE = 15000; // ฐานเงินเดือนสูงส�
 /**
  * Convert Firestore document to SocialSecurity type
  */
-function docToSocialSecurity(id: string, data: DocumentData): SocialSecurity {
+function docToSocialSecurity(id: string, data: DocumentData): SocialSecurity | null {
+  const validation = SocialSecuritySchema.safeParse({ id, ...data });
+
+  if (!validation.success) {
+    console.error('Invalid social security data', {
+      id,
+      issues: validation.error.issues,
+    });
+    return null;
+  }
+
+  const parsed = validation.data;
+
   return {
+    id: parsed.id,
+    employeeId: parsed.employeeId,
+    employeeName: parsed.employeeName,
+    employeeCode: parsed.employeeCode,
+    socialSecurityNumber: parsed.socialSecurityNumber,
+    registrationDate: parsed.registrationDate.toDate(),
+    status: parsed.status,
+    hospitalName: parsed.hospitalName,
+    hospitalCode: parsed.hospitalCode ?? undefined,
+    employeeContributionRate: parsed.employeeContributionRate,
+    employerContributionRate: parsed.employerContributionRate,
+    contributionBase: parsed.contributionBase,
+    employeeAmount: parsed.employeeAmount,
+    employerAmount: parsed.employerAmount,
+    totalAmount: parsed.totalAmount,
+    totalEmployeeContribution: parsed.totalEmployeeContribution,
+    totalEmployerContribution: parsed.totalEmployerContribution,
+    totalContribution: parsed.totalContribution,
+    notes: parsed.notes ?? undefined,
+    lastContributionDate: parsed.lastContributionDate
+      ? parsed.lastContributionDate.toDate()
+      : undefined,
+    tenantId: parsed.tenantId,
+    createdAt: parsed.createdAt.toDate(),
+    updatedAt: parsed.updatedAt.toDate(),
+  };
+}
+
+function docToContribution(
+  socialSecurityId: string,
+  id: string,
+  data: DocumentData
+): SocialSecurityContribution | null {
+  const validation = SocialSecurityContributionSchema.safeParse({
     id,
-    employeeId: data.employeeId,
-    employeeName: data.employeeName,
-    employeeCode: data.employeeCode,
-    socialSecurityNumber: data.socialSecurityNumber,
-    registrationDate: data.registrationDate.toDate(),
-    status: data.status,
-    hospitalName: data.hospitalName,
-    hospitalCode: data.hospitalCode,
-    employeeContributionRate: data.employeeContributionRate,
-    employerContributionRate: data.employerContributionRate,
-    contributionBase: data.contributionBase,
-    employeeAmount: data.employeeAmount,
-    employerAmount: data.employerAmount,
-    totalAmount: data.totalAmount,
-    totalEmployeeContribution: data.totalEmployeeContribution,
-    totalEmployerContribution: data.totalEmployerContribution,
-    totalContribution: data.totalContribution,
-    notes: data.notes,
-    lastContributionDate: data.lastContributionDate?.toDate(),
-    tenantId: data.tenantId,
-    createdAt: data.createdAt.toDate(),
-    updatedAt: data.updatedAt.toDate(),
+    socialSecurityId,
+    ...data,
+  });
+
+  if (!validation.success) {
+    console.error('Invalid social security contribution', {
+      id,
+      socialSecurityId,
+      issues: validation.error.issues,
+    });
+    return null;
+  }
+
+  const parsed = validation.data;
+
+  return {
+    id: parsed.id,
+    socialSecurityId: parsed.socialSecurityId,
+    payrollId: parsed.payrollId ?? undefined,
+    month: parsed.month,
+    year: parsed.year,
+    contributionDate: parsed.contributionDate.toDate(),
+    contributionBase: parsed.contributionBase,
+    employeeAmount: parsed.employeeAmount,
+    employerAmount: parsed.employerAmount,
+    totalAmount: parsed.totalAmount,
+    status: parsed.status,
+    paidAt: parsed.paidAt ? parsed.paidAt.toDate() : undefined,
+    createdAt: parsed.createdAt.toDate(),
+    updatedAt: parsed.updatedAt.toDate(),
   };
 }
 
@@ -112,7 +170,9 @@ export const socialSecurityService = {
       }
 
       const snapshot = await getDocs(q);
-      return snapshot.docs.map((doc) => docToSocialSecurity(doc.id, doc.data()));
+      return snapshot.docs
+        .map((doc) => docToSocialSecurity(doc.id, doc.data()))
+        .filter((record): record is SocialSecurity => record !== null);
     } catch (error) {
       console.error('Failed to fetch social security records', error);
       throw new Error('ไม่สามารถดึงข้อมูลประกันสังคมได้');
@@ -298,25 +358,9 @@ export const socialSecurityService = {
       );
 
       const snapshot = await getDocs(q);
-      return snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          socialSecurityId,
-          payrollId: data.payrollId,
-          month: data.month,
-          year: data.year,
-          contributionDate: data.contributionDate.toDate(),
-          contributionBase: data.contributionBase,
-          employeeAmount: data.employeeAmount,
-          employerAmount: data.employerAmount,
-          totalAmount: data.totalAmount,
-          status: data.status,
-          paidAt: data.paidAt?.toDate(),
-          createdAt: data.createdAt.toDate(),
-          updatedAt: data.updatedAt.toDate(),
-        } as SocialSecurityContribution;
-      });
+      return snapshot.docs
+        .map((doc) => docToContribution(socialSecurityId, doc.id, doc.data()))
+        .filter((record): record is SocialSecurityContribution => record !== null);
     } catch (error) {
       console.error('Failed to fetch contributions', error);
       throw new Error('ไม่สามารถดึงข้อมูลประวัติการจ่ายได้');

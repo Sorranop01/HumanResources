@@ -4,7 +4,6 @@
  */
 
 import { z } from 'zod';
-import { FirestoreTimestampSchema } from '@/shared/schemas/common.schema';
 
 /**
  * Time format validation (HH:mm)
@@ -193,14 +192,14 @@ export const WorkSchedulePolicySchema = z.object({
   applicableEmploymentTypes: z.array(z.string()),
 
   // Effective dates
-  effectiveDate: FirestoreTimestampSchema,
-  expiryDate: FirestoreTimestampSchema.optional(),
+  effectiveDate: z.date(),
+  expiryDate: z.date().optional(),
 
   // Metadata
   isActive: z.boolean(),
   tenantId: z.string().min(1),
-  createdAt: FirestoreTimestampSchema,
-  updatedAt: FirestoreTimestampSchema,
+  createdAt: z.date(),
+  updatedAt: z.date(),
   createdBy: z.string().optional(),
   updatedBy: z.string().optional(),
 });
@@ -218,3 +217,29 @@ export function safeValidateWorkSchedulePolicy(data: unknown) {
   const result = WorkSchedulePolicySchema.safeParse(data);
   return result.success ? result.data : null;
 }
+
+// ===== Cloud Function Schemas =====
+
+/**
+ * Cloud Function: Create Work Schedule Policy Schema
+ */
+export const CloudFunctionCreateWorkSchedulePolicySchema = z.object({
+  policyData: CreateWorkSchedulePolicySchema.extend({
+    tenantId: z.string().min(1, 'ต้องระบุ Tenant ID'),
+  }),
+});
+
+/**
+ * Cloud Function: Update Work Schedule Policy Schema
+ */
+export const CloudFunctionUpdateWorkSchedulePolicySchema = z.object({
+  policyId: z.string().min(1, 'ต้องระบุ Policy ID'),
+  policyData: UpdateWorkSchedulePolicySchema,
+});
+
+/**
+ * Cloud Function: Delete Work Schedule Policy Schema
+ */
+export const CloudFunctionDeleteWorkSchedulePolicySchema = z.object({
+  policyId: z.string().min(1, 'ต้องระบุ Policy ID'),
+});

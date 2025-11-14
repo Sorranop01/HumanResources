@@ -141,6 +141,11 @@ export const AttendanceRecordSchema = z.object({
 });
 
 export type AttendanceRecord = z.infer<typeof AttendanceRecordSchema>;
+export type AttendanceStatus = z.infer<typeof AttendanceStatusSchema>;
+export type ClockInMethod = z.infer<typeof ClockInMethodSchema>;
+export type LocationData = z.infer<typeof LocationDataSchema>;
+export type BreakRecord = z.infer<typeof BreakRecordSchema>;
+export type AttendancePenalty = z.infer<typeof AttendancePenaltySchema>;
 
 /**
  * Clock In Input Schema

@@ -72,11 +72,37 @@ export const UpdateDepartmentSchema = CreateDepartmentSchema.partial().omit({
 });
 
 /**
+ * Cloud Function: Create Department Schema
+ */
+export const CloudFunctionCreateDepartmentSchema = z.object({
+  departmentData: CreateDepartmentSchema,
+});
+
+/**
+ * Cloud Function: Update Department Schema
+ */
+export const CloudFunctionUpdateDepartmentSchema = z.object({
+  departmentId: z.string().min(1, 'ต้องระบุ Department ID'),
+  departmentData: UpdateDepartmentSchema,
+});
+
+/**
+ * Cloud Function: Delete Department Schema
+ */
+export const CloudFunctionDeleteDepartmentSchema = z.object({
+  departmentId: z.string().min(1, 'ต้องระบุ Department ID'),
+  transferEmployeesToDepartmentId: z.string().optional(), // ถ้ามีพนักงานในแผนก ย้ายไปแผนกไหน
+});
+
+/**
  * Inferred types
  */
 export type Department = z.infer<typeof DepartmentSchema>;
 export type CreateDepartmentFormInput = z.infer<typeof CreateDepartmentSchema>;
 export type UpdateDepartmentFormInput = z.infer<typeof UpdateDepartmentSchema>;
+export type CloudFunctionCreateDepartment = z.infer<typeof CloudFunctionCreateDepartmentSchema>;
+export type CloudFunctionUpdateDepartment = z.infer<typeof CloudFunctionUpdateDepartmentSchema>;
+export type CloudFunctionDeleteDepartment = z.infer<typeof CloudFunctionDeleteDepartmentSchema>;
 
 // Validation helpers
 export function validateDepartment(data: unknown) {

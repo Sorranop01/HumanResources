@@ -6,6 +6,7 @@
 import {
   addDoc,
   collection,
+  type DocumentData,
   deleteDoc,
   doc,
   getDoc,
@@ -17,36 +18,49 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore';
+import { ShiftSchema } from '@/domains/system/features/policies/schemas/shiftSchema';
 import { db } from '@/shared/lib/firebase';
 import type { CreateShiftInput, Shift, ShiftFilters, UpdateShiftInput } from '../types/shift';
 
 const COLLECTION_NAME = 'shifts';
 
 /**
- * Convert Firestore document to Shift
+ * Convert Firestore document to Shift with validation
  */
-function docToShift(id: string, data: DocumentData): Shift {
+function docToShift(id: string, data: DocumentData): Shift | null {
+  const validation = ShiftSchema.safeParse({ id, ...data });
+
+  if (!validation.success) {
+    console.error('Invalid shift document', {
+      id,
+      issues: validation.error.issues,
+    });
+    return null;
+  }
+
+  const parsed = validation.data;
+
   return {
-    id,
-    name: data.name,
-    nameEn: data.nameEn,
-    description: data.description,
-    code: data.code,
-    startTime: data.startTime,
-    endTime: data.endTime,
-    breaks: data.breaks,
-    workHours: data.workHours,
-    grossHours: data.grossHours,
-    premiumRate: data.premiumRate,
-    nightShiftBonus: data.nightShiftBonus,
-    applicableDays: data.applicableDays,
-    color: data.color ?? undefined,
-    isActive: data.isActive,
-    effectiveDate: data.effectiveDate.toDate(),
-    expiryDate: data.expiryDate ? data.expiryDate.toDate() : undefined,
-    tenantId: data.tenantId,
-    createdAt: data.createdAt.toDate(),
-    updatedAt: data.updatedAt.toDate(),
+    id: parsed.id,
+    name: parsed.name,
+    nameEn: parsed.nameEn,
+    description: parsed.description,
+    code: parsed.code,
+    startTime: parsed.startTime,
+    endTime: parsed.endTime,
+    breaks: parsed.breaks,
+    workHours: parsed.workHours,
+    grossHours: parsed.grossHours,
+    premiumRate: parsed.premiumRate,
+    nightShiftBonus: parsed.nightShiftBonus,
+    applicableDays: parsed.applicableDays,
+    color: parsed.color ?? undefined,
+    isActive: parsed.isActive,
+    effectiveDate: parsed.effectiveDate,
+    expiryDate: parsed.expiryDate ?? undefined,
+    tenantId: parsed.tenantId,
+    createdAt: parsed.createdAt,
+    updatedAt: parsed.updatedAt,
   };
 }
 
@@ -179,7 +193,9 @@ export const shiftService = {
       const q = query(collection(db, COLLECTION_NAME), ...constraints);
       const snapshot = await getDocs(q);
 
-      return snapshot.docs.map((doc) => docToShift(doc.id, doc.data()));
+      return snapshot.docs
+        .map((doc) => docToShift(doc.id, doc.data()))
+        .filter((shift): shift is Shift => shift !== null);
     } catch (error) {
       console.error('Failed to fetch shifts', error);
       throw new Error('Failed to fetch shifts');

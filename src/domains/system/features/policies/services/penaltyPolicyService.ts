@@ -6,6 +6,7 @@
 import {
   addDoc,
   collection,
+  type DocumentData,
   deleteDoc,
   doc,
   getDoc,
@@ -17,6 +18,7 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore';
+import { PenaltyPolicySchema } from '@/domains/system/features/policies/schemas/penaltyPolicySchema';
 import { db } from '@/shared/lib/firebase';
 import type {
   CreatePenaltyPolicyInput,
@@ -30,39 +32,51 @@ import type {
 const COLLECTION_NAME = 'penaltyPolicies';
 
 /**
- * Convert Firestore document to PenaltyPolicy
+ * Convert Firestore document to PenaltyPolicy with validation
  */
-function docToPenaltyPolicy(id: string, data: DocumentData): PenaltyPolicy {
+function docToPenaltyPolicy(id: string, data: DocumentData): PenaltyPolicy | null {
+  const validation = PenaltyPolicySchema.safeParse({ id, ...data });
+
+  if (!validation.success) {
+    console.error('Invalid penalty policy document', {
+      id,
+      issues: validation.error.issues,
+    });
+    return null;
+  }
+
+  const parsed = validation.data;
+
   return {
-    id,
-    name: data.name,
-    nameEn: data.nameEn,
-    description: data.description,
-    code: data.code,
-    type: data.type,
-    calculationType: data.calculationType,
-    amount: data.amount ?? undefined,
-    percentage: data.percentage ?? undefined,
-    hourlyRateMultiplier: data.hourlyRateMultiplier ?? undefined,
-    dailyRateMultiplier: data.dailyRateMultiplier ?? undefined,
-    threshold: data.threshold,
-    gracePeriodMinutes: data.gracePeriodMinutes ?? undefined,
-    graceOccurrences: data.graceOccurrences ?? undefined,
-    isProgressive: data.isProgressive,
-    progressiveRules: data.progressiveRules ?? undefined,
-    applicableDepartments: data.applicableDepartments,
-    applicablePositions: data.applicablePositions,
-    applicableEmploymentTypes: data.applicableEmploymentTypes,
-    autoApply: data.autoApply,
-    requiresApproval: data.requiresApproval,
-    maxPenaltyPerMonth: data.maxPenaltyPerMonth ?? undefined,
-    maxOccurrencesPerMonth: data.maxOccurrencesPerMonth ?? undefined,
-    isActive: data.isActive,
-    effectiveDate: data.effectiveDate.toDate(),
-    expiryDate: data.expiryDate ? data.expiryDate.toDate() : undefined,
-    tenantId: data.tenantId,
-    createdAt: data.createdAt.toDate(),
-    updatedAt: data.updatedAt.toDate(),
+    id: parsed.id,
+    name: parsed.name,
+    nameEn: parsed.nameEn,
+    description: parsed.description,
+    code: parsed.code,
+    type: parsed.type,
+    calculationType: parsed.calculationType,
+    amount: parsed.amount ?? undefined,
+    percentage: parsed.percentage ?? undefined,
+    hourlyRateMultiplier: parsed.hourlyRateMultiplier ?? undefined,
+    dailyRateMultiplier: parsed.dailyRateMultiplier ?? undefined,
+    threshold: parsed.threshold,
+    gracePeriodMinutes: parsed.gracePeriodMinutes ?? undefined,
+    graceOccurrences: parsed.graceOccurrences ?? undefined,
+    isProgressive: parsed.isProgressive,
+    progressiveRules: parsed.progressiveRules ?? undefined,
+    applicableDepartments: parsed.applicableDepartments,
+    applicablePositions: parsed.applicablePositions,
+    applicableEmploymentTypes: parsed.applicableEmploymentTypes,
+    autoApply: parsed.autoApply,
+    requiresApproval: parsed.requiresApproval,
+    maxPenaltyPerMonth: parsed.maxPenaltyPerMonth ?? undefined,
+    maxOccurrencesPerMonth: parsed.maxOccurrencesPerMonth ?? undefined,
+    isActive: parsed.isActive,
+    effectiveDate: parsed.effectiveDate,
+    expiryDate: parsed.expiryDate ?? undefined,
+    tenantId: parsed.tenantId,
+    createdAt: parsed.createdAt,
+    updatedAt: parsed.updatedAt,
   };
 }
 
@@ -205,7 +219,9 @@ export const penaltyPolicyService = {
       const q = query(collection(db, COLLECTION_NAME), ...constraints);
       const snapshot = await getDocs(q);
 
-      return snapshot.docs.map((doc) => docToPenaltyPolicy(doc.id, doc.data()));
+      return snapshot.docs
+        .map((doc) => docToPenaltyPolicy(doc.id, doc.data()))
+        .filter((policy): policy is PenaltyPolicy => policy !== null);
     } catch (error) {
       console.error('Failed to fetch penalty policies', error);
       throw new Error('Failed to fetch penalty policies');

@@ -6,6 +6,7 @@
 import {
   addDoc,
   collection,
+  type DocumentData,
   deleteDoc,
   doc,
   getDoc,
@@ -17,6 +18,7 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore';
+import { OvertimePolicySchema } from '@/domains/system/features/policies/schemas/overtimePolicySchema';
 import { db } from '@/shared/lib/firebase';
 import type {
   CreateOvertimePolicyInput,
@@ -31,35 +33,47 @@ import type {
 const COLLECTION_NAME = 'overtimePolicies';
 
 /**
- * Convert Firestore document to OvertimePolicy
+ * Convert Firestore document to OvertimePolicy with validation
  */
-function docToOvertimePolicy(id: string, data: DocumentData): OvertimePolicy {
+function docToOvertimePolicy(id: string, data: DocumentData): OvertimePolicy | null {
+  const validation = OvertimePolicySchema.safeParse({ id, ...data });
+
+  if (!validation.success) {
+    console.error('Invalid overtime policy document', {
+      id,
+      issues: validation.error.issues,
+    });
+    return null;
+  }
+
+  const parsed = validation.data;
+
   return {
-    id,
-    name: data.name,
-    nameEn: data.nameEn,
-    description: data.description,
-    code: data.code,
-    eligibleEmployeeTypes: data.eligibleEmployeeTypes,
-    eligiblePositions: data.eligiblePositions,
-    eligibleDepartments: data.eligibleDepartments,
-    rules: data.rules,
-    requiresApproval: data.requiresApproval,
-    approvalThresholdHours: data.approvalThresholdHours ?? undefined,
-    autoApproveUnder: data.autoApproveUnder ?? undefined,
-    holidayRate: data.holidayRate,
-    weekendRate: data.weekendRate,
-    nightShiftRate: data.nightShiftRate ?? undefined,
-    trackBySystem: data.trackBySystem,
-    allowManualEntry: data.allowManualEntry,
-    paymentMethod: data.paymentMethod,
-    paymentFrequency: data.paymentFrequency,
-    isActive: data.isActive,
-    effectiveDate: data.effectiveDate.toDate(),
-    expiryDate: data.expiryDate ? data.expiryDate.toDate() : undefined,
-    tenantId: data.tenantId,
-    createdAt: data.createdAt.toDate(),
-    updatedAt: data.updatedAt.toDate(),
+    id: parsed.id,
+    name: parsed.name,
+    nameEn: parsed.nameEn,
+    description: parsed.description,
+    code: parsed.code,
+    eligibleEmployeeTypes: parsed.eligibleEmployeeTypes,
+    eligiblePositions: parsed.eligiblePositions,
+    eligibleDepartments: parsed.eligibleDepartments,
+    rules: parsed.rules,
+    requiresApproval: parsed.requiresApproval,
+    approvalThresholdHours: parsed.approvalThresholdHours ?? undefined,
+    autoApproveUnder: parsed.autoApproveUnder ?? undefined,
+    holidayRate: parsed.holidayRate,
+    weekendRate: parsed.weekendRate,
+    nightShiftRate: parsed.nightShiftRate ?? undefined,
+    trackBySystem: parsed.trackBySystem,
+    allowManualEntry: parsed.allowManualEntry,
+    paymentMethod: parsed.paymentMethod,
+    paymentFrequency: parsed.paymentFrequency,
+    isActive: parsed.isActive,
+    effectiveDate: parsed.effectiveDate,
+    expiryDate: parsed.expiryDate,
+    tenantId: parsed.tenantId,
+    createdAt: parsed.createdAt,
+    updatedAt: parsed.updatedAt,
   };
 }
 
@@ -207,7 +221,9 @@ export const overtimePolicyService = {
       const q = query(collection(db, COLLECTION_NAME), ...constraints);
       const snapshot = await getDocs(q);
 
-      return snapshot.docs.map((doc) => docToOvertimePolicy(doc.id, doc.data()));
+      return snapshot.docs
+        .map((doc) => docToOvertimePolicy(doc.id, doc.data()))
+        .filter((policy): policy is OvertimePolicy => policy !== null);
     } catch (error) {
       console.error('Failed to fetch overtime policies', error);
       throw new Error('Failed to fetch overtime policies');

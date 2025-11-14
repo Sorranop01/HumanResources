@@ -49,9 +49,11 @@ To ensure consistent data between Firestore, TypeScript types, and runtime valid
 Use the schema from @/shared/schemas when defining the seed payload.
 
 ts
-คัดลอกโค้ด
-import { EmployeeSchema } from '@/shared/schemas/employee.schema';
-import type { Employee } from '@/shared/types';
+// Import both the Zod Schema AND the inferred type from the *same* schema file
+import {
+  EmployeeSchema,
+  type Employee,
+} from '@/shared/schemas/employee.schema';
 
 const employee: Employee = EmployeeSchema.parse({
   id: 'emp_001',
@@ -135,9 +137,9 @@ http://localhost:4000
 
 🚀 Section 5 — Best Practices
 ❇️ Use Type Safety
-ts
-คัดลอกโค้ด
-import type { Position } from '@/shared/types';
+// Import the inferred type from its schema definition (Zod SSOT)
+import type { Position } from '@/shared/schemas/position.schema';
+// (This assumes position.schema.ts exports: `export type Position = z.infer<typeof PositionSchema>`)
 
 const position: Position = {
   id: 'pos_001',
@@ -323,9 +325,11 @@ ts
 
 **Symptoms:**
 ```
+
 Error: Input not instance of Timestamp
 ZodError: Expected Firebase Timestamp
-```
+
+````
 
 **Solution:** Use custom Timestamp validator
 
@@ -350,21 +354,22 @@ export const MyEntitySchema = z.object({
   createdAt: FirestoreTimestampSchema, // ✅ Works!
   updatedAt: FirestoreTimestampSchema,
 });
-```
+````
 
 **Best Practice:**
+
 - Always use `FirestoreTimestampSchema` for schemas shared between frontend and seed scripts
 - Never use `z.instanceof(Timestamp)` from `firebase/firestore` in shared schemas
 - Document this in schema file comments
-✅ Summary
-Key Rule	Description
-Schema First	Always import Zod schemas — never redefine structure.
-Type Safety	Parse all payloads with Zod.
-No Undefined	Firestore rejects undefined fields.
-Atomic Seeds	One script = one collection.
-Emulator Safe	Never seed production manually.
-tenantId Consistency	Always use tenantId: 'default'.
-Correct Collection Names	Match names with the service layer.
+  ✅ Summary
+  Key Rule Description
+  Schema First Always import Zod schemas — never redefine structure.
+  Type Safety Parse all payloads with Zod.
+  No Undefined Firestore rejects undefined fields.
+  Atomic Seeds One script = one collection.
+  Emulator Safe Never seed production manually.
+  tenantId Consistency Always use tenantId: 'default'.
+  Correct Collection Names Match names with the service layer.
 
 🧠 AI Reminder
 When generating or modifying seed scripts:
@@ -382,4 +387,7 @@ Match collection names with service layer
 Ensure emulator is running
 
 Keep seeds deterministic & idempotent
+
+```
+
 ```

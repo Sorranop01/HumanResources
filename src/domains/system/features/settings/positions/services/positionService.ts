@@ -3,17 +3,18 @@ import {
   collection,
   deleteDoc,
   doc,
+  Timestamp as FirestoreTimestamp,
   getDoc,
   getDocs,
   orderBy,
   type QueryConstraint,
   query,
   serverTimestamp,
-  type Timestamp,
   updateDoc,
   where,
 } from 'firebase/firestore';
 import { db } from '@/shared/lib/firebase';
+import { PositionSchema } from '../schemas/positionSchemas';
 import type {
   CreatePositionInput,
   Position,
@@ -24,10 +25,58 @@ import type {
 
 const COLLECTION = 'positions';
 
-const mapDocToPosition = (id: string, data: PositionDocument): Position => ({
-  id,
-  ...data,
-});
+/**
+ * Convert Firestore Timestamp to Date
+ */
+function convertTimestamps(data: unknown): unknown {
+  if (data === null || data === undefined) {
+    return data;
+  }
+
+  if (data instanceof FirestoreTimestamp) {
+    return data.toDate();
+  }
+
+  if (Array.isArray(data)) {
+    return data.map((item) => convertTimestamps(item));
+  }
+
+  if (typeof data === 'object') {
+    const converted: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(data)) {
+      converted[key] = convertTimestamps(value);
+    }
+    return converted;
+  }
+
+  return data;
+}
+
+/**
+ * Convert Firestore document to Position with Zod validation
+ * ✅ Layer 2: Service Layer Validation
+ */
+function docToPosition(id: string, data: any): Position | null {
+  const converted = {
+    id,
+    ...(convertTimestamps(data) as Record<string, unknown>),
+  };
+
+  const validation = PositionSchema.safeParse(converted);
+
+  if (!validation.success) {
+    console.warn(
+      `⚠️ Skipping invalid position ${id}:`,
+      'Schema validation failed. Check data integrity.'
+    );
+    if (import.meta.env.DEV) {
+      console.error('Validation errors:', validation.error.errors);
+    }
+    return null;
+  }
+
+  return validation.data;
+}
 
 export const getAllPositions = async (
   tenantId: string,
@@ -59,7 +108,12 @@ export const getAllPositions = async (
     const q = query(collection(db, COLLECTION), ...constraints);
     const snapshot = await getDocs(q);
 
-    return snapshot.docs.map((doc) => mapDocToPosition(doc.id, doc.data() as PositionDocument));
+    // ✅ Use docToPosition with validation
+    const positions = snapshot.docs
+      .map((docSnap) => docToPosition(docSnap.id, docSnap.data()))
+      .filter((pos): pos is Position => pos !== null);
+
+    return positions;
   } catch (error) {
     console.error('❌ Failed to get positions:', error);
     throw new Error('ไม่สามารถดึงข้อมูลตำแหน่งได้');
@@ -75,7 +129,7 @@ export const getPositionById = async (id: string): Promise<Position | null> => {
       return null;
     }
 
-    return mapDocToPosition(snapshot.id, snapshot.data() as PositionDocument);
+    return docToPosition(snapshot.id, snapshot.data());
   } catch (error) {
     console.error('❌ Failed to get position by ID:', error);
     throw new Error('ไม่สามารถดึงข้อมูลตำแหน่งได้');
@@ -99,11 +153,11 @@ export const getPositionByCode = async (
       return null;
     }
 
-    const doc = snapshot.docs[0];
-    if (!doc) {
+    const docSnap = snapshot.docs[0];
+    if (!docSnap) {
       return null;
     }
-    return mapDocToPosition(doc.id, doc.data() as PositionDocument);
+    return docToPosition(docSnap.id, docSnap.data());
   } catch (error) {
     console.error('❌ Failed to get position by code:', error);
     throw new Error('ไม่สามารถดึงข้อมูลตำแหน่งได้');
@@ -120,11 +174,11 @@ export const createPosition = async (
       throw new Error(`รหัสตำแหน่ง "${input.code}" มีอยู่แล้ว`);
     }
 
-    const data: PositionDocument = {
+    const data: any = {
       ...input,
       code: input.code.toUpperCase(),
-      createdAt: serverTimestamp() as Timestamp,
-      updatedAt: serverTimestamp() as Timestamp,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
       createdBy: userId,
       updatedBy: userId,
     };

@@ -12,12 +12,12 @@ import {
   getDocs,
   query,
   serverTimestamp,
-  type Timestamp,
   updateDoc,
   where,
 } from 'firebase/firestore';
 import type { Role } from '@/shared/constants/roles';
 import { db } from '@/shared/lib/firebase';
+import { toDate, toDateRequired } from '@/shared/lib/firestore-utils';
 import {
   type AssignUserRoleInput,
   assignUserRoleSchema,
@@ -34,9 +34,9 @@ const COLLECTION_NAME = 'userRoleAssignments';
 function convertToUserRoleAssignment(doc: UserRoleAssignmentFirestore): UserRoleAssignment {
   return {
     ...doc,
-    createdAt: (doc.createdAt as Timestamp).toDate(),
-    updatedAt: (doc.updatedAt as Timestamp).toDate(),
-    expiresAt: doc.expiresAt ? (doc.expiresAt as Timestamp).toDate() : undefined,
+    createdAt: toDateRequired(doc.createdAt, 'createdAt'),
+    updatedAt: toDateRequired(doc.updatedAt, 'updatedAt'),
+    expiresAt: toDate(doc.expiresAt),
   };
 }
 

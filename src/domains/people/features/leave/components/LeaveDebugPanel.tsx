@@ -166,9 +166,13 @@ export const LeaveDebugPanel: FC = () => {
       const usersRef = collection(db, 'users');
       const usersSnapshot = await getDocs(usersRef);
 
+      const currentUserData = user?.id
+        ? usersSnapshot.docs.find((doc) => doc.id === user.id)?.data() ?? null
+        : null;
+
       info.collections.users = {
         total: usersSnapshot.size,
-        currentUser: user?.id ? usersSnapshot.docs.find((doc) => doc.id === user.id)?.data() : null,
+        currentUser: currentUserData,
       };
     } catch (error: unknown) {
       console.error('❌ Debug error:', error);

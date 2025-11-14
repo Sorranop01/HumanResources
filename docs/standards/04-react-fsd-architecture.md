@@ -1,6 +1,7 @@
 Purpose: Define the complete folder structure and coding principles for AI to build scalable React applications using Feature-Slice Design within a Vite + TypeScript monorepo.
 
 🇬🇧 Section 1: AI Coding Rules (for AI to follow)
+
 1. Architectural Principle
 
 Follow Feature-Slice Design (FSD) strictly.
@@ -13,28 +14,18 @@ AI must never mix logic between domains or import cross-domain files directly.
 → Use @/shared/ packages for shared code only.
 
 2. Folder Structure Template
-src/
-├── app/                # Root app config (providers, router, theme)
-├── shared/             # Shared reusable modules
-│   ├── ui/             # Shared UI components
-│   ├── lib/            # Utilities, helpers
-│   ├── types/          # Global types
-│   ├── constants/      # Constant values
-│   └── config/         # Global configs (API endpoints, settings)
-├── domains/            # Business logic separated by domain
-│   ├── people/
-│   │   ├── features/
-│   │   │   ├── employees/
-│   │   │   │   ├── components/
-│   │   │   │   ├── hooks/
-│   │   │   │   ├── services/
-│   │   │   │   ├── schemas/
-│   │   │   │   └── types/
-│   │   └── index.ts
-│   ├── auth/
-│   │   └── features/
-│   └── ...
-└── index.tsx
+   src/
+   ├── domains/ # Business logic separated by domain
+   │ ├── people/
+   │ │ ├── features/
+   │ │ │ ├── employees/
+   │ │ │ │ ├── components/
+   │ │ │ │ ├── hooks/
+   │ │ │ │ ├── services/
+   │ │ │ │ ├── schemas/ <-- Data Models are defined AND exported here
+   │ │ │ │ └── (types/ folder is only for UI-specific props, not data models)
+   │ │ └── index.ts
+   Note on SSOT: As per 10-Single-Source-of-Truth-Zod.md, all data model types (like Employee) must be inferred from Zod schemas located in the schemas/ folder. The types/ folder is deprecated for this purpose and should only be used for UI-related types (e.g., component props) if necessary.
 
 3. Import Rules
 
@@ -42,7 +33,6 @@ AI must use alias imports, not relative paths:
 
 import { formatMoney } from '@/shared/lib/format';
 import { EmployeeCard } from '@/domains/people/features/employees/components/EmployeeCard';
-
 
 Never write deep relative imports such as ../../../.
 
@@ -70,10 +60,10 @@ import type { FC } from 'react';
 import type { Employee } from '@/shared/types';
 
 export const EmployeeCard: FC<{ employee: Employee }> = ({ employee }) => (
-  <Card hoverable>
-    <p>{employee.firstName} {employee.lastName}</p>
-    <Tag color="blue">{employee.role}</Tag>
-  </Card>
+<Card hoverable>
+<p>{employee.firstName} {employee.lastName}</p>
+<Tag color="blue">{employee.role}</Tag>
+</Card>
 );
 
 5. Hook Rules
@@ -106,10 +96,10 @@ import { db } from '@/shared/lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 
 export const employeeService = {
-  async getAll() {
-    const snapshot = await getDocs(collection(db, 'employees'));
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  },
+async getAll() {
+const snapshot = await getDocs(collection(db, 'employees'));
+return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+},
 };
 
 7. Schema and Validation
@@ -121,9 +111,9 @@ Each form or API input must have its schema defined in schemas/.
 import { z } from 'zod';
 
 export const EmployeeFormSchema = z.object({
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-  position: z.string(),
+firstName: z.string().min(1),
+lastName: z.string().min(1),
+position: z.string(),
 });
 export type EmployeeFormInput = z.infer<typeof EmployeeFormSchema>;
 

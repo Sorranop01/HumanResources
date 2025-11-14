@@ -68,15 +68,15 @@ Transaction/batch on multi-doc updates.
 Idempotent jobs (re-run safe) for backfills.
 
 A.3 Client vs Cloud Functions — Decision Matrix
-Action	Client	Cloud Function
-Public read (authorized via rules)	✅	—
-Simple write (user’s own doc, single doc)	✅	—
-Privileged write (admin-only, cross-user)	❌	✅
-Multi-doc transaction / cross-collection consistency	⚠️ Possible	✅ Preferred
-Aggregations / counters updates	❌	✅
-Scheduled jobs / TTL cleanup	❌	✅ (scheduled)
-Secret usage (API keys, server-only logic)	❌	✅
-Heavy compute / PII handling	❌	✅
+Action Client Cloud Function
+Public read (authorized via rules) ✅ —
+Simple write (user’s own doc, single doc) ✅ —
+Privileged write (admin-only, cross-user) ❌ ✅
+Multi-doc transaction / cross-collection consistency ⚠️ Possible ✅ Preferred
+Aggregations / counters updates ❌ ✅
+Scheduled jobs / TTL cleanup ❌ ✅ (scheduled)
+Secret usage (API keys, server-only logic) ❌ ✅
+Heavy compute / PII handling ❌ ✅
 
 Rule: if security, consistency, or secrecy is involved → Cloud Functions.
 
@@ -149,16 +149,9 @@ B.1 TypeScript Types (Shared)
 // shared/types/firestore.ts
 export type ID = string;
 
-export type BaseDoc = {
-  id?: ID;               // doc.id (not stored) — mirror when mapping
-  createdAt: FirebaseTimestamp;
-  updatedAt: FirebaseTimestamp;
-  tenantId: ID;
-  ownerId?: ID;          // optional for user-owned docs
-};
+export type BaseDoc = { id?: ID; // doc.id (not stored) — mirror when mapping createdAt: Date; // Converted to Date by service layer updatedAt: Date; // Converted to Date by service layer tenantId: ID; ownerId?: ID; // optional for user-owned docs };
 
-export type FirebaseTimestamp = import('firebase/firestore').Timestamp;
-
+// This type is now deprecated in favor of z.date() validation // export type FirebaseTimestamp = import('firebase/firestore').Timestamp;
 B.2 Example: Employees & Attendance
 
 Collections:
@@ -172,81 +165,75 @@ Optional: attendance_daily (top-level) — denormalized read model for listing
 Employee:
 
 export type Employee = BaseDoc & {
-  firstName: string;
-  lastName: string;
-  departmentId: ID;
-  position?: string;
-  isActive: boolean;
-  displayName: string; // denormalized: `${firstName} ${lastName}`
+firstName: string;
+lastName: string;
+departmentId: ID;
+position?: string;
+isActive: boolean;
+displayName: string; // denormalized: `${firstName} ${lastName}`
 };
-
 
 Attendance Event (subcollection):
 
-export type AttendanceEvent = BaseDoc & {
-  date: string; // 'YYYY-MM-DD' for partitioning + equality filters
-  clockInTime?: FirebaseTimestamp;
-  clockOutTime?: FirebaseTimestamp;
-  durationHours?: number; // computed, optional
-  employeeId: ID;         // duplicate for collectionGroup queries
-  employeeName: string;   // denormalized for lists
+export type AttendanceEvent = BaseDoc & { date: string; // 'YYYY-MM-DD' for partitioning + equality filters clockInTime?: Date; clockOutTime?: Date; durationHours?: number; // computed, optional
+employeeId: ID; // duplicate for collectionGroup queries
+employeeName: string; // denormalized for lists
 };
-
 
 Denormalized Daily rollup (optional, top-level):
 
 export type AttendanceDaily = BaseDoc & {
-  employeeId: ID;
-  date: string;           // 'YYYY-MM-DD'
-  totalHours: number;     // maintained by Function
-  lastEventAt: FirebaseTimestamp;
-  employeeName: string;   // for list screens
+employeeId: ID;
+date: string; // 'YYYY-MM-DD'
+totalHours: number; // maintained by Function
+lastEventAt: FirebaseTimestamp;
+employeeName: string; // for list screens
 };
 
 B.3 Zod Schemas (Validation)
 import { z } from 'zod';
 
 export const EmployeeCreateSchema = z.object({
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-  departmentId: z.string().min(1),
-  position: z.string().optional(),
-  isActive: z.boolean().default(true),
+firstName: z.string().min(1),
+lastName: z.string().min(1),
+departmentId: z.string().min(1),
+position: z.string().optional(),
+isActive: z.boolean().default(true),
 });
 
 export const AttendanceEventSchema = z.object({
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  clockInTime: z.any().optional(),
-  clockOutTime: z.any().optional(),
+date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+clockInTime: z.date().optional(),
+clockOutTime: z.date().optional(),
 });
 
 B.4 Mapping Helpers (Web SDK)
 import {
-  Timestamp, serverTimestamp, doc, getDoc, setDoc,
+Timestamp, serverTimestamp, doc, getDoc, setDoc,
 } from 'firebase/firestore';
 import { db } from '@/shared/lib/firebase';
 
 export const nowTS = () => serverTimestamp();
 
 export const withBaseCreate = <T extends object>(tenantId: string, ownerId?: string) =>
-  ({ ...data }: T) => ({
-    ...data,
-    tenantId,
-    ownerId,
-    createdAt: nowTS(),
-    updatedAt: nowTS(),
-  });
+({ ...data }: T) => ({
+...data,
+tenantId,
+ownerId,
+createdAt: nowTS(),
+updatedAt: nowTS(),
+});
 
 export const withBaseUpdate = <T extends object>() =>
-  ({ ...patch }: T) => ({
-    ...patch,
-    updatedAt: nowTS(),
-  });
+({ ...patch }: T) => ({
+...patch,
+updatedAt: nowTS(),
+});
 
 // Example create
 export async function createEmployee(id: string, input: Omit<Employee, keyof BaseDoc | 'id'>) {
-  const ref = doc(db, 'employees', id);
-  await setDoc(ref, withBaseCreate<Employee>(input.tenantId, input.ownerId)(input));
+const ref = doc(db, 'employees', id);
+await setDoc(ref, withBaseCreate<Employee>(input.tenantId, input.ownerId)(input));
 }
 
 B.5 Cloud Functions — Aggregation Trigger (Admin SDK)
@@ -257,10 +244,10 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 const db = getFirestore();
 
 export const attendanceOnWrite = onDocumentWritten(
-  'employees/{employeeId}/attendance/{eventId}',
-  async (event) => {
-    const after = event.data?.after.data();
-    if (!after) return;
+'employees/{employeeId}/attendance/{eventId}',
+async (event) => {
+const after = event.data?.after.data();
+if (!after) return;
 
     const { employeeId, date, durationHours = 0 } = after;
     const rollupRef = db.collection('attendance_daily').doc(`${employeeId}_${date}`);
@@ -276,5 +263,6 @@ export const attendanceOnWrite = onDocumentWritten(
         tx.update(rollupRef, { totalHours: (prev.totalHours ?? 0) + (durationHours ?? 0), updatedAt: FieldValue.serverTimestamp() });
       }
     });
-  },
+
+},
 );

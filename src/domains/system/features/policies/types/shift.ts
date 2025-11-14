@@ -1,71 +1,11 @@
 /**
  * Shift Management Types
- * Defines shift schedules, assignments, and rotation patterns
+ * Re-exports from schema for type consistency
  */
 
 import type { BaseEntity } from '@/shared/types';
 
-/**
- * Shift Break
- */
-export interface ShiftBreak {
-  name: string;
-  nameEn: string;
-  startTime: string; // HH:mm format
-  duration: number; // minutes
-}
-
-/**
- * Shift Rotation Type
- */
-export type ShiftRotationType = 'fixed' | 'weekly' | 'bi-weekly' | 'monthly' | 'custom';
-
-/**
- * Shift Rotation Pattern
- */
-export interface ShiftRotationPattern {
-  type: ShiftRotationType;
-  sequence: string[]; // Array of shift codes ["MORNING", "AFTERNOON", "NIGHT"]
-  cycleDays: number; // Total days in one cycle (e.g., 21 for 3-week rotation)
-  startDate: Date;
-}
-
-/**
- * Shift
- * Defines a work shift (e.g., Morning, Afternoon, Night)
- */
-export interface Shift extends BaseEntity {
-  name: string;
-  nameEn: string;
-  description: string;
-  code: string; // MORNING, AFTERNOON, NIGHT, etc.
-
-  // Time configuration
-  startTime: string; // HH:mm format (e.g., "06:00")
-  endTime: string; // HH:mm format (e.g., "14:00")
-  breaks: ShiftBreak[];
-
-  // Hours
-  workHours: number; // Net working hours (excluding breaks)
-  grossHours: number; // Total hours (including breaks)
-
-  // Premium
-  premiumRate: number; // Additional rate (0 = no premium, 0.15 = +15%)
-  nightShiftBonus: number; // Fixed bonus for night shift
-
-  // Applicable days
-  applicableDays: number[]; // [0,1,2,3,4,5,6] where 0=Sunday
-
-  // Color for UI
-  color?: string; // Hex color for calendar display
-
-  // Status
-  isActive: boolean;
-  effectiveDate: Date;
-  expiryDate?: Date;
-
-  tenantId: string;
-}
+export type { Shift } from '../schemas/shiftSchema';
 
 /**
  * Shift Assignment

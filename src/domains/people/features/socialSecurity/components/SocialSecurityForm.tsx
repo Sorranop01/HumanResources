@@ -15,7 +15,16 @@ const { TextArea } = Input;
 
 interface SocialSecurityFormProps {
   initialData?: SocialSecurity | undefined;
-  onSubmit: (data: SocialSecurityFormInput) => void;
+  onSubmit: (data: {
+    socialSecurityNumber: string;
+    registrationDate: string;
+    hospitalName: string;
+    hospitalCode?: string;
+    employeeContributionRate: number;
+    employerContributionRate: number;
+    status: 'active' | 'inactive' | 'suspended';
+    notes?: string;
+  }) => void;
   onCancel?: () => void;
   loading?: boolean;
 }

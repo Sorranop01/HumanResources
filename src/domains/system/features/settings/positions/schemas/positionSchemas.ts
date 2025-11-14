@@ -90,8 +90,8 @@ const BasePositionSchema = z.object({
   employmentTypes: z.array(EmploymentTypeSchema).min(1, 'ต้องระบุประเภทการจ้างงานอย่างน้อย 1 ประเภท'),
 
   // Settings
-  isActive: z.boolean().default(true),
-  isPublic: z.boolean().default(false),
+  isActive: z.boolean().optional().default(true),
+  isPublic: z.boolean().optional().default(false),
 
   // Metadata
   tenantId: z.string().min(1, 'Tenant ID จำเป็นต้องระบุ'),
@@ -134,11 +134,40 @@ export const UpdatePositionSchema = BasePositionSchema.partial()
   );
 
 /**
+ * Cloud Function: Create Position Schema
+ */
+export const CloudFunctionCreatePositionSchema = z.object({
+  positionData: CreatePositionSchema,
+});
+
+/**
+ * Cloud Function: Update Position Schema
+ */
+export const CloudFunctionUpdatePositionSchema = z.object({
+  positionId: z.string().min(1, 'ต้องระบุ Position ID'),
+  positionData: UpdatePositionSchema,
+});
+
+/**
+ * Cloud Function: Delete Position Schema
+ */
+export const CloudFunctionDeletePositionSchema = z.object({
+  positionId: z.string().min(1, 'ต้องระบุ Position ID'),
+  transferEmployeesToPositionId: z.string().optional(), // ถ้ามีพนักงานในตำแหน่ง ย้ายไปตำแหน่งไหน
+});
+
+/**
  * Inferred types
  */
 export type Position = z.infer<typeof PositionSchema>;
+export type PositionLevel = z.infer<typeof PositionLevelSchema>;
+export type PositionCategory = z.infer<typeof PositionCategorySchema>;
+export type EmploymentType = z.infer<typeof EmploymentTypeSchema>;
 export type CreatePositionFormInput = z.infer<typeof CreatePositionSchema>;
 export type UpdatePositionFormInput = z.infer<typeof UpdatePositionSchema>;
+export type CloudFunctionCreatePosition = z.infer<typeof CloudFunctionCreatePositionSchema>;
+export type CloudFunctionUpdatePosition = z.infer<typeof CloudFunctionUpdatePositionSchema>;
+export type CloudFunctionDeletePosition = z.infer<typeof CloudFunctionDeletePositionSchema>;
 
 // Validation helpers
 export function validatePosition(data: unknown) {

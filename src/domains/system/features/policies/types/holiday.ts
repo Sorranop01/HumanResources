@@ -1,9 +1,15 @@
 /**
  * Holiday Calendar Types
  * Defines public holidays and special dates for attendance and payroll calculations
+ *
+ * NOTE: PublicHoliday is now defined in schemas (Single Source of Truth via Zod)
+ * Re-exporting from schemas for backward compatibility
  */
 
 import type { BaseEntity } from '@/shared/types';
+
+// Re-export schema-based types
+export type { PublicHoliday } from '../schemas/holidaySchema';
 
 /**
  * Holiday Type
@@ -25,10 +31,9 @@ export type HolidayWorkPolicy =
   | 'overtime-only'; // ทำงานเป็น OT เท่านั้น
 
 /**
- * Public Holiday
- * วันหยุดนักขัตฤกษ์
+ * @deprecated Legacy PublicHoliday interface - now using schema-based type
  */
-export interface PublicHoliday extends BaseEntity {
+interface PublicHolidayLegacy extends BaseEntity {
   name: string;
   nameEn: string;
   description: string;

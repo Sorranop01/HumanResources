@@ -6,6 +6,7 @@
 import {
   addDoc,
   collection,
+  type DocumentData,
   deleteDoc,
   doc,
   getDoc,
@@ -17,6 +18,7 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore';
+import { ShiftAssignmentSchema } from '@/domains/system/features/policies/schemas/shiftSchema';
 import { db } from '@/shared/lib/firebase';
 import type {
   CreateShiftAssignmentInput,
@@ -30,29 +32,51 @@ import { shiftService } from './shiftService';
 
 const COLLECTION_NAME = 'shiftAssignments';
 
+const toDate = (value: Timestamp | Date | null | undefined): Date | undefined => {
+  if (!value) return undefined;
+  return value instanceof Timestamp ? value.toDate() : value;
+};
+
 /**
  * Convert Firestore document to ShiftAssignment
  */
-function docToShiftAssignment(id: string, data: DocumentData): ShiftAssignment {
+function docToShiftAssignment(id: string, data: DocumentData): ShiftAssignment | null {
+  const validation = ShiftAssignmentSchema.safeParse({ id, ...data });
+
+  if (!validation.success) {
+    console.error('Invalid shift assignment data', {
+      id,
+      issues: validation.error.issues,
+    });
+    return null;
+  }
+
+  const parsed = validation.data;
+
   return {
-    id,
-    employeeId: data.employeeId,
-    employeeName: data.employeeName,
-    shiftId: data.shiftId,
-    shiftCode: data.shiftCode,
-    startDate: data.startDate.toDate(),
-    endDate: data.endDate ? data.endDate.toDate() : undefined,
-    workDays: data.workDays,
-    rotationPattern: data.rotationPattern ?? undefined,
-    isPermanent: data.isPermanent,
-    isRotational: data.isRotational,
-    isActive: data.isActive,
-    notes: data.notes ?? undefined,
-    assignedBy: data.assignedBy,
-    assignedAt: data.assignedAt.toDate(),
-    tenantId: data.tenantId,
-    createdAt: data.createdAt.toDate(),
-    updatedAt: data.updatedAt.toDate(),
+    id: parsed.id,
+    employeeId: parsed.employeeId,
+    employeeName: parsed.employeeName,
+    shiftId: parsed.shiftId,
+    shiftCode: parsed.shiftCode,
+    startDate: toDate(parsed.startDate) ?? new Date(0),
+    endDate: toDate(parsed.endDate ?? null),
+    workDays: parsed.workDays,
+    rotationPattern: parsed.rotationPattern
+      ? {
+          ...parsed.rotationPattern,
+          startDate: toDate(parsed.rotationPattern.startDate) ?? new Date(0),
+        }
+      : undefined,
+    isPermanent: parsed.isPermanent,
+    isRotational: parsed.isRotational,
+    isActive: parsed.isActive,
+    notes: parsed.notes ?? undefined,
+    assignedBy: parsed.assignedBy,
+    assignedAt: toDate(parsed.assignedAt) ?? new Date(0),
+    tenantId: parsed.tenantId,
+    createdAt: toDate(parsed.createdAt) ?? new Date(0),
+    updatedAt: toDate(parsed.updatedAt) ?? new Date(0),
   };
 }
 
@@ -165,7 +189,9 @@ export const shiftAssignmentService = {
       );
 
       const snapshot = await getDocs(q);
-      return snapshot.docs.map((doc) => docToShiftAssignment(doc.id, doc.data()));
+      return snapshot.docs
+        .map((doc) => docToShiftAssignment(doc.id, doc.data()))
+        .filter((assignment): assignment is ShiftAssignment => assignment !== null);
     } catch (error) {
       console.error('Failed to fetch shift assignments by employee', error);
       throw new Error('Failed to fetch shift assignments');
@@ -204,7 +230,9 @@ export const shiftAssignmentService = {
       const q = query(collection(db, COLLECTION_NAME), ...constraints);
       const snapshot = await getDocs(q);
 
-      return snapshot.docs.map((doc) => docToShiftAssignment(doc.id, doc.data()));
+      return snapshot.docs
+        .map((doc) => docToShiftAssignment(doc.id, doc.data()))
+        .filter((assignment): assignment is ShiftAssignment => assignment !== null);
     } catch (error) {
       console.error('Failed to fetch shift assignments', error);
       throw new Error('Failed to fetch shift assignments');

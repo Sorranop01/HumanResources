@@ -247,7 +247,8 @@ export interface OvertimeConfig {
  * Document Record
  */
 export interface DocumentRecord {
-  type: DocumentType;
+  // Some legacy records still store arbitrary strings, so accept string fallback
+  type: DocumentType | string;
   fileName: string;
   fileURL: string;
   uploadDate: Date;
@@ -261,17 +262,11 @@ export interface DocumentRecord {
 // ============================================
 
 /**
- * Complete Employee Entity
- * Main employee document with comprehensive information
+ * Employee type is now defined in schemas (Single Source of Truth)
+ * Re-exporting from schemas for backward compatibility
  */
-export interface Employee extends BaseEntity {
-  // ===== Basic Info =====
-  userId: string;
-  employeeCode: string;
+export type { Employee } from '../schemas';
 
-  // ===== Personal Information =====
-  firstName: string;
-  lastName: string;
   displayName: string; // Denormalized: `${firstName} ${lastName}` (for list rendering)
   thaiFirstName: string;
   thaiLastName: string;

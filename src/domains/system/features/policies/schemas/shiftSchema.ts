@@ -4,7 +4,7 @@
  */
 
 import { z } from 'zod';
-import { FirestoreTimestampSchema } from '@/shared/schemas/common.schema';
+import { TenantIdSchema } from '@/shared/schemas/common.schema';
 
 /**
  * Time format validation (HH:mm)
@@ -46,6 +46,16 @@ export const ShiftRotationTypeSchema = z.enum([
 export const ShiftRotationPatternSchema = z.object({
   type: ShiftRotationTypeSchema,
   sequence: z.array(z.string()).min(1, 'At least one shift code required'),
+  cycleDays: z.number().min(1).max(365),
+  startDate: z.date(),
+});
+
+/**
+ * Firestore representation of rotation patterns
+ */
+const ShiftRotationPatternFirestoreSchema = z.object({
+  type: ShiftRotationTypeSchema,
+  sequence: z.array(z.string()).min(1),
   cycleDays: z.number().min(1).max(365),
   startDate: z.date(),
 });
@@ -203,6 +213,53 @@ export const ShiftAssignmentFiltersSchema = z.object({
 export type ShiftAssignmentFiltersValidated = z.infer<typeof ShiftAssignmentFiltersSchema>;
 
 /**
+ * Complete Shift Assignment Schema (Firestore document)
+ */
+export const ShiftAssignmentSchema = z.object({
+  id: z.string().min(1),
+  employeeId: z.string().min(1),
+  employeeName: z.string().min(1),
+  shiftId: z.string().min(1),
+  shiftCode: z.string().min(1),
+
+  // Assignment period
+  startDate: z.date(),
+  endDate: z.date().nullable(),
+
+  // Working days
+  workDays: z.array(z.number().min(0).max(6)).min(1).max(7),
+
+  // Rotation
+  rotationPattern: ShiftRotationPatternFirestoreSchema.nullable(),
+  isPermanent: z.boolean(),
+  isRotational: z.boolean(),
+
+  // Status & notes
+  isActive: z.boolean(),
+  notes: z.string().max(500).nullable(),
+
+  // Assignment metadata
+  assignedBy: z.string().min(1),
+  assignedAt: z.date(),
+
+  // Tenant metadata
+  tenantId: TenantIdSchema,
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
+export type ShiftAssignmentRecord = z.infer<typeof ShiftAssignmentSchema>;
+
+export function validateShiftAssignment(data: unknown) {
+  return ShiftAssignmentSchema.parse(data);
+}
+
+export function safeValidateShiftAssignment(data: unknown) {
+  const result = ShiftAssignmentSchema.safeParse(data);
+  return result.success ? result.data : null;
+}
+
+/**
  * Complete Shift Schema (for seed scripts and Firestore)
  * Includes all fields with Firestore Timestamps
  */
@@ -236,14 +293,14 @@ export const ShiftSchema = z.object({
     .optional(),
 
   // Effective dates
-  effectiveDate: FirestoreTimestampSchema,
-  expiryDate: FirestoreTimestampSchema.optional(),
+  effectiveDate: z.date(),
+  expiryDate: z.date().optional(),
 
   // Metadata
   isActive: z.boolean(),
   tenantId: z.string().min(1),
-  createdAt: FirestoreTimestampSchema,
-  updatedAt: FirestoreTimestampSchema,
+  createdAt: z.date(),
+  updatedAt: z.date(),
   createdBy: z.string().optional(),
   updatedBy: z.string().optional(),
 });
@@ -261,3 +318,29 @@ export function safeValidateShift(data: unknown) {
   const result = ShiftSchema.safeParse(data);
   return result.success ? result.data : null;
 }
+
+// ===== Cloud Function Schemas =====
+
+/**
+ * Cloud Function: Create Shift Schema
+ */
+export const CloudFunctionCreateShiftSchema = z.object({
+  shiftData: CreateShiftSchema.extend({
+    tenantId: z.string().min(1, 'ต้องระบุ Tenant ID'),
+  }),
+});
+
+/**
+ * Cloud Function: Update Shift Schema
+ */
+export const CloudFunctionUpdateShiftSchema = z.object({
+  shiftId: z.string().min(1, 'ต้องระบุ Shift ID'),
+  shiftData: UpdateShiftSchema,
+});
+
+/**
+ * Cloud Function: Delete Shift Schema
+ */
+export const CloudFunctionDeleteShiftSchema = z.object({
+  shiftId: z.string().min(1, 'ต้องระบุ Shift ID'),
+});
