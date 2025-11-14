@@ -7,7 +7,6 @@
  */
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { message } from 'antd';
 import type { CreateRoleInput } from '../services/roleCloudFunctionService';
 import * as roleCloudFunctionService from '../services/roleCloudFunctionService';
 import { roleKeys } from './useRoles';
@@ -19,14 +18,11 @@ export function useCreateRoleCloudFunction() {
 
   return useMutation({
     mutationFn: (input: CreateRoleInput) => roleCloudFunctionService.createRole(input),
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: roleKeys.all });
-      message.success(`สร้างบทบาท "${data.name}" สำเร็จ`);
     },
     onError: (error: unknown) => {
       console.error('Failed to create role:', error);
-      const errorMessage = error instanceof Error ? error.message : 'ไม่สามารถสร้างบทบาทได้';
-      message.error(errorMessage);
     },
   });
 }

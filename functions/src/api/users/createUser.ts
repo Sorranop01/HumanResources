@@ -9,8 +9,6 @@ import * as logger from 'firebase-functions/logger';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { preparePhoneNumberForAuth } from '../../utils/phoneNumber.js';
 
-const db = getFirestore();
-
 interface CreateUserRequest {
   email: string;
   password: string;
@@ -26,6 +24,7 @@ export const createUser = onCall(
     cors: true,
   },
   async (request) => {
+    const db = getFirestore();
     // Check authentication
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'Must be logged in');

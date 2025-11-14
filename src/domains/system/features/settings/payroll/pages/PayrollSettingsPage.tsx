@@ -64,7 +64,9 @@ export const PayrollSettingsPage = memo(() => {
   if (isLoading) {
     return (
       <div style={{ textAlign: 'center', padding: '100px 0' }}>
-        <Spin size="large" tip="กำลังโหลดการตั้งค่า..." />
+        <Spin size="large" tip="กำลังโหลดการตั้งค่า...">
+          <div style={{ height: '200px' }} />
+        </Spin>
       </div>
     );
   }

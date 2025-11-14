@@ -4,6 +4,10 @@
  */
 
 import { z } from 'zod';
+import {
+  DenormalizedDepartmentRefSchema,
+  DenormalizedPositionRefSchema,
+} from '@/shared/schemas/denormalized.schema';
 
 /**
  * Overtime Type Schema
@@ -51,10 +55,10 @@ export const CreateOvertimePolicySchema = z.object({
   description: z.string().max(500),
   code: z.string().min(1, 'Code is required').max(50).toUpperCase(),
 
-  // Eligibility
+  // Eligibility (denormalized)
   eligibleEmployeeTypes: z.array(z.string()).default([]),
-  eligiblePositions: z.array(z.string()).default([]),
-  eligibleDepartments: z.array(z.string()).default([]),
+  eligiblePositions: z.record(DenormalizedPositionRefSchema).optional(),
+  eligibleDepartments: z.record(DenormalizedDepartmentRefSchema).optional(),
 
   // Overtime rules
   rules: z.array(OvertimeRuleSchema).min(1, 'At least one rule is required'),
@@ -92,10 +96,10 @@ export const UpdateOvertimePolicySchema = z.object({
   nameEn: z.string().min(1).max(100).optional(),
   description: z.string().max(500).optional(),
 
-  // Eligibility
+  // Eligibility (denormalized)
   eligibleEmployeeTypes: z.array(z.string()).optional(),
-  eligiblePositions: z.array(z.string()).optional(),
-  eligibleDepartments: z.array(z.string()).optional(),
+  eligiblePositions: z.record(DenormalizedPositionRefSchema).optional(),
+  eligibleDepartments: z.record(DenormalizedDepartmentRefSchema).optional(),
 
   // Overtime rules
   rules: z.array(OvertimeRuleSchema).optional(),
@@ -163,10 +167,10 @@ export const OvertimePolicySchema = z.object({
   description: z.string().max(500),
   code: z.string().min(1).max(50),
 
-  // Eligibility
+  // Eligibility (denormalized)
   eligibleEmployeeTypes: z.array(z.string()),
-  eligiblePositions: z.array(z.string()),
-  eligibleDepartments: z.array(z.string()),
+  eligiblePositions: z.record(DenormalizedPositionRefSchema).optional(),
+  eligibleDepartments: z.record(DenormalizedDepartmentRefSchema).optional(),
 
   // Overtime rules
   rules: z.array(OvertimeRuleSchema),

@@ -647,6 +647,8 @@ async function seedEmployees() {
         tenantId: 'default', // ✅ Required for multi-tenant support
         createdAt: now,
         updatedAt: now,
+        createdBy: 'system',
+        updatedBy: 'system',
       });
 
       // Write to Firestore (skip validation for seed data)

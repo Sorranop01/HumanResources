@@ -28,6 +28,16 @@ import {
 } from '../utils/timeCalculations';
 import { attendancePenaltyService } from './attendancePenaltyService';
 
+/**
+ * Convert Firestore Timestamp or Date to milliseconds
+ */
+function toMillis(value: Date | Timestamp): number {
+  if (value instanceof Date) {
+    return value.getTime();
+  }
+  return value.toMillis();
+}
+
 const ATTENDANCE_COLLECTION = 'attendance';
 const TENANT_ID = 'default';
 
@@ -286,6 +296,7 @@ export const attendanceService = {
 
     const newRecord: Partial<AttendanceRecord> = {
       userId,
+      employeeId: employeeId || userId, // ✅ Required by Firestore rules
       clockInTime: now,
       clockOutTime: null,
       status: 'clocked-in' as const,
@@ -799,7 +810,7 @@ export const attendanceService = {
         throw new Error('ไม่พบการพักที่ยังไม่สิ้นสุด');
       }
 
-      const duration = Math.floor((now.toMillis() - activeBreak.startTime.toMillis()) / 60000); // minutes
+      const duration = Math.floor((now.toMillis() - toMillis(activeBreak.startTime)) / 60000); // minutes
 
       // Update the break
       const updatedBreaks = [...existingRecord.breaks];

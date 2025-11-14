@@ -11,9 +11,15 @@ export const DepartmentSchema = z.object({
   name: z.string().min(2).max(100),
   nameEn: z.string().min(2).max(100),
   description: z.string(),
+  // Parent department reference (denormalized)
   parentDepartment: z.string().optional(),
+  parentDepartmentName: z.string().optional(), // ✅ Denormalized parent name
+  parentDepartmentCode: z.string().optional(), // ✅ Denormalized parent code
+  // Manager reference (denormalized)
   managerId: z.string().optional(),
   managerName: z.string().optional(),
+  managerPositionId: z.string().optional(), // ✅ Denormalized manager position ID
+  managerPositionName: z.string().optional(), // ✅ Denormalized manager position name
   headCount: z.number().int().min(0),
   isActive: z.boolean(),
   tenantId: z.string().min(1),

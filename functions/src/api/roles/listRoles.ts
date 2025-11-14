@@ -7,8 +7,6 @@ import { getFirestore } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 
-const db = getFirestore();
-
 interface ListRolesRequest {
   includeInactive?: boolean;
   systemOnly?: boolean;
@@ -21,6 +19,7 @@ export const listRoles = onCall<ListRolesRequest>(
     cors: true,
   },
   async (request) => {
+    const db = getFirestore();
     // 1. Authentication check
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'User must be authenticated');
@@ -48,7 +47,7 @@ export const listRoles = onCall<ListRolesRequest>(
       // Order by creation time
       const snapshot = await query.orderBy('createdAt', 'asc').get();
 
-      // 3. Map results
+      // 3. Map results and convert Timestamps to ISO strings
       const roles = snapshot.docs.map((doc) => {
         const data = doc.data();
         return {
@@ -58,8 +57,8 @@ export const listRoles = onCall<ListRolesRequest>(
           description: data.description,
           isSystemRole: data.isSystemRole,
           isActive: data.isActive,
-          createdAt: data.createdAt,
-          updatedAt: data.updatedAt,
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString(),
         };
       });
 

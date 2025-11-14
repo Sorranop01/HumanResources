@@ -62,8 +62,11 @@ export const CandidateSchema = z.object({
   nationality: z.string().nullable().optional(),
   address: z.string().nullable().optional(),
 
-  // Position Information
-  positionApplied: z.string().min(1, 'กรุณาระบุตำแหน่งที่สมัคร'),
+  // Position Information (denormalized)
+  positionId: z.string().min(1, 'กรุณาเลือกตำแหน่งที่สมัคร'),
+  positionName: z.string().min(1),
+  departmentId: z.string().min(1),
+  departmentName: z.string().min(1),
   expectedSalary: z.number().min(0).nullable().optional(),
   availableDate: z.string().nullable().optional(),
 
@@ -113,8 +116,11 @@ export const CandidateApplicationSchema = z.object({
   nationality: z.string().optional(),
   address: z.string().optional(),
 
-  // Position Information
-  positionApplied: z.string().min(1, 'กรุณาเลือกตำแหน่งที่สมัคร'),
+  // Position Information (denormalized)
+  positionId: z.string().min(1, 'กรุณาเลือกตำแหน่งที่สมัคร'),
+  positionName: z.string().min(1),
+  departmentId: z.string().min(1),
+  departmentName: z.string().min(1),
   expectedSalary: z.number().min(0, 'เงินเดือนที่คาดหวังต้องมากกว่า 0').optional(),
   availableDate: z.string().optional(),
 

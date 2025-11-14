@@ -7,8 +7,6 @@ import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { type CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https';
 
-const db = getFirestore();
-
 /**
  * Input type for calculate payroll
  */
@@ -29,6 +27,7 @@ export const calculatePayroll = onCall<CalculatePayrollInput>(
     memory: '256MiB',
   },
   async (request: CallableRequest<CalculatePayrollInput>) => {
+    const db = getFirestore();
     try {
       // Authentication check
       if (!request.auth) {

@@ -29,13 +29,10 @@ import {
 } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { type CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https';
-import { CloudFunctionCreateEmployeeSchema } from '@/domains/people/features/employees/schemas/index.js';
+import { CloudFunctionCreateEmployeeSchema } from '../../schemas/employee.schema.js';
 import { ROLES } from '../../shared/constants/roles.js';
 import { checkPermission } from '../../shared/utils/permissions.js';
 import { normalizeThaiPhoneNumber } from '../../utils/phoneNumber.js';
-
-const db = getFirestore();
-const auth = getAuth();
 
 const hasErrorCode = (error: unknown): error is { code?: string } =>
   typeof error === 'object' && error !== null && 'code' in error;
@@ -44,6 +41,7 @@ const hasErrorCode = (error: unknown): error is { code?: string } =>
  * Helper to check if user has required role
  */
 async function hasRole(userId: string, ...allowedRoles: string[]): Promise<boolean> {
+  const db = getFirestore();
   const userDoc = await db.collection('users').doc(userId).get();
   const userData = userDoc.data();
   if (!userData) return false;
@@ -68,6 +66,7 @@ function calculateAge(dateOfBirth: Date | Timestamp): number {
  * Generate unique employee code (EMP-YYYY-XXX)
  */
 async function generateEmployeeCode(): Promise<string> {
+  const db = getFirestore();
   const year = new Date().getFullYear();
   const prefix = `EMP-${year}-`;
 
@@ -102,6 +101,8 @@ async function generateEmployeeCode(): Promise<string> {
  * Validate email uniqueness in both Auth and Firestore
  */
 async function validateEmailUniqueness(email: string): Promise<void> {
+  const auth = getAuth();
+  const db = getFirestore();
   // Check Firebase Auth
   try {
     await auth.getUserByEmail(email);
@@ -133,6 +134,7 @@ async function validateEmailUniqueness(email: string): Promise<void> {
  * Validate national ID uniqueness
  */
 async function validateNationalIdUniqueness(nationalId: string): Promise<void> {
+  const db = getFirestore();
   const snapshot = await db
     .collection('employees')
     .where('nationalId', '==', nationalId)
@@ -154,6 +156,7 @@ async function createAuditLog(
   resourceId: string,
   metadata?: Record<string, unknown>
 ): Promise<void> {
+  const db = getFirestore();
   await db.collection('auditLogs').add({
     userId,
     action,
@@ -312,8 +315,12 @@ interface CreateEmployeeInput {
 export const createEmployee = onCall<CreateEmployeeInput>(
   {
     region: 'asia-southeast1',
+    timeoutSeconds: 60,
+    cors: true,
   },
   async (request: CallableRequest<CreateEmployeeInput>) => {
+    const auth = getAuth();
+    const db = getFirestore();
     const startTime = Date.now();
     const { data, auth: authContext } = request;
 

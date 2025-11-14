@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "outDir": "lib",
+    "paths": {
+      "@/*": ["../src/*"]
+    }
+  },
+  "tsc-alias": {
+    "verbose": false,
+    "resolveFullPaths": true,
+    "replacers": {
+      "fileExtension": {
+        "pattern": "(from\\s+['\"].*?)(\\.[tj]s)?(['\"])",
+        "replace": "$1.js$3"
+      }
+    }
+  }
+}

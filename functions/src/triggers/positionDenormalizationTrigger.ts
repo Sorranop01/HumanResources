@@ -15,14 +15,13 @@ import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 import { onDocumentUpdated } from 'firebase-functions/v2/firestore';
 
-const db = getFirestore();
-
 interface PositionData {
   name: string;
   code: string;
 }
 
 export const syncPositionName = onDocumentUpdated('positions/{positionId}', async (event) => {
+  const db = getFirestore();
   const beforeData = event.data?.before.data() as PositionData;
   const afterData = event.data?.after.data() as PositionData;
   const positionId = event.params.positionId;

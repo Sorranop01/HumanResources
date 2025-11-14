@@ -16,8 +16,6 @@ import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 import { onDocumentUpdated } from 'firebase-functions/v2/firestore';
 
-const db = getFirestore();
-
 interface EmployeeData {
   firstName: string;
   lastName: string;
@@ -35,6 +33,7 @@ interface EmployeeData {
 export const syncEmployeeDenormalizedFields = onDocumentUpdated(
   'employees/{employeeId}',
   async (event) => {
+    const db = getFirestore();
     const beforeData = event.data?.before.data() as EmployeeData;
     const afterData = event.data?.after.data() as EmployeeData;
     const employeeId = event.params.employeeId;

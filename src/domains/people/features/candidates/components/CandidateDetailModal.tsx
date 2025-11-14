@@ -125,7 +125,8 @@ export const CandidateDetailModal: FC<CandidateDetailModalProps> = ({
           <Card title="ข้อมูลการสมัคร" size="small" style={{ marginTop: 16 }}>
             <Descriptions column={2} size="small">
               <Descriptions.Item label="ตำแหน่งที่สมัคร">
-                <Tag color="blue">{candidate.positionApplied}</Tag>
+                <Tag color="blue">{candidate.positionName}</Tag>
+                {candidate.departmentName && <Tag color="green">{candidate.departmentName}</Tag>}
               </Descriptions.Item>
               <Descriptions.Item label="เงินเดือนที่คาดหวัง">
                 {candidate.expectedSalary

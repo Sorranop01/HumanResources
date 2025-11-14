@@ -118,7 +118,8 @@ export const OvertimeRequestCard: FC<OvertimeRequestCardProps> = ({
               <Tag icon={<TeamOutlined />} color="cyan">
                 {request.employeeName}
               </Tag>
-              <Tag>{request.department}</Tag>
+              <Tag>{request.departmentName}</Tag>
+              <Tag color="blue">{request.positionName}</Tag>
             </Space>
 
             <Text strong>รายละเอียดงาน</Text>

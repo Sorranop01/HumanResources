@@ -6,8 +6,6 @@
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 
-const db = getFirestore();
-
 interface UserDocument {
   id?: string;
   email: string;
@@ -74,6 +72,7 @@ export const onUserWrite = onDocumentWritten(
     region: 'asia-southeast1',
   },
   async (event) => {
+    const db = getFirestore();
     const userId = event.params.userId;
     const beforeData = event.data?.before.data() as UserDocument | undefined;
     const afterData = event.data?.after.data() as UserDocument | undefined;

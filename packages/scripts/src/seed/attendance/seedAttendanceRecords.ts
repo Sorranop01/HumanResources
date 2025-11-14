@@ -8,6 +8,57 @@
 import { db, Timestamp } from '../../config/firebase-admin.js';
 import { stripUndefined } from '../../utils/stripUndefined.js';
 
+// Mock data for denormalization
+const MOCK_EMPLOYEES: Record<
+  string,
+  {
+    employeeId: string;
+    employeeName: string;
+    employeeCode: string;
+    departmentId: string;
+    departmentName: string;
+    positionId: string;
+    positionName: string;
+  }
+> = {
+  'user-emp-001': {
+    employeeId: 'emp-001',
+    employeeName: 'Thanawat Jitpakdee',
+    employeeCode: 'EMP006',
+    departmentId: 'dept-it',
+    departmentName: 'ฝ่ายเทคโนโลยีสารสนเทศ',
+    positionId: 'pos-senior-dev',
+    positionName: 'Senior Developer',
+  },
+  'user-emp-002': {
+    employeeId: 'emp-002',
+    employeeName: 'Siriporn Rattanaporn',
+    employeeCode: 'EMP007',
+    departmentId: 'dept-it',
+    departmentName: 'ฝ่ายเทคโนโลยีสารสนเทศ',
+    positionId: 'pos-mid-dev',
+    positionName: 'Mid-Level Developer',
+  },
+  'user-emp-003': {
+    employeeId: 'emp-003',
+    employeeName: 'Nattawut Kaewsri',
+    employeeCode: 'EMP008',
+    departmentId: 'dept-it',
+    departmentName: 'ฝ่ายเทคโนโลยีสารสนเทศ',
+    positionId: 'pos-junior-dev',
+    positionName: 'Junior Developer',
+  },
+  'user-emp-004': {
+    employeeId: 'emp-004',
+    employeeName: 'Ploy Sukhumvit',
+    employeeCode: 'EMP009',
+    departmentId: 'dept-marketing',
+    departmentName: 'ฝ่ายการตลาด',
+    positionId: 'pos-marketing-manager',
+    positionName: 'Marketing Manager',
+  },
+};
+
 interface LocationData {
   latitude: number;
   longitude: number;
@@ -39,6 +90,12 @@ interface AttendanceRecord {
   id: string;
   userId: string;
   employeeId?: string;
+  employeeName: string;
+  employeeCode: string;
+  departmentId?: string;
+  departmentName: string;
+  positionId?: string;
+  positionName: string;
   clockInTime: FirebaseFirestore.Timestamp;
   clockOutTime: FirebaseFirestore.Timestamp | null;
   status: 'clocked-in' | 'clocked-out';
@@ -126,10 +183,17 @@ function createAttendanceRecords(): Omit<AttendanceRecord, 'id'>[] {
   // Record 1: Perfect attendance (today - 5 days ago)
   const date1 = createDate(5, 8, 55); // Clock in at 08:55
   const clockOut1 = new Date(date1.getTime() + 9 * 60 * 60 * 1000 + 5 * 60 * 1000); // 9h 5min later
+  const employee1 = MOCK_EMPLOYEES['user-emp-001'];
 
   records.push({
     userId: 'user-emp-001',
-    employeeId: 'emp-001',
+    employeeId: employee1.employeeId,
+    employeeName: employee1.employeeName,
+    employeeCode: employee1.employeeCode,
+    departmentId: employee1.departmentId,
+    departmentName: employee1.departmentName,
+    positionId: employee1.positionId,
+    positionName: employee1.positionName,
     clockInTime: Timestamp.fromDate(date1),
     clockOutTime: Timestamp.fromDate(clockOut1),
     status: 'clocked-out',
@@ -185,10 +249,17 @@ function createAttendanceRecords(): Omit<AttendanceRecord, 'id'>[] {
   // Record 2: Late arrival with penalty (today - 4 days ago)
   const date2 = createDate(4, 9, 20); // Clock in at 09:20 (20 min late)
   const clockOut2 = new Date(date2.getTime() + 8 * 60 * 60 * 1000 + 40 * 60 * 1000);
+  const employee2 = MOCK_EMPLOYEES['user-emp-002'];
 
   records.push({
     userId: 'user-emp-002',
-    employeeId: 'emp-002',
+    employeeId: employee2.employeeId,
+    employeeName: employee2.employeeName,
+    employeeCode: employee2.employeeCode,
+    departmentId: employee2.departmentId,
+    departmentName: employee2.departmentName,
+    positionId: employee2.positionId,
+    positionName: employee2.positionName,
     clockInTime: Timestamp.fromDate(date2),
     clockOutTime: Timestamp.fromDate(clockOut2),
     status: 'clocked-out',
@@ -254,10 +325,17 @@ function createAttendanceRecords(): Omit<AttendanceRecord, 'id'>[] {
   // Record 3: Early leave (today - 3 days ago)
   const date3 = createDate(3, 8, 58);
   const clockOut3 = new Date(date3.getTime() + 7 * 60 * 60 * 1000 + 30 * 60 * 1000); // Left 1.5h early
+  const employee3 = MOCK_EMPLOYEES['user-emp-003'];
 
   records.push({
     userId: 'user-emp-003',
-    employeeId: 'emp-003',
+    employeeId: employee3.employeeId,
+    employeeName: employee3.employeeName,
+    employeeCode: employee3.employeeCode,
+    departmentId: employee3.departmentId,
+    departmentName: employee3.departmentName,
+    positionId: employee3.positionId,
+    positionName: employee3.positionName,
     clockInTime: Timestamp.fromDate(date3),
     clockOutTime: Timestamp.fromDate(clockOut3),
     status: 'clocked-out',
@@ -323,10 +401,17 @@ function createAttendanceRecords(): Omit<AttendanceRecord, 'id'>[] {
   // Record 4: Multiple breaks (today - 2 days ago)
   const date4 = createDate(2, 9, 0);
   const clockOut4 = new Date(date4.getTime() + 9 * 60 * 60 * 1000);
+  const employee4 = MOCK_EMPLOYEES['user-emp-001'];
 
   records.push({
     userId: 'user-emp-001',
-    employeeId: 'emp-001',
+    employeeId: employee4.employeeId,
+    employeeName: employee4.employeeName,
+    employeeCode: employee4.employeeCode,
+    departmentId: employee4.departmentId,
+    departmentName: employee4.departmentName,
+    positionId: employee4.positionId,
+    positionName: employee4.positionName,
     clockInTime: Timestamp.fromDate(date4),
     clockOutTime: Timestamp.fromDate(clockOut4),
     status: 'clocked-out',
@@ -393,10 +478,17 @@ function createAttendanceRecords(): Omit<AttendanceRecord, 'id'>[] {
   // Record 5: Remote work (today - 1 day ago)
   const date5 = createDate(1, 9, 5);
   const clockOut5 = new Date(date5.getTime() + 8 * 60 * 60 * 1000 + 30 * 60 * 1000);
+  const employee5 = MOCK_EMPLOYEES['user-emp-004'];
 
   records.push({
     userId: 'user-emp-004',
-    employeeId: 'emp-004',
+    employeeId: employee5.employeeId,
+    employeeName: employee5.employeeName,
+    employeeCode: employee5.employeeCode,
+    departmentId: employee5.departmentId,
+    departmentName: employee5.departmentName,
+    positionId: employee5.positionId,
+    positionName: employee5.positionName,
     clockInTime: Timestamp.fromDate(date5),
     clockOutTime: Timestamp.fromDate(clockOut5),
     status: 'clocked-out',
@@ -453,10 +545,17 @@ function createAttendanceRecords(): Omit<AttendanceRecord, 'id'>[] {
 
   // Record 6: Currently clocked in (today)
   const date6 = createDate(0, 8, 57);
+  const employee6 = MOCK_EMPLOYEES['user-emp-001'];
 
   records.push({
     userId: 'user-emp-001',
-    employeeId: 'emp-001',
+    employeeId: employee6.employeeId,
+    employeeName: employee6.employeeName,
+    employeeCode: employee6.employeeCode,
+    departmentId: employee6.departmentId,
+    departmentName: employee6.departmentName,
+    positionId: employee6.positionId,
+    positionName: employee6.positionName,
     clockInTime: Timestamp.fromDate(date6),
     clockOutTime: null,
     status: 'clocked-in',

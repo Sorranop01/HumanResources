@@ -590,11 +590,14 @@ export const employeeService = {
             console.group(`❌ Validation Details for ${docSnap.id}`);
             console.log('Raw data after conversion:', converted);
             console.log('Normalized data:', normalized);
-            console.log('Validation errors with paths:', result.error.errors.map(err => ({
-              path: err.path.join('.'),
-              message: err.message,
-              code: err.code
-            })));
+            console.log(
+              'Validation errors with paths:',
+              result.error.errors.map((err) => ({
+                path: err.path.join('.'),
+                message: err.message,
+                code: err.code,
+              }))
+            );
             console.log('🔍 Sample timestamp values:', {
               dateOfBirth: normalized.dateOfBirth,
               dateOfBirthType: typeof normalized.dateOfBirth,
@@ -607,7 +610,8 @@ export const employeeService = {
               createdAtConstructor: normalized.createdAt?.constructor?.name,
               salaryEffectiveDate: (normalized.salary as any)?.effectiveDate,
               salaryEffectiveDateType: typeof (normalized.salary as any)?.effectiveDate,
-              salaryEffectiveDateConstructor: (normalized.salary as any)?.effectiveDate?.constructor?.name,
+              salaryEffectiveDateConstructor: (normalized.salary as any)?.effectiveDate?.constructor
+                ?.name,
             });
             console.groupEnd();
           }

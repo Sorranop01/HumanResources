@@ -1,5 +1,11 @@
 import { type FirebaseApp, initializeApp } from 'firebase/app';
-import { type Auth, connectAuthEmulator, getAuth } from 'firebase/auth';
+import {
+  type Auth,
+  browserLocalPersistence,
+  connectAuthEmulator,
+  getAuth,
+  setPersistence,
+} from 'firebase/auth';
 import { connectFirestoreEmulator, type Firestore, getFirestore } from 'firebase/firestore';
 import { connectFunctionsEmulator, type Functions, getFunctions } from 'firebase/functions';
 import { connectStorageEmulator, type FirebaseStorage, getStorage } from 'firebase/storage';
@@ -29,6 +35,12 @@ let isEmulatorConnected = false;
 try {
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
+
+  // Set auth persistence to local (prevent unnecessary token refresh in emulator)
+  setPersistence(auth, browserLocalPersistence).catch((error) => {
+    console.warn('Failed to set auth persistence:', error);
+  });
+
   db = getFirestore(app);
   storage = getStorage(app);
   functions = getFunctions(app, 'asia-southeast1');
@@ -40,10 +52,10 @@ try {
 
   if (isDev && !isEmulatorConnected) {
     try {
-      connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
-      connectFirestoreEmulator(db, 'localhost', 8888);
-      connectFunctionsEmulator(functions, 'localhost', 5001);
-      connectStorageEmulator(storage, 'localhost', 9199);
+      connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+      connectFirestoreEmulator(db, '127.0.0.1', 8888);
+      connectFunctionsEmulator(functions, '127.0.0.1', 5001);
+      connectStorageEmulator(storage, '127.0.0.1', 9199);
       isEmulatorConnected = true;
       // eslint-disable-next-line no-console
       console.log('🔧 Firebase connected to emulators');

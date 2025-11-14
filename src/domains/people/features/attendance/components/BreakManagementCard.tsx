@@ -2,6 +2,7 @@ import { ClockCircleOutlined, CoffeeOutlined } from '@ant-design/icons';
 import { Button, Card, Flex, Select, Space, Tag, Typography } from 'antd';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
+import type { Timestamp } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { useCurrentBreak, useEndBreak, useStartBreak } from '../hooks/useBreakManagement';
 import { useTodayAttendance } from '../hooks/useTodayAttendance';
@@ -9,6 +10,26 @@ import { useTodayAttendance } from '../hooks/useTodayAttendance';
 dayjs.extend(duration);
 
 const { Text } = Typography;
+
+/**
+ * Convert Firestore Timestamp or Date to Date
+ */
+function toDate(value: Date | Timestamp): Date {
+  if (value instanceof Date) {
+    return value;
+  }
+  return value.toDate();
+}
+
+/**
+ * Convert Firestore Timestamp or Date to milliseconds
+ */
+function toMillis(value: Date | Timestamp): number {
+  if (value instanceof Date) {
+    return value.getTime();
+  }
+  return value.toMillis();
+}
 
 const breakTypeOptions = [
   { label: 'พักกลางวัน (Lunch)', value: 'lunch' },
@@ -36,7 +57,7 @@ export const BreakManagementCard = () => {
     }
 
     const interval = setInterval(() => {
-      const start = dayjs(currentBreak.startTime.toDate());
+      const start = dayjs(toDate(currentBreak.startTime));
       const now = dayjs();
       const diff = now.diff(start);
       const dur = dayjs.duration(diff);
@@ -87,7 +108,7 @@ export const BreakManagementCard = () => {
             {breakDuration}
           </Text>
           <Text type="secondary" style={{ fontSize: '12px' }}>
-            เริ่มพักเมื่อ: {dayjs(currentBreak.startTime.toDate()).format('HH:mm:ss')}
+            เริ่มพักเมื่อ: {dayjs(toDate(currentBreak.startTime)).format('HH:mm:ss')}
           </Text>
           <Button
             type="primary"
@@ -134,7 +155,7 @@ export const BreakManagementCard = () => {
             </Text>
             {attendanceRecord.breaks.map((b) => (
               <Flex
-                key={`${attendanceRecord.id}-${b.startTime.toMillis()}`}
+                key={`${attendanceRecord.id}-${toMillis(b.startTime)}`}
                 justify="space-between"
                 style={{ fontSize: '12px' }}
               >

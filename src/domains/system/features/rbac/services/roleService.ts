@@ -32,10 +32,29 @@ const COLLECTION_NAME = 'roleDefinitions';
  * Convert Firestore document to RoleDefinition
  */
 function convertToRoleDefinition(doc: RoleDefinitionFirestore): RoleDefinition {
+  const convertTimestamp = (timestamp: unknown): Date => {
+    if (timestamp instanceof Date) {
+      return timestamp;
+    }
+    if (typeof timestamp === 'string') {
+      return new Date(timestamp);
+    }
+    if (
+      timestamp &&
+      typeof timestamp === 'object' &&
+      'toDate' in timestamp &&
+      typeof timestamp.toDate === 'function'
+    ) {
+      return (timestamp as Timestamp).toDate();
+    }
+    // Fallback: return current date
+    return new Date();
+  };
+
   return {
     ...doc,
-    createdAt: (doc.createdAt as Timestamp).toDate(),
-    updatedAt: (doc.updatedAt as Timestamp).toDate(),
+    createdAt: convertTimestamp(doc.createdAt),
+    updatedAt: convertTimestamp(doc.updatedAt),
   };
 }
 
@@ -48,7 +67,7 @@ export async function getAllRoles(): Promise<RoleDefinition[]> {
 
   return snapshot.docs.map((doc) => {
     const data = doc.data() as RoleDefinitionFirestore;
-    return convertToRoleDefinition(data);
+    return convertToRoleDefinition({ ...data, id: doc.id });
   });
 }
 
@@ -62,7 +81,7 @@ export async function getActiveRoles(): Promise<RoleDefinition[]> {
 
   return snapshot.docs.map((doc) => {
     const data = doc.data() as RoleDefinitionFirestore;
-    return convertToRoleDefinition(data);
+    return convertToRoleDefinition({ ...data, id: doc.id });
   });
 }
 
@@ -78,7 +97,7 @@ export async function getRoleById(id: string): Promise<RoleDefinition | null> {
   }
 
   const data = snapshot.data() as RoleDefinitionFirestore;
-  return convertToRoleDefinition(data);
+  return convertToRoleDefinition({ ...data, id: snapshot.id });
 }
 
 /**
@@ -93,12 +112,13 @@ export async function getRoleByType(role: Role): Promise<RoleDefinition | null> 
     return null;
   }
 
-  const data = snapshot.docs[0]?.data() as RoleDefinitionFirestore | undefined;
-  if (!data) {
+  const firstDoc = snapshot.docs[0];
+  if (!firstDoc) {
     return null;
   }
 
-  return convertToRoleDefinition(data);
+  const data = firstDoc.data() as RoleDefinitionFirestore;
+  return convertToRoleDefinition({ ...data, id: firstDoc.id });
 }
 
 /**
@@ -123,6 +143,7 @@ export async function createRole(
     ...validatedData,
     isActive: true,
     isSystemRole: false,
+    permissions: {}, // ✅ Initialize with empty permissions map (will be populated by trigger)
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     createdBy: userId,
@@ -132,6 +153,10 @@ export async function createRole(
   const docRef = await addDoc(rolesRef, newRole);
 
   const snapshot = await getDoc(docRef);
+  if (!snapshot.exists()) {
+    throw new Error('Failed to create role');
+  }
+
   const createdData = snapshot.data() as RoleDefinitionFirestore;
 
   return convertToRoleDefinition({
@@ -172,9 +197,13 @@ export async function updateRole(
   });
 
   const updatedSnapshot = await getDoc(roleRef);
+  if (!updatedSnapshot.exists()) {
+    throw new Error('Failed to update role');
+  }
+
   const updatedData = updatedSnapshot.data() as RoleDefinitionFirestore;
 
-  return convertToRoleDefinition(updatedData);
+  return convertToRoleDefinition({ ...updatedData, id: updatedSnapshot.id });
 }
 
 /**
@@ -244,7 +273,11 @@ export async function toggleRoleStatus(id: string, userId: string): Promise<Role
   });
 
   const updatedSnapshot = await getDoc(roleRef);
+  if (!updatedSnapshot.exists()) {
+    throw new Error('Failed to toggle role status');
+  }
+
   const updatedData = updatedSnapshot.data() as RoleDefinitionFirestore;
 
-  return convertToRoleDefinition(updatedData);
+  return convertToRoleDefinition({ ...updatedData, id: updatedSnapshot.id });
 }

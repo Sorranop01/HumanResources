@@ -262,7 +262,7 @@ export const overtimeService = {
       }
 
       await updateDoc(docRef, {
-        actualClockInTime: Timestamp.now(),
+        actualStartTime: Timestamp.now(),
         clockStatus: 'clocked-in',
         updatedAt: Timestamp.now(),
       });
@@ -291,7 +291,7 @@ export const overtimeService = {
       }
 
       const clockOutTime = Timestamp.now();
-      const clockInTime = request.actualClockInTime as Timestamp;
+      const clockInTime = request.actualStartTime as Timestamp;
 
       // Calculate actual hours
       const durationMs = clockOutTime.toMillis() - clockInTime.toMillis();
@@ -302,9 +302,9 @@ export const overtimeService = {
       const calculatedPay = actualHours * request.overtimeRate * 100; // Assuming base rate of 100/hour
 
       await updateDoc(docRef, {
-        actualClockOutTime: clockOutTime,
+        actualEndTime: clockOutTime,
         actualHours,
-        calculatedPay,
+        overtimePay: calculatedPay,
         clockStatus: 'clocked-out',
         status: 'completed',
         notes,

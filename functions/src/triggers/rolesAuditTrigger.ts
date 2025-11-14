@@ -6,8 +6,6 @@
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 
-const db = getFirestore();
-
 interface RoleDefinitionDocument {
   id?: string;
   role: string;
@@ -64,6 +62,7 @@ function detectRoleChanges(
  * Get performer email from users collection
  */
 async function getPerformerEmail(userId: string): Promise<string> {
+  const db = getFirestore();
   try {
     const userDoc = await db.collection('users').doc(userId).get();
     if (userDoc.exists) {
@@ -85,6 +84,7 @@ export const onRoleDefinitionWrite = onDocumentWritten(
     region: 'asia-southeast1',
   },
   async (event) => {
+    const db = getFirestore();
     const roleId = event.params.roleId;
     const beforeData = event.data?.before.data() as RoleDefinitionDocument | undefined;
     const afterData = event.data?.after.data() as RoleDefinitionDocument | undefined;

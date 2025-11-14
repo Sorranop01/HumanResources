@@ -4,6 +4,10 @@
  */
 
 import { z } from 'zod';
+import {
+  DenormalizedDepartmentRefSchema,
+  DenormalizedPositionRefSchema,
+} from '@/shared/schemas/denormalized.schema';
 
 /**
  * Time format validation (HH:mm)
@@ -64,9 +68,9 @@ export const CreateWorkSchedulePolicySchema = z.object({
   overtimeStartsAfter: z.number().min(0).max(120),
   maxOvertimeHoursPerDay: z.number().min(0).max(12),
 
-  // Applicable to
-  applicableDepartments: z.array(z.string()).default([]),
-  applicablePositions: z.array(z.string()).default([]),
+  // Applicable to (denormalized)
+  applicableDepartments: z.record(DenormalizedDepartmentRefSchema).optional(), // ✅ Changed to denormalized map
+  applicablePositions: z.record(DenormalizedPositionRefSchema).optional(), // ✅ Changed to denormalized map
   applicableEmploymentTypes: z.array(z.string()).default([]),
 
   // Effective dates
@@ -111,9 +115,9 @@ export const UpdateWorkSchedulePolicySchema = z.object({
   overtimeStartsAfter: z.number().min(0).max(120).optional(),
   maxOvertimeHoursPerDay: z.number().min(0).max(12).optional(),
 
-  // Applicable to
-  applicableDepartments: z.array(z.string()).optional(),
-  applicablePositions: z.array(z.string()).optional(),
+  // Applicable to (denormalized)
+  applicableDepartments: z.record(DenormalizedDepartmentRefSchema).optional(),
+  applicablePositions: z.record(DenormalizedPositionRefSchema).optional(),
   applicableEmploymentTypes: z.array(z.string()).optional(),
 
   // Effective dates
@@ -186,9 +190,9 @@ export const WorkSchedulePolicySchema = z.object({
   overtimeStartsAfter: z.number().min(0).max(120),
   maxOvertimeHoursPerDay: z.number().min(0).max(12),
 
-  // Applicable to
-  applicableDepartments: z.array(z.string()),
-  applicablePositions: z.array(z.string()),
+  // Applicable to (denormalized)
+  applicableDepartments: z.record(DenormalizedDepartmentRefSchema).optional(),
+  applicablePositions: z.record(DenormalizedPositionRefSchema).optional(),
   applicableEmploymentTypes: z.array(z.string()),
 
   // Effective dates

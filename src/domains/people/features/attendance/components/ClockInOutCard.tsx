@@ -1,6 +1,7 @@
 import { CheckCircleOutlined, ClockCircleOutlined, WarningOutlined } from '@ant-design/icons';
 import { Button, Card, Flex, Spin, Statistic, Tag, Typography } from 'antd';
 import dayjs from 'dayjs';
+import type { Timestamp } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { useClockIn } from '@/domains/people/features/attendance/hooks/useClockIn';
 import { useClockOut } from '@/domains/people/features/attendance/hooks/useClockOut';
@@ -8,6 +9,16 @@ import { useTodayAttendance } from '@/domains/people/features/attendance/hooks/u
 import { formatMinutesToDuration } from '@/domains/people/features/attendance/utils/timeCalculations';
 
 const { Title, Text } = Typography;
+
+/**
+ * Convert Firestore Timestamp or Date to Date
+ */
+function toDate(value: Date | Timestamp): Date {
+  if (value instanceof Date) {
+    return value;
+  }
+  return value.toDate();
+}
 
 export const ClockInOutCard = () => {
   const [currentTime, setCurrentTime] = useState(dayjs());
@@ -51,7 +62,7 @@ export const ClockInOutCard = () => {
     }
 
     if (attendanceRecord?.status === 'clocked-in') {
-      const clockInTime = dayjs(attendanceRecord.clockInTime.toDate());
+      const clockInTime = dayjs(toDate(attendanceRecord.clockInTime));
       const scheduledStart = attendanceRecord.scheduledStartTime || '09:00';
 
       return (
@@ -91,8 +102,10 @@ export const ClockInOutCard = () => {
     }
 
     if (attendanceRecord?.status === 'clocked-out') {
-      const clockInTime = dayjs(attendanceRecord.clockInTime.toDate());
-      const clockOutTime = dayjs(attendanceRecord.clockOutTime?.toDate());
+      const clockInTime = dayjs(toDate(attendanceRecord.clockInTime));
+      const clockOutTime = attendanceRecord.clockOutTime
+        ? dayjs(toDate(attendanceRecord.clockOutTime))
+        : null;
 
       return (
         <Flex vertical align="center" gap="middle">
@@ -121,7 +134,7 @@ export const ClockInOutCard = () => {
           </Flex>
           <Flex vertical align="center" gap="small">
             <Text type="secondary">
-              เข้างาน: {clockInTime.format('HH:mm')} | ออกงาน: {clockOutTime.format('HH:mm')}
+              เข้างาน: {clockInTime.format('HH:mm')} | ออกงาน: {clockOutTime?.format('HH:mm') ?? '-'}
             </Text>
             <Text type="secondary" style={{ fontSize: '12px' }}>
               รวมทำงาน: {attendanceRecord.durationHours?.toFixed(2)} ชั่วโมง

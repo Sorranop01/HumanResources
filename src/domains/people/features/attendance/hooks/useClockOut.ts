@@ -7,7 +7,7 @@ import { useAuth } from '@/shared/hooks/useAuth';
 
 interface ClockOutVariables {
   recordId: string;
-  clockInTime: Timestamp;
+  clockInTime: Date | Timestamp;
   scheduledEndTime: string;
   gracePeriodMinutes?: number;
   earlyLeaveThresholdMinutes?: number;

@@ -15,14 +15,13 @@ import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 import { onDocumentUpdated } from 'firebase-functions/v2/firestore';
 
-const db = getFirestore();
-
 interface LeaveTypeData {
   name: string;
   code: string;
 }
 
 export const syncLeaveTypeName = onDocumentUpdated('leaveTypes/{leaveTypeId}', async (event) => {
+  const db = getFirestore();
   const beforeData = event.data?.before.data() as LeaveTypeData;
   const afterData = event.data?.after.data() as LeaveTypeData;
   const leaveTypeId = event.params.leaveTypeId;

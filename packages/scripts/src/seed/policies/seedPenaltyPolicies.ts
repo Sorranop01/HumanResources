@@ -102,8 +102,8 @@ const penaltyPolicies: Omit<
 
     isProgressive: false,
 
-    applicableDepartments: [],
-    applicablePositions: [],
+    applicableDepartments: {},
+    applicablePositions: {},
     applicableEmploymentTypes: ['full-time', 'part-time'],
 
     autoApply: true,
@@ -156,8 +156,8 @@ const penaltyPolicies: Omit<
       },
     ],
 
-    applicableDepartments: [],
-    applicablePositions: [],
+    applicableDepartments: {},
+    applicablePositions: {},
     applicableEmploymentTypes: ['full-time'],
 
     autoApply: false,
@@ -189,8 +189,8 @@ const penaltyPolicies: Omit<
 
     isProgressive: false,
 
-    applicableDepartments: [],
-    applicablePositions: [],
+    applicableDepartments: {},
+    applicablePositions: {},
     applicableEmploymentTypes: ['full-time', 'part-time'],
 
     autoApply: true,
@@ -223,8 +223,8 @@ const penaltyPolicies: Omit<
 
     isProgressive: false,
 
-    applicableDepartments: [],
-    applicablePositions: [],
+    applicableDepartments: {},
+    applicablePositions: {},
     applicableEmploymentTypes: ['full-time'],
 
     autoApply: true,
@@ -257,8 +257,8 @@ const penaltyPolicies: Omit<
 
     isProgressive: false,
 
-    applicableDepartments: [],
-    applicablePositions: [],
+    applicableDepartments: {},
+    applicablePositions: {},
     applicableEmploymentTypes: ['full-time', 'part-time'],
 
     autoApply: false,

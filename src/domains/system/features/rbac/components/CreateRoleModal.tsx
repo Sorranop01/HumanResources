@@ -1,8 +1,6 @@
-import { Form, Input, Modal, Select } from 'antd';
+import { App, Form, Input, Modal } from 'antd';
 import type { FC } from 'react';
-import { useAuth } from '@/domains/system/features/auth/hooks/useAuth';
-import { ROLE_LABELS, ROLES, type Role } from '@/shared/constants/roles';
-import { useCreateRole } from '../hooks/useRoles';
+import { useCreateRoleCloudFunction } from '../hooks/useCreateRole';
 
 interface CreateRoleModalProps {
   open: boolean;
@@ -10,7 +8,7 @@ interface CreateRoleModalProps {
 }
 
 interface FormValues {
-  role: Role;
+  role: string;
   name: string;
   description: string;
 }
@@ -20,30 +18,28 @@ interface FormValues {
  */
 export const CreateRoleModal: FC<CreateRoleModalProps> = ({ open, onClose }) => {
   const [form] = Form.useForm<FormValues>();
-  const { user } = useAuth();
-  const { mutate: createRole, isPending } = useCreateRole();
+  const { message } = App.useApp();
+  const { mutate: createRole, isPending } = useCreateRoleCloudFunction();
 
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
 
-      if (!user?.id) {
-        return;
-      }
-
       createRole(
         {
-          data: {
-            role: values.role,
-            name: values.name,
-            description: values.description,
-          },
-          userId: user.id,
+          role: values.role,
+          name: values.name,
+          description: values.description,
         },
         {
-          onSuccess: () => {
+          onSuccess: (data) => {
+            message.success(`สร้างบทบาท "${data.name}" สำเร็จ`);
             form.resetFields();
             onClose();
+          },
+          onError: (error) => {
+            const errorMessage = error instanceof Error ? error.message : 'ไม่สามารถสร้างบทบาทได้';
+            message.error(errorMessage);
           },
         }
       );
@@ -70,33 +66,50 @@ export const CreateRoleModal: FC<CreateRoleModalProps> = ({ open, onClose }) => 
     >
       <Form form={form} layout="vertical" style={{ marginTop: 24 }}>
         <Form.Item
-          label="ประเภทบทบาท"
+          label="รหัสบทบาท (Role Key)"
           name="role"
-          rules={[{ required: true, message: 'กรุณาเลือกประเภทบทบาท' }]}
+          tooltip="ใช้ตัวอักษรภาษาอังกฤษตัวเล็ก ตัวเลข และ _ เท่านั้น ต้องขึ้นต้นด้วยตัวอักษร (เช่น sales_manager, project_lead)"
+          rules={[
+            { required: true, message: 'กรุณากรอกรหัสบทบาท' },
+            { min: 3, message: 'รหัสบทบาทต้องมีอย่างน้อย 3 ตัวอักษร' },
+            { max: 50, message: 'รหัสบทบาทต้องไม่เกิน 50 ตัวอักษร' },
+            {
+              pattern: /^[a-z][a-z0-9_]*$/,
+              message: 'รหัสบทบาทต้องขึ้นต้นด้วยตัวอักษรเล็ก และมีเฉพาะตัวอักษรเล็ก ตัวเลข และ _ เท่านั้น',
+            },
+          ]}
         >
-          <Select placeholder="เลือกประเภทบทบาท">
-            <Select.Option value={ROLES.ADMIN}>{ROLE_LABELS[ROLES.ADMIN]}</Select.Option>
-            <Select.Option value={ROLES.HR}>{ROLE_LABELS[ROLES.HR]}</Select.Option>
-            <Select.Option value={ROLES.MANAGER}>{ROLE_LABELS[ROLES.MANAGER]}</Select.Option>
-            <Select.Option value={ROLES.EMPLOYEE}>{ROLE_LABELS[ROLES.EMPLOYEE]}</Select.Option>
-            <Select.Option value={ROLES.AUDITOR}>{ROLE_LABELS[ROLES.AUDITOR]}</Select.Option>
-          </Select>
+          <Input placeholder="เช่น sales_manager, project_lead, finance_officer" />
         </Form.Item>
 
         <Form.Item
           label="ชื่อบทบาท"
           name="name"
-          rules={[{ required: true, message: 'กรุณากรอกชื่อบทบาท' }]}
+          tooltip="ชื่อบทบาทที่แสดงในระบบ (ภาษาไทยหรืออังกฤษ)"
+          rules={[
+            { required: true, message: 'กรุณากรอกชื่อบทบาท' },
+            { min: 2, message: 'ชื่อบทบาทต้องมีอย่างน้อย 2 ตัวอักษร' },
+            { max: 100, message: 'ชื่อบทบาทต้องไม่เกิน 100 ตัวอักษร' },
+          ]}
         >
-          <Input placeholder="เช่น ผู้ดูแลระบบ" />
+          <Input placeholder="เช่น ผู้จัดการฝ่ายขาย, หัวหน้าโครงการ" />
         </Form.Item>
 
         <Form.Item
           label="คำอธิบาย"
           name="description"
-          rules={[{ required: true, message: 'กรุณากรอกคำอธิบาย' }]}
+          rules={[
+            { required: true, message: 'กรุณากรอกคำอธิบาย' },
+            { min: 10, message: 'คำอธิบายต้องมีอย่างน้อย 10 ตัวอักษร' },
+            { max: 500, message: 'คำอธิบายต้องไม่เกิน 500 ตัวอักษร' },
+          ]}
         >
-          <Input.TextArea rows={4} placeholder="อธิบายบทบาทและหน้าที่ความรับผิดชอบ" />
+          <Input.TextArea
+            rows={4}
+            placeholder="อธิบายบทบาทและหน้าที่ความรับผิดชอบ (อย่างน้อย 10 ตัวอักษร)"
+            showCount
+            maxLength={500}
+          />
         </Form.Item>
       </Form>
     </Modal>

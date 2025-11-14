@@ -4,13 +4,9 @@
  */
 
 import { FieldValue, getFirestore, Timestamp } from 'firebase-admin/firestore';
-import { defineInt } from 'firebase-functions/params';
 import { logger } from 'firebase-functions/v2';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { CloudFunctionClockOutSchema } from '@/domains/people/features/attendance/schemas/index.js';
-
-const timeoutSeconds = defineInt('FUNCTION_TIMEOUT_SECONDS');
-const db = getFirestore();
 
 /**
  * Calculate work duration in hours
@@ -48,10 +44,11 @@ function calculateEarlyMinutes(
 export const clockOut = onCall(
   {
     region: 'asia-southeast1',
-    timeoutSeconds: timeoutSeconds.value() || 60,
+    timeoutSeconds: 60,
     cors: true,
   },
   async (request) => {
+    const db = getFirestore();
     const { auth, data } = request;
 
     // ===== 1. Authentication Check =====

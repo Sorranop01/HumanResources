@@ -33,6 +33,21 @@ const seedSteps: SeedStep[] = [
     command: 'pnpm exec tsx src/seed/rbac/seedRolePermissions.ts',
     description: 'Assigning permissions to roles',
   },
+  {
+    name: '3.1. Permission Definitions',
+    command: 'pnpm exec tsx src/seed/rbac/seedPermissionDefinitions.ts',
+    description: 'Creating detailed permission definitions (routes, actions, UI elements)',
+  },
+  {
+    name: '3.2. Route Permissions',
+    command: 'pnpm exec tsx src/seed/rbac/seedRoutePermissions.ts',
+    description: 'Mapping routes to required permissions',
+  },
+  {
+    name: '3.3. Action Permissions',
+    command: 'pnpm exec tsx src/seed/rbac/seedActionPermissions.ts',
+    description: 'Mapping actions to required permissions',
+  },
 
   // ============================================
   // Phase 2: System Settings

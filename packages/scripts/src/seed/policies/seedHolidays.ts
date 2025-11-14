@@ -60,8 +60,8 @@ const holidays2025: Omit<PublicHoliday, 'createdAt' | 'updatedAt' | 'date' | 'or
     locations: [],
     regions: [],
 
-    applicableDepartments: [],
-    applicablePositions: [],
+    applicableDepartments: {},
+    applicablePositions: {},
 
     isActive: true,
     tenantId: 'default',
@@ -84,8 +84,8 @@ const holidays2025: Omit<PublicHoliday, 'createdAt' | 'updatedAt' | 'date' | 'or
     locations: [],
     regions: [],
 
-    applicableDepartments: [],
-    applicablePositions: [],
+    applicableDepartments: {},
+    applicablePositions: {},
 
     isActive: true,
     tenantId: 'default',
@@ -108,8 +108,8 @@ const holidays2025: Omit<PublicHoliday, 'createdAt' | 'updatedAt' | 'date' | 'or
     locations: [],
     regions: [],
 
-    applicableDepartments: [],
-    applicablePositions: [],
+    applicableDepartments: {},
+    applicablePositions: {},
 
     isActive: true,
     tenantId: 'default',
@@ -132,8 +132,8 @@ const holidays2025: Omit<PublicHoliday, 'createdAt' | 'updatedAt' | 'date' | 'or
     locations: [],
     regions: [],
 
-    applicableDepartments: [],
-    applicablePositions: [],
+    applicableDepartments: {},
+    applicablePositions: {},
 
     isActive: true,
     tenantId: 'default',
@@ -156,8 +156,8 @@ const holidays2025: Omit<PublicHoliday, 'createdAt' | 'updatedAt' | 'date' | 'or
     locations: [],
     regions: [],
 
-    applicableDepartments: [],
-    applicablePositions: [],
+    applicableDepartments: {},
+    applicablePositions: {},
 
     isActive: true,
     tenantId: 'default',
@@ -180,8 +180,8 @@ const holidays2025: Omit<PublicHoliday, 'createdAt' | 'updatedAt' | 'date' | 'or
     locations: [],
     regions: [],
 
-    applicableDepartments: [],
-    applicablePositions: [],
+    applicableDepartments: {},
+    applicablePositions: {},
 
     isActive: true,
     tenantId: 'default',
@@ -204,8 +204,8 @@ const holidays2025: Omit<PublicHoliday, 'createdAt' | 'updatedAt' | 'date' | 'or
     locations: [],
     regions: [],
 
-    applicableDepartments: [],
-    applicablePositions: [],
+    applicableDepartments: {},
+    applicablePositions: {},
 
     isActive: true,
     tenantId: 'default',
@@ -228,8 +228,8 @@ const holidays2025: Omit<PublicHoliday, 'createdAt' | 'updatedAt' | 'date' | 'or
     locations: [],
     regions: [],
 
-    applicableDepartments: [],
-    applicablePositions: [],
+    applicableDepartments: {},
+    applicablePositions: {},
 
     isActive: true,
     tenantId: 'default',
@@ -252,8 +252,8 @@ const holidays2025: Omit<PublicHoliday, 'createdAt' | 'updatedAt' | 'date' | 'or
     locations: [],
     regions: [],
 
-    applicableDepartments: [],
-    applicablePositions: [],
+    applicableDepartments: {},
+    applicablePositions: {},
 
     isActive: true,
     tenantId: 'default',
@@ -276,8 +276,8 @@ const holidays2025: Omit<PublicHoliday, 'createdAt' | 'updatedAt' | 'date' | 'or
     locations: [],
     regions: [],
 
-    applicableDepartments: [],
-    applicablePositions: [],
+    applicableDepartments: {},
+    applicablePositions: {},
 
     isActive: true,
     tenantId: 'default',
@@ -300,8 +300,8 @@ const holidays2025: Omit<PublicHoliday, 'createdAt' | 'updatedAt' | 'date' | 'or
     locations: [],
     regions: [],
 
-    applicableDepartments: [],
-    applicablePositions: [],
+    applicableDepartments: {},
+    applicablePositions: {},
 
     isActive: true,
     tenantId: 'default',
@@ -324,8 +324,8 @@ const holidays2025: Omit<PublicHoliday, 'createdAt' | 'updatedAt' | 'date' | 'or
     locations: [],
     regions: [],
 
-    applicableDepartments: [],
-    applicablePositions: [],
+    applicableDepartments: {},
+    applicablePositions: {},
 
     isActive: true,
     tenantId: 'default',
@@ -348,8 +348,8 @@ const holidays2025: Omit<PublicHoliday, 'createdAt' | 'updatedAt' | 'date' | 'or
     locations: [],
     regions: [],
 
-    applicableDepartments: [],
-    applicablePositions: [],
+    applicableDepartments: {},
+    applicablePositions: {},
 
     isActive: true,
     tenantId: 'default',

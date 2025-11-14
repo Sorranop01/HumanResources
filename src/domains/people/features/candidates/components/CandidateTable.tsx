@@ -42,9 +42,15 @@ export const CandidateTable: FC<CandidateTableProps> = ({ candidates, loading })
     },
     {
       title: 'ตำแหน่งที่สมัคร',
-      dataIndex: 'positionApplied',
-      key: 'positionApplied',
-      sorter: (a, b) => a.positionApplied.localeCompare(b.positionApplied),
+      dataIndex: 'positionName',
+      key: 'positionName',
+      sorter: (a, b) => a.positionName.localeCompare(b.positionName),
+      render: (positionName: string, record) => (
+        <>
+          {positionName}
+          {record.departmentName && <div style={{ color: '#8c8c8c', fontSize: '12px' }}>{record.departmentName}</div>}
+        </>
+      ),
     },
     {
       title: 'เงินเดือนที่คาดหวัง',

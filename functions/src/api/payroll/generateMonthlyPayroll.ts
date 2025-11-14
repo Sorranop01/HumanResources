@@ -7,8 +7,6 @@ import { getFirestore } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { type CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https';
 
-const db = getFirestore();
-
 /**
  * Input type for generate monthly payroll
  */
@@ -29,6 +27,7 @@ export const generateMonthlyPayroll = onCall<GenerateMonthlyPayrollInput>(
     timeoutSeconds: 300, // 5 minutes for batch processing
   },
   async (request: CallableRequest<GenerateMonthlyPayrollInput>) => {
+    const db = getFirestore();
     try {
       // Authentication check
       if (!request.auth) {

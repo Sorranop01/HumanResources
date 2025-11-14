@@ -526,7 +526,9 @@ service cloud.firestore {
           data.unpaidBreakMinutes >= 0;
 
         let validOptionalFields =
-          (!('durationHours' in data) || (data.durationHours is number && data.durationHours >= 0 && data.durationHours <= 24)) &&
+          (!('durationHours' in data) || data.durationHours == null || (data.durationHours is number && data.durationHours >= 0 && data.durationHours <= 24)) &&
+          (!('clockOutTime' in data) || data.clockOutTime == null || data.clockOutTime is timestamp) &&
+          (!('employeeId' in data) || data.employeeId is string) &&
           (!('approvalStatus' in data) || data.approvalStatus in ['pending', 'approved', 'rejected']) &&
           (!('clockOutMethod' in data) || data.clockOutMethod in ['mobile', 'web', 'biometric', 'manual']) &&
           (!('lateReason' in data) || data.lateReason is string) &&
@@ -540,11 +542,15 @@ service cloud.firestore {
       // Helper function: Validate attendance update (partial)
       function isValidAttendanceUpdate(data) {
         return (!('status' in data) || data.status in ['clocked-in', 'clocked-out']) &&
+               (!('clockOutTime' in data) || data.clockOutTime == null || data.clockOutTime is timestamp) &&
+               (!('clockOutMethod' in data) || data.clockOutMethod in ['mobile', 'web', 'biometric', 'manual']) &&
                (!('minutesLate' in data) || (data.minutesLate is number && data.minutesLate >= 0)) &&
                (!('minutesEarly' in data) || (data.minutesEarly is number && data.minutesEarly >= 0)) &&
-               (!('durationHours' in data) || (data.durationHours is number && data.durationHours >= 0 && data.durationHours <= 24)) &&
+               (!('durationHours' in data) || data.durationHours == null || (data.durationHours is number && data.durationHours >= 0 && data.durationHours <= 24)) &&
+               (!('isEarlyLeave' in data) || data.isEarlyLeave is bool) &&
                (!('approvalStatus' in data) || data.approvalStatus in ['pending', 'approved', 'rejected']) &&
                (!('totalBreakMinutes' in data) || (data.totalBreakMinutes is number && data.totalBreakMinutes >= 0)) &&
+               (!('unpaidBreakMinutes' in data) || (data.unpaidBreakMinutes is number && data.unpaidBreakMinutes >= 0)) &&
                ('updatedAt' in data);
       }
 
@@ -562,11 +568,18 @@ service cloud.firestore {
       // Update: HR/Admin (full), or employee updating own record (limited)
       allow update: if (isHR() && isValidAttendanceUpdate(request.resource.data)) ||
                        (isRecordOwner() && isValidAttendanceUpdate(request.resource.data) &&
-                        // Employees can only update specific fields
-                        !request.resource.data.diff(resource.data).affectedKeys().hasAny([
-                          'userId', 'employeeId', 'clockInTime', 'status', 'approvalStatus',
-                          'isManualEntry', 'isCorrected', 'penaltiesApplied'
-                        ]));
+                        // Employees can update for clock out (status change from clocked-in to clocked-out)
+                        (
+                          // Allow clock out: status change + clockOutTime
+                          (resource.data.status == 'clocked-in' &&
+                           request.resource.data.status == 'clocked-out' &&
+                           'clockOutTime' in request.resource.data) ||
+                          // Or other limited updates (no status change)
+                          (!request.resource.data.diff(resource.data).affectedKeys().hasAny([
+                            'userId', 'employeeId', 'clockInTime', 'status', 'approvalStatus',
+                            'isManualEntry', 'isCorrected', 'penaltiesApplied'
+                          ]))
+                        ));
 
       // Delete: Admin only
       allow delete: if isAdmin();
@@ -1004,6 +1017,20 @@ service cloud.firestore {
       allow read: if isHR() || isEmployee();
       allow create: if isHR() && isValidHolidayData(request.resource.data);
       allow update: if isHR() && isValidHolidayUpdate(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // ============================================
+    // Payroll Configs collection
+    // ============================================
+    match /payrollConfigs/{configId} {
+      // Read: HR and Admin only
+      allow read: if isHR();
+
+      // Create/Update: Admin only
+      allow create, update: if isAdmin();
+
+      // Delete: Admin only
       allow delete: if isAdmin();
     }
 

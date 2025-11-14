@@ -7,8 +7,6 @@ import { getFirestore } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 
-const db = getFirestore();
-
 type Role = 'admin' | 'hr' | 'manager' | 'employee' | 'auditor';
 type Resource =
   | 'employees'
@@ -72,6 +70,7 @@ const PERMISSION_MATRIX: Record<Role, Partial<Record<Resource, Permission[]>>> =
 export const checkPermission = onCall(
   { region: 'asia-southeast1', enforceAppCheck: false },
   async (request) => {
+    const db = getFirestore();
     // Check authentication
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'Must be logged in');

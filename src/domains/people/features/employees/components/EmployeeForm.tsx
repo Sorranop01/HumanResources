@@ -6,6 +6,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button, Col, DatePicker, Form, Input, InputNumber, Row, Select } from 'antd';
 import dayjs from 'dayjs';
+import type { Timestamp } from 'firebase/firestore';
 import type { FC } from 'react';
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -16,6 +17,16 @@ import { DepartmentSelect } from '@/domains/system/features/settings/departments
 import { PositionSelect } from '@/domains/system/features/settings/positions/components/PositionSelect';
 
 const { Option } = Select;
+
+/**
+ * Convert Firestore Timestamp or Date to Date
+ */
+function toDate(value: Date | Timestamp): Date {
+  if (value instanceof Date) {
+    return value;
+  }
+  return value.toDate();
+}
 
 const phonePattern = /^[0-9]{9,10}$/;
 
@@ -65,8 +76,8 @@ export const EmployeeForm: FC<EmployeeFormProps> = ({
         thaiLastName: initialData.thaiLastName,
         email: initialData.email,
         phoneNumber: initialData.phoneNumber,
-        dateOfBirth: dayjs(initialData.dateOfBirth).format('YYYY-MM-DD'),
-        hireDate: dayjs(initialData.hireDate).format('YYYY-MM-DD'),
+        dateOfBirth: dayjs(toDate(initialData.dateOfBirth)).format('YYYY-MM-DD'),
+        hireDate: dayjs(toDate(initialData.hireDate)).format('YYYY-MM-DD'),
         position: initialData.position,
         department: initialData.department,
         salary: initialData.salary.baseSalary,
@@ -111,8 +122,8 @@ export const EmployeeForm: FC<EmployeeFormProps> = ({
         thaiLastName: initialData.thaiLastName,
         email: initialData.email,
         phoneNumber: initialData.phoneNumber,
-        dateOfBirth: dayjs(initialData.dateOfBirth).format('YYYY-MM-DD'),
-        hireDate: dayjs(initialData.hireDate).format('YYYY-MM-DD'),
+        dateOfBirth: dayjs(toDate(initialData.dateOfBirth)).format('YYYY-MM-DD'),
+        hireDate: dayjs(toDate(initialData.hireDate)).format('YYYY-MM-DD'),
         position: initialData.position,
         department: initialData.department,
         salary: initialData.salary.baseSalary,

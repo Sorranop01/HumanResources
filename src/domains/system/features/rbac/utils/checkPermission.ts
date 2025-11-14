@@ -1,10 +1,14 @@
+import type { Permission as BasePermissionType } from '@/shared/constants/permissions';
+import type { Resource as ResourceType } from '@/shared/constants/resources';
+import { RESOURCES } from '@/shared/constants/resources';
 import type { Role } from '@/shared/constants/roles';
 import { ROLES } from '@/shared/constants/roles';
 
 /**
- * Base permission operations
+ * Re-export base types from constants
  */
-export type BasePermission = 'read' | 'create' | 'update' | 'delete';
+export type BasePermission = BasePermissionType;
+export type Resource = ResourceType;
 
 /**
  * Context-based permission scope
@@ -28,60 +32,47 @@ export type ContextualPermission = `${BasePermission}:${PermissionScope}`;
 export type Permission = BasePermission | ContextualPermission;
 
 /**
- * Resource types in the system
- */
-export type Resource =
-  | 'employees'
-  | 'attendance'
-  | 'leave-requests'
-  | 'payroll'
-  | 'settings'
-  | 'users'
-  | 'roles'
-  | 'audit-logs';
-
-/**
  * Permission matrix: Role -> Resource -> Permissions
  * Note: Use context-based permissions (e.g., 'read:own', 'read:all') for fine-grained access control
  */
 const PERMISSION_MATRIX: Record<Role, Partial<Record<Resource, Permission[]>>> = {
   [ROLES.ADMIN]: {
-    employees: ['read:all', 'create', 'update:all', 'delete'],
-    attendance: ['read:all', 'create', 'update:all', 'delete'],
-    'leave-requests': ['read:all', 'create', 'update:all', 'delete'],
-    payroll: ['read:all', 'create', 'update:all', 'delete'],
-    settings: ['read:all', 'create', 'update:all', 'delete'],
-    users: ['read:all', 'create', 'update:all', 'delete'],
-    roles: ['read:all', 'create', 'update:all', 'delete'],
-    'audit-logs': ['read:all'],
+    [RESOURCES.EMPLOYEES]: ['read:all', 'create', 'update:all', 'delete'],
+    [RESOURCES.ATTENDANCE]: ['read:all', 'create', 'update:all', 'delete'],
+    [RESOURCES.LEAVE_REQUESTS]: ['read:all', 'create', 'update:all', 'delete'],
+    [RESOURCES.PAYROLL]: ['read:all', 'create', 'update:all', 'delete'],
+    [RESOURCES.SETTINGS]: ['read:all', 'create', 'update:all', 'delete'],
+    [RESOURCES.USERS]: ['read:all', 'create', 'update:all', 'delete'],
+    [RESOURCES.ROLES]: ['read:all', 'create', 'update:all', 'delete'],
+    [RESOURCES.AUDIT_LOGS]: ['read:all'],
   },
   [ROLES.HR]: {
-    employees: ['read:all', 'create', 'update:all'],
-    attendance: ['read:all', 'update:all'],
-    'leave-requests': ['read:all', 'update:all'],
-    payroll: ['read:all', 'create', 'update:all'],
-    settings: ['read:all'],
-    users: ['read:all'],
-    roles: ['read:all'],
-    'audit-logs': ['read:all'],
+    [RESOURCES.EMPLOYEES]: ['read:all', 'create', 'update:all'],
+    [RESOURCES.ATTENDANCE]: ['read:all', 'update:all'],
+    [RESOURCES.LEAVE_REQUESTS]: ['read:all', 'update:all'],
+    [RESOURCES.PAYROLL]: ['read:all', 'create', 'update:all'],
+    [RESOURCES.SETTINGS]: ['read:all'],
+    [RESOURCES.USERS]: ['read:all'],
+    [RESOURCES.ROLES]: ['read:all'],
+    [RESOURCES.AUDIT_LOGS]: ['read:all'],
   },
   [ROLES.MANAGER]: {
-    employees: ['read:all'],
-    attendance: ['read:all', 'update:all'],
-    'leave-requests': ['read:all', 'update:all'],
-    settings: ['read:all'],
+    [RESOURCES.EMPLOYEES]: ['read:all'],
+    [RESOURCES.ATTENDANCE]: ['read:all', 'update:all'],
+    [RESOURCES.LEAVE_REQUESTS]: ['read:all', 'update:all'],
+    [RESOURCES.SETTINGS]: ['read:all'],
   },
   [ROLES.EMPLOYEE]: {
-    employees: ['read:own'],
-    attendance: ['read:own', 'create'],
-    'leave-requests': ['read:own', 'create'],
+    [RESOURCES.EMPLOYEES]: ['read:own'],
+    [RESOURCES.ATTENDANCE]: ['read:own', 'create'],
+    [RESOURCES.LEAVE_REQUESTS]: ['read:own', 'create'],
   },
   [ROLES.AUDITOR]: {
-    employees: ['read:all'],
-    attendance: ['read:all'],
-    'leave-requests': ['read:all'],
-    payroll: ['read:all'],
-    'audit-logs': ['read:all'],
+    [RESOURCES.EMPLOYEES]: ['read:all'],
+    [RESOURCES.ATTENDANCE]: ['read:all'],
+    [RESOURCES.LEAVE_REQUESTS]: ['read:all'],
+    [RESOURCES.PAYROLL]: ['read:all'],
+    [RESOURCES.AUDIT_LOGS]: ['read:all'],
   },
 };
 

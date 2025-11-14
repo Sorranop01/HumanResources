@@ -4,13 +4,9 @@
  */
 
 import { getFirestore } from 'firebase-admin/firestore';
-import { defineInt } from 'firebase-functions/params';
 import { logger } from 'firebase-functions/v2';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { CloudFunctionDeleteDepartmentSchema } from '@/domains/system/features/settings/departments/schemas/departmentSchemas.js';
-
-const timeoutSeconds = defineInt('FUNCTION_TIMEOUT_SECONDS');
-const db = getFirestore();
 
 /**
  * Delete Department Function
@@ -19,10 +15,11 @@ const db = getFirestore();
 export const deleteDepartment = onCall(
   {
     region: 'asia-southeast1',
-    timeoutSeconds: timeoutSeconds.value() || 60,
+    timeoutSeconds: 60,
     cors: true,
   },
   async (request) => {
+    const db = getFirestore();
     const { auth, data } = request;
 
     // ===== 1. Authentication Check =====
@@ -129,7 +126,11 @@ export const deleteDepartment = onCall(
 
         const transferDeptData = transferDeptDoc.data();
 
-        if (transferDeptData?.tenantId !== departmentData.tenantId) {
+        if (!transferDeptData) {
+          throw new HttpsError('not-found', 'ไม่พบข้อมูลแผนกปลายทาง');
+        }
+
+        if (transferDeptData.tenantId !== departmentData.tenantId) {
           throw new HttpsError('failed-precondition', 'แผนกปลายทางต้องอยู่ใน Tenant เดียวกัน');
         }
 

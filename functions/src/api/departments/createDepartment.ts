@@ -4,13 +4,9 @@
  */
 
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
-import { defineInt } from 'firebase-functions/params';
 import { logger } from 'firebase-functions/v2';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { CloudFunctionCreateDepartmentSchema } from '@/domains/system/features/settings/departments/schemas/departmentSchemas.js';
-
-const timeoutSeconds = defineInt('FUNCTION_TIMEOUT_SECONDS');
-const db = getFirestore();
 
 /**
  * Create Department Function
@@ -19,10 +15,11 @@ const db = getFirestore();
 export const createDepartment = onCall(
   {
     region: 'asia-southeast1',
-    timeoutSeconds: timeoutSeconds.value() || 60,
+    timeoutSeconds: 60,
     cors: true,
   },
   async (request) => {
+    const db = getFirestore();
     const { auth, data } = request;
 
     // ===== 1. Authentication Check =====

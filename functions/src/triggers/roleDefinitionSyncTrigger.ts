@@ -11,8 +11,6 @@ import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { onDocumentUpdated } from 'firebase-functions/v2/firestore';
 
-const db = getFirestore();
-
 /**
  * Trigger on roleDefinition update
  * Syncs roleName to all users when role name changes
@@ -23,6 +21,7 @@ export const onRoleDefinitionUpdate = onDocumentUpdated(
     region: 'asia-southeast1',
   },
   async (event) => {
+    const db = getFirestore();
     const roleId = event.params.roleId;
     const beforeData = event.data?.before.data();
     const afterData = event.data?.after.data();

@@ -10,6 +10,7 @@ export { syncLeaveTypeName } from './leaveTypeDenormalizationTrigger.js';
 export { syncPositionName } from './positionDenormalizationTrigger.js';
 // Denormalization sync triggers (RBAC)
 export { onRoleDefinitionCreate, onRoleDefinitionUpdate } from './roleDefinitionSyncTrigger.js';
+export { syncRolePermissionsToRoleDefinitions } from './rolePermissionDenormalizationTrigger.js';
 export { onRoleDefinitionWrite } from './rolesAuditTrigger.js';
 
 // Audit triggers

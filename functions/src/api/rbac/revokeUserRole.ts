@@ -7,8 +7,6 @@ import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 
-const db = getFirestore();
-
 interface RevokeUserRoleRequest {
   userId: string;
   reason?: string | undefined;
@@ -17,6 +15,7 @@ interface RevokeUserRoleRequest {
 export const revokeUserRole = onCall(
   { region: 'asia-southeast1', enforceAppCheck: false },
   async (request) => {
+    const db = getFirestore();
     // Check authentication
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'Must be logged in');

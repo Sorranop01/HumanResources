@@ -9,14 +9,13 @@ import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { CreateRoleSchema } from '../../shared/schemas/roleSchemas.js';
 import type { CreateRoleInput } from '../../shared/types/role.js';
 
-const db = getFirestore();
-
 export const createRole = onCall<CreateRoleInput>(
   {
     region: 'asia-southeast1',
     cors: true,
   },
   async (request) => {
+    const db = getFirestore();
     // 1. Authentication check
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'User must be authenticated');
@@ -87,6 +86,8 @@ export const createRole = onCall<CreateRoleInput>(
         createdBy: userId,
       });
 
+      const now = new Date().toISOString();
+
       return {
         success: true,
         roleId,
@@ -97,6 +98,8 @@ export const createRole = onCall<CreateRoleInput>(
           description,
           isSystemRole: false,
           isActive: true,
+          createdAt: now,
+          updatedAt: now,
         },
       };
     } catch (error: unknown) {

@@ -107,14 +107,12 @@ export async function seedGeofences() {
   for (const config of geofenceConfigs) {
     const docRef = db.collection('geofence_configs').doc(config.id);
 
-    // ✅ Use stripUndefined for Firestore safety
-    const geofencePayload = stripUndefined({
-      ...config,
-      createdAt: now,
-      updatedAt: now,
-      tenantId: 'default', // ✅ Ensure tenantId is present
-    });
-
+          // ✅ Use stripUndefined for Firestore safety
+          const geofencePayload = stripUndefined({
+            ...config,
+            createdAt: now,
+            updatedAt: now,
+          });
     batch.set(docRef, geofencePayload);
     console.log(`  ✓ Created geofence: ${config.name}`);
   }

@@ -1,11 +1,22 @@
 import { CheckCircleOutlined, ClockCircleOutlined, WarningOutlined } from '@ant-design/icons';
 import { Card, Flex, Space, Table, Tag, Tooltip, Typography } from 'antd';
 import dayjs from 'dayjs';
+import type { Timestamp } from 'firebase/firestore';
 import { useAttendanceHistory } from '@/domains/people/features/attendance/hooks/useAttendanceHistory';
 import type { AttendanceRecord } from '@/domains/people/features/attendance/types';
 import { formatMinutesToDuration } from '@/domains/people/features/attendance/utils/timeCalculations';
 
 const { Text } = Typography;
+
+/**
+ * Convert Firestore Timestamp or Date to Date
+ */
+function toDate(value: Date | Timestamp): Date {
+  if (value instanceof Date) {
+    return value;
+  }
+  return value.toDate();
+}
 
 const columns = [
   {
@@ -23,7 +34,7 @@ const columns = [
 
       return (
         <Flex vertical gap={4}>
-          <Text strong>{dayjs(time.toDate()).format('HH:mm:ss')}</Text>
+          <Text strong>{dayjs(toDate(time)).format('HH:mm:ss')}</Text>
           {record.scheduledStartTime && (
             <Text type="secondary" style={{ fontSize: '11px' }}>
               กำหนด: {record.scheduledStartTime}
@@ -44,7 +55,7 @@ const columns = [
 
       return (
         <Flex vertical gap={4}>
-          <Text strong>{dayjs(time.toDate()).format('HH:mm:ss')}</Text>
+          <Text strong>{dayjs(toDate(time)).format('HH:mm:ss')}</Text>
           {record.scheduledEndTime && (
             <Text type="secondary" style={{ fontSize: '11px' }}>
               กำหนด: {record.scheduledEndTime}

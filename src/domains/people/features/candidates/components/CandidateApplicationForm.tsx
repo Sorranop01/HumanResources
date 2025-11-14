@@ -15,8 +15,11 @@ import {
 } from 'antd';
 import type { FC } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
+import { usePositions } from '@/domains/system/features/settings/positions/hooks/usePositions';
 import { useCreateCandidate } from '../hooks/useCreateCandidate';
 import { CandidateApplicationSchema, ExperienceLevelSchema } from '../schemas';
+
+const TENANT_ID = 'default';
 
 type CandidateApplicationFormValues = (typeof CandidateApplicationSchema)['_input'];
 
@@ -25,12 +28,16 @@ const { TextArea } = Input;
 
 export const CandidateApplicationForm: FC = () => {
   const createCandidate = useCreateCandidate();
+  const { data: positions, isLoading: positionsLoading } = usePositions(TENANT_ID, {
+    isActive: true,
+  });
 
   const {
     control,
     handleSubmit,
     formState: { errors, isSubmitting },
     reset,
+    setValue,
   } = useForm<CandidateApplicationFormValues>({
     resolver: zodResolver(CandidateApplicationSchema),
     defaultValues: {
@@ -188,15 +195,38 @@ export const CandidateApplicationForm: FC = () => {
           <Col span={12}>
             <Form.Item
               label="ตำแหน่งที่สมัคร"
-              validateStatus={errors.positionApplied ? 'error' : ''}
-              help={errors.positionApplied?.message}
+              validateStatus={errors.positionId ? 'error' : ''}
+              help={errors.positionId?.message}
               required
             >
               <Controller
-                name="positionApplied"
+                name="positionId"
                 control={control}
                 render={({ field }) => (
-                  <Input {...field} placeholder="เช่น Software Engineer, HR Manager" />
+                  <Select
+                    {...field}
+                    placeholder="เลือกตำแหน่งที่สมัคร"
+                    loading={positionsLoading}
+                    showSearch
+                    filterOption={(input, option) =>
+                      (option?.label?.toString() ?? '').toLowerCase().includes(input.toLowerCase())
+                    }
+                    onChange={(value) => {
+                      // Find selected position and denormalize
+                      const selectedPosition = positions?.find((p) => p.id === value);
+                      if (selectedPosition) {
+                        field.onChange(value); // positionId
+                        setValue('positionName', selectedPosition.title);
+                        setValue('departmentId', selectedPosition.departmentId);
+                        setValue('departmentName', selectedPosition.departmentName);
+                      }
+                    }}
+                    options={positions?.map((pos) => ({
+                      label: `${pos.code} - ${pos.title} (${pos.level})`,
+                      value: pos.id,
+                    }))}
+                    style={{ width: '100%' }}
+                  />
                 )}
               />
             </Form.Item>

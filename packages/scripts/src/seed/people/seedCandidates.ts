@@ -10,6 +10,58 @@ import { validateCandidate } from '@/domains/people/features/candidates/schemas/
 import { db, Timestamp } from '../../config/firebase-admin.js';
 import { stripUndefined } from '../../utils/stripUndefined.js';
 
+// ============================================
+// Position & Department Mapping
+// ============================================
+
+const POSITION_MAP: Record<
+  string,
+  { positionId: string; positionName: string; departmentId: string; departmentName: string }
+> = {
+  'Senior Full-Stack Developer': {
+    positionId: 'pos-senior-dev',
+    positionName: 'Senior Full-Stack Developer',
+    departmentId: 'dept-it',
+    departmentName: 'ฝ่ายเทคโนโลยีสารสนเทศ',
+  },
+  'Junior Frontend Developer': {
+    positionId: 'pos-junior-dev',
+    positionName: 'Junior Frontend Developer',
+    departmentId: 'dept-it',
+    departmentName: 'ฝ่ายเทคโนโลยีสารสนเทศ',
+  },
+  'Mid-Level Backend Developer': {
+    positionId: 'pos-mid-dev',
+    positionName: 'Mid-Level Backend Developer',
+    departmentId: 'dept-it',
+    departmentName: 'ฝ่ายเทคโนโลยีสารสนเทศ',
+  },
+  'HR Specialist': {
+    positionId: 'pos-hr-specialist',
+    positionName: 'HR Specialist',
+    departmentId: 'dept-hr',
+    departmentName: 'ฝ่ายทรัพยากรบุคคล',
+  },
+  'Digital Marketing Specialist': {
+    positionId: 'pos-digital-marketer',
+    positionName: 'Digital Marketing Specialist',
+    departmentId: 'dept-marketing',
+    departmentName: 'ฝ่ายการตลาด',
+  },
+  'Junior Developer': {
+    positionId: 'pos-junior-dev',
+    positionName: 'Junior Developer',
+    departmentId: 'dept-it',
+    departmentName: 'ฝ่ายเทคโนโลยีสารสนเทศ',
+  },
+  'HR Manager': {
+    positionId: 'pos-hr-manager',
+    positionName: 'HR Manager',
+    departmentId: 'dept-hr',
+    departmentName: 'ฝ่ายทรัพยากรบุคคล',
+  },
+};
+
 interface SeedCandidateData {
   // Personal Information
   firstName: string;
@@ -410,6 +462,13 @@ async function seedCandidates() {
   let errorCount = 0;
 
   for (const candidateData of sampleCandidates) {
+    const positionInfo = POSITION_MAP[candidateData.positionApplied];
+    if (!positionInfo) {
+      console.error(`  ❌ Invalid position applied: ${candidateData.positionApplied}`);
+      errorCount++;
+      continue;
+    }
+
     try {
       // Generate candidate ID
       const candidateRef = db.collection('candidates').doc();
@@ -429,7 +488,10 @@ async function seedCandidates() {
         address: candidateData.address || null,
 
         // Position Information
-        positionApplied: candidateData.positionApplied,
+        positionId: positionInfo.positionId,
+        positionName: positionInfo.positionName,
+        departmentId: positionInfo.departmentId,
+        departmentName: positionInfo.departmentName,
         expectedSalary: candidateData.expectedSalary || null,
         availableDate: candidateData.availableDate || null,
 
@@ -460,6 +522,8 @@ async function seedCandidates() {
         createdAt: now,
         source: candidateData.source || 'website',
         tenantId: 'default', // ✅ Required for multi-tenant support
+        createdBy: 'system',
+        updatedBy: 'system',
       });
 
       // Create candidate document (skip validation for seed data)
@@ -467,7 +531,7 @@ async function seedCandidates() {
       await candidateRef.set(candidatePayload);
 
       console.log(
-        `  ✅ Created candidate: ${candidateData.firstName} ${candidateData.lastName} - ${candidateData.positionApplied} (${candidateData.status})`
+        `  ✅ Created candidate: ${candidateData.firstName} ${candidateData.lastName} - ${positionInfo.positionName} (${candidateData.status})`
       );
       successCount++;
     } catch (error) {

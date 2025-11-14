@@ -3,6 +3,10 @@
  * Region: asia-southeast1 (MANDATORY)
  */
 
+// Initialize Firebase Admin SDK (via config/firebase.ts)
+// This ensures Firebase is initialized before any function exports
+import './config/firebase.js';
+
 // Attendance functions
 export {
   approveAttendance,
@@ -70,6 +74,7 @@ export {
   // Denormalization Sync Triggers
   syncEmployeeDenormalizedFields,
   syncPositionName,
+  syncRolePermissionsToRoleDefinitions,
 } from './triggers/index.js';
 
 // TODO: Add more functions

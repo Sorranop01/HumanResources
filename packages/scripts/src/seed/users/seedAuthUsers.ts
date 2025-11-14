@@ -31,7 +31,7 @@ const testUsers: TestUser[] = [
     password: 'admin123456',
     displayName: 'Admin User',
     role: ROLES.ADMIN,
-    phoneNumber: '+66812345678',
+    phoneNumber: '0812345678',
     createEmployee: true,
     employeeData: {
       firstName: 'Admin',
@@ -46,7 +46,7 @@ const testUsers: TestUser[] = [
     password: 'hr123456',
     displayName: 'HR Manager',
     role: ROLES.HR,
-    phoneNumber: '+66823456789',
+    phoneNumber: '0823456789',
     createEmployee: true,
     employeeData: {
       firstName: 'HR',
@@ -61,7 +61,7 @@ const testUsers: TestUser[] = [
     password: 'manager123456',
     displayName: 'Team Manager',
     role: ROLES.MANAGER,
-    phoneNumber: '+66834567890',
+    phoneNumber: '0834567890',
     createEmployee: true,
     employeeData: {
       firstName: 'Team',
@@ -76,7 +76,7 @@ const testUsers: TestUser[] = [
     password: 'employee123456',
     displayName: 'John Doe',
     role: ROLES.EMPLOYEE,
-    phoneNumber: '+66845678901',
+    phoneNumber: '0845678901',
     createEmployee: false, // Employee seeded separately in seedEmployees.ts
   },
   {
@@ -84,7 +84,7 @@ const testUsers: TestUser[] = [
     password: 'auditor123456',
     displayName: 'Audit Officer',
     role: ROLES.AUDITOR,
-    phoneNumber: '+66856789012',
+    phoneNumber: '0856789012',
     createEmployee: true,
     employeeData: {
       firstName: 'Audit',

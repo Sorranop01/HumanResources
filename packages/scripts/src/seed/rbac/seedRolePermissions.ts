@@ -9,11 +9,32 @@ import { db, Timestamp } from '../../config/firebase-admin.js';
 import { ROLES } from '../../constants/roles.js';
 import { stripUndefined } from '../../utils/stripUndefined.js';
 
+const ROLE_NAME_MAP: Record<string, string> = {
+  [ROLES.ADMIN]: 'ผู้ดูแลระบบ',
+  [ROLES.HR]: 'ฝ่ายทรัพยากรบุคคล',
+  [ROLES.MANAGER]: 'ผู้จัดการ',
+  [ROLES.EMPLOYEE]: 'พนักงาน',
+  [ROLES.AUDITOR]: 'ผู้ตรวจสอบ',
+};
+
+const RESOURCE_NAME_MAP: Record<string, string> = {
+  employees: 'จัดการข้อมูลพนักงาน',
+  attendance: 'จัดการการเข้างาน',
+  'leave-requests': 'จัดการคำขอลา',
+  payroll: 'จัดการเงินเดือน',
+  settings: 'จัดการการตั้งค่าระบบ',
+  users: 'จัดการผู้ใช้',
+  roles: 'จัดการบทบาท',
+  'audit-logs': 'ดู Audit Logs',
+};
+
 interface RolePermission {
   id: string;
   roleId: string;
   role: string;
+  roleName: string; // Denormalized
   resource: string;
+  resourceName: string; // Denormalized
   permissions: string[];
   isActive: boolean;
   tenantId: string;
@@ -23,7 +44,10 @@ interface RolePermission {
   updatedBy?: string;
 }
 
-const rolePermissionMappings: Omit<RolePermission, 'createdAt' | 'updatedAt'>[] = [
+const rolePermissionMappings: Omit<
+  RolePermission,
+  'createdAt' | 'updatedAt' | 'roleName' | 'resourceName'
+>[] = [
   // ============================================
   // ADMIN - Full access to everything
   // ============================================
@@ -354,6 +378,8 @@ async function seedRolePermissions() {
     // ✅ Use stripUndefined for Firestore safety
     const mappingPayload = stripUndefined({
       ...mapping,
+      roleName: ROLE_NAME_MAP[mapping.role] || mapping.role,
+      resourceName: RESOURCE_NAME_MAP[mapping.resource] || mapping.resource,
       createdAt: now,
       updatedAt: now,
     });

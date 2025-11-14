@@ -5,8 +5,6 @@
 
 import { getFirestore } from 'firebase-admin/firestore';
 
-const db = getFirestore();
-
 /**
  * Check if user has specific permission for a resource
  * @param userId - User ID to check
@@ -19,6 +17,7 @@ export async function checkPermission(
   resource: string,
   permission: string
 ): Promise<boolean> {
+  const db = getFirestore();
   try {
     // Get user document to find their role
     const userDoc = await db.collection('users').doc(userId).get();
@@ -161,6 +160,7 @@ export async function hasAllPermissions(
 export async function getUserPermissions(
   userId: string
 ): Promise<Record<string, Record<string, boolean>>> {
+  const db = getFirestore();
   try {
     const userDoc = await db.collection('users').doc(userId).get();
 

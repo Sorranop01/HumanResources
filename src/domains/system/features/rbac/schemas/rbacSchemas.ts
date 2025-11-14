@@ -4,6 +4,8 @@
  */
 
 import { z } from 'zod';
+import { PERMISSIONS } from '@/shared/constants/permissions';
+import { RESOURCES } from '@/shared/constants/resources';
 import { ROLES } from '@/shared/constants/roles';
 
 // ============================================
@@ -18,22 +20,45 @@ export const roleSchema = z.enum([
   ROLES.AUDITOR,
 ]);
 
-export const permissionSchema = z.enum(['read', 'create', 'update', 'delete']);
+export const permissionSchema = z.enum([
+  PERMISSIONS.READ,
+  PERMISSIONS.CREATE,
+  PERMISSIONS.UPDATE,
+  PERMISSIONS.DELETE,
+]);
 
 export const resourceSchema = z.enum([
-  'employees',
-  'attendance',
-  'leave-requests',
-  'payroll',
-  'settings',
-  'users',
-  'roles',
-  'audit-logs',
+  RESOURCES.EMPLOYEES,
+  RESOURCES.ATTENDANCE,
+  RESOURCES.LEAVE_REQUESTS,
+  RESOURCES.PAYROLL,
+  RESOURCES.SETTINGS,
+  RESOURCES.USERS,
+  RESOURCES.ROLES,
+  RESOURCES.AUDIT_LOGS,
 ]);
 
 // ============================================
 // Entity Schemas
 // ============================================
+
+/**
+ * Denormalized Permission Info Schema
+ */
+export const denormalizedPermissionInfoSchema = z.object({
+  resource: resourceSchema,
+  resourceName: z.string().min(1),
+  permissions: z.array(permissionSchema),
+});
+
+/**
+ * Available Permission Detail Schema
+ */
+export const availablePermissionDetailSchema = z.object({
+  permission: permissionSchema,
+  label: z.string().min(1),
+  description: z.string().min(1),
+});
 
 /**
  * Role Definition Schema
@@ -45,6 +70,7 @@ export const roleDefinitionSchema = z.object({
   description: z.string().min(1).max(500),
   isActive: z.boolean(),
   isSystemRole: z.boolean(),
+  permissions: z.record(denormalizedPermissionInfoSchema).optional(), // ✅ Denormalized
   createdAt: z.date(),
   updatedAt: z.date(),
   createdBy: z.string().optional(),
@@ -79,6 +105,7 @@ export const permissionDefinitionSchema = z.object({
   description: z.string().min(1).max(500),
   permissions: z.array(permissionSchema),
   isActive: z.boolean(),
+  availablePermissions: z.array(availablePermissionDetailSchema).optional(), // ✅ Denormalized
   createdAt: z.date(),
   updatedAt: z.date(),
   createdBy: z.string().optional(),
@@ -102,7 +129,9 @@ export const rolePermissionSchema = z.object({
   id: z.string().min(1),
   roleId: z.string().min(1),
   role: roleSchema,
+  roleName: z.string().min(1), // ✅ Denormalized
   resource: resourceSchema,
+  resourceName: z.string().min(1), // ✅ Denormalized
   permissions: z.array(permissionSchema).min(1),
   isActive: z.boolean(),
   createdAt: z.date(),
@@ -133,11 +162,18 @@ export const updateRolePermissionSchema = z.object({
  */
 export const userRoleAssignmentSchema = z.object({
   id: z.string().min(1),
+  // User reference (denormalized)
   userId: z.string().min(1),
   userEmail: z.string().email(),
   userDisplayName: z.string().min(1).max(200),
+  // Role reference (denormalized)
   role: roleSchema,
+  roleName: z.string().min(1).max(100), // ✅ Denormalized role name
+  roleDescription: z.string().max(500).optional(), // ✅ Denormalized role description
+  // Assignment info (denormalized)
   assignedBy: z.string().min(1),
+  assignedByName: z.string().min(1).max(200), // ✅ Denormalized assignedBy name
+  assignedByEmail: z.string().email().optional(), // ✅ Denormalized assignedBy email
   isActive: z.boolean(),
   expiresAt: z.date().optional(),
   reason: z.string().max(500).optional(),

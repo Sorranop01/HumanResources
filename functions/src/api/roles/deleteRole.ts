@@ -8,8 +8,6 @@ import { getFirestore } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 
-const db = getFirestore();
-
 interface DeleteRoleRequest {
   roleId: string;
 }
@@ -20,6 +18,7 @@ export const deleteRole = onCall<DeleteRoleRequest>(
     cors: true,
   },
   async (request) => {
+    const db = getFirestore();
     // 1. Authentication check
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'User must be authenticated');

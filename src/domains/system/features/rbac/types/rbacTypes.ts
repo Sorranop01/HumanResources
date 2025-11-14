@@ -4,8 +4,9 @@
  */
 
 import type { Timestamp } from 'firebase/firestore';
+import type { Permission } from '@/shared/constants/permissions';
+import type { Resource } from '@/shared/constants/resources';
 import type { Role } from '@/shared/constants/roles';
-import type { Permission, Resource } from '../utils/checkPermission';
 
 /**
  * Base RBAC entity
@@ -19,6 +20,15 @@ export interface BaseRBACEntity {
 }
 
 /**
+ * Denormalized Permission Info (for embedding in RoleDefinition)
+ */
+export interface DenormalizedPermissionInfo {
+  resource: Resource;
+  resourceName: string;
+  permissions: Permission[];
+}
+
+/**
  * Role definition (extended from basic role)
  */
 export interface RoleDefinition extends BaseRBACEntity {
@@ -27,6 +37,18 @@ export interface RoleDefinition extends BaseRBACEntity {
   description: string;
   isActive: boolean;
   isSystemRole: boolean; // Cannot be deleted/modified if true
+
+  // ✅ Denormalized permissions map for quick access
+  permissions?: Record<string, DenormalizedPermissionInfo>;
+}
+
+/**
+ * Available Permission Detail (for PermissionDefinition)
+ */
+export interface AvailablePermissionDetail {
+  permission: Permission;
+  label: string;
+  description: string;
 }
 
 /**
@@ -38,6 +60,9 @@ export interface PermissionDefinition extends BaseRBACEntity {
   description: string;
   permissions: Permission[];
   isActive: boolean;
+
+  // ✅ Denormalized available permissions with labels
+  availablePermissions?: AvailablePermissionDetail[];
 }
 
 /**
@@ -46,7 +71,11 @@ export interface PermissionDefinition extends BaseRBACEntity {
 export interface RolePermission extends BaseRBACEntity {
   roleId: string;
   role: Role;
+  roleName: string; // ✅ Denormalized role name
+
   resource: Resource;
+  resourceName: string; // ✅ Denormalized resource name
+
   permissions: Permission[];
   isActive: boolean;
 }
@@ -105,6 +134,7 @@ export interface RoleDefinitionFirestore {
   description: string;
   isActive: boolean;
   isSystemRole: boolean;
+  permissions?: Record<string, DenormalizedPermissionInfo>; // ✅ Denormalized
   createdAt: Timestamp;
   updatedAt: Timestamp;
   createdBy?: string | undefined;
@@ -118,6 +148,7 @@ export interface PermissionDefinitionFirestore {
   description: string;
   permissions: Permission[];
   isActive: boolean;
+  availablePermissions?: AvailablePermissionDetail[]; // ✅ Denormalized
   createdAt: Timestamp;
   updatedAt: Timestamp;
   createdBy?: string | undefined;
@@ -128,7 +159,9 @@ export interface RolePermissionFirestore {
   id: string;
   roleId: string;
   role: Role;
+  roleName: string; // ✅ Denormalized
   resource: Resource;
+  resourceName: string; // ✅ Denormalized
   permissions: Permission[];
   isActive: boolean;
   createdAt: Timestamp;

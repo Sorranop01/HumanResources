@@ -4,6 +4,10 @@
  */
 
 import { z } from 'zod';
+import {
+  DenormalizedDepartmentRefSchema,
+  DenormalizedPositionRefSchema,
+} from '@/shared/schemas/denormalized.schema';
 
 /**
  * Penalty Type Schema
@@ -78,9 +82,9 @@ export const CreatePenaltyPolicySchema = z.object({
   isProgressive: z.boolean(),
   progressiveRules: z.array(ProgressivePenaltyRuleSchema).optional(),
 
-  // Applicable to
-  applicableDepartments: z.array(z.string()).default([]),
-  applicablePositions: z.array(z.string()).default([]),
+  // Applicable to (denormalized)
+  applicableDepartments: z.record(DenormalizedDepartmentRefSchema).optional(),
+  applicablePositions: z.record(DenormalizedPositionRefSchema).optional(),
   applicableEmploymentTypes: z.array(z.string()).default([]),
 
   // Auto-apply
@@ -124,9 +128,9 @@ export const UpdatePenaltyPolicySchema = z.object({
   isProgressive: z.boolean().optional(),
   progressiveRules: z.array(ProgressivePenaltyRuleSchema).optional(),
 
-  // Applicable to
-  applicableDepartments: z.array(z.string()).optional(),
-  applicablePositions: z.array(z.string()).optional(),
+  // Applicable to (denormalized)
+  applicableDepartments: z.record(DenormalizedDepartmentRefSchema).optional(),
+  applicablePositions: z.record(DenormalizedPositionRefSchema).optional(),
   applicableEmploymentTypes: z.array(z.string()).optional(),
 
   // Auto-apply
@@ -207,9 +211,9 @@ export const PenaltyPolicySchema = z.object({
   isProgressive: z.boolean(),
   progressiveRules: z.array(ProgressivePenaltyRuleSchema).optional(),
 
-  // Applicable to
-  applicableDepartments: z.array(z.string()),
-  applicablePositions: z.array(z.string()),
+  // Applicable to (denormalized)
+  applicableDepartments: z.record(DenormalizedDepartmentRefSchema).optional(),
+  applicablePositions: z.record(DenormalizedPositionRefSchema).optional(),
   applicableEmploymentTypes: z.array(z.string()),
 
   // Auto-apply

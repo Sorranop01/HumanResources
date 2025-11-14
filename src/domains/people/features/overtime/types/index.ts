@@ -1,82 +1,22 @@
 /**
  * Overtime Types
  * Complete type definitions for overtime management
+ *
+ * NOTE: Main types (OvertimeRequest, OvertimeRequestStatus, etc.) are now exported from schemas
+ * This file contains additional UI/business logic types only
  */
 
 import type { Timestamp } from 'firebase/firestore';
 import type { BaseEntity } from '@/shared/types';
 
-// ============================================
-// Enum Types
-// ============================================
-
-/**
- * OT Request Status
- */
-export type OvertimeRequestStatus = 'pending' | 'approved' | 'rejected' | 'cancelled' | 'completed';
-
-/**
- * OT Clock Status
- */
-export type OvertimeClockStatus = 'not-started' | 'clocked-in' | 'clocked-out' | 'completed';
-
-/**
- * OT Type
- */
-export type OvertimeType = 'weekday' | 'weekend' | 'holiday' | 'emergency';
-
-// ============================================
-// OT Request Entity
-// ============================================
-
-/**
- * Overtime Request - Request for overtime work approval
- */
-export interface OvertimeRequest extends BaseEntity {
-  // Employee Info
-  employeeId: string;
-  employeeName: string;
-  employeeCode: string;
-  department: string;
-  position: string;
-
-  // OT Details
-  overtimeDate: Date;
-  overtimeType: OvertimeType;
-  plannedStartTime: string; // "18:00"
-  plannedEndTime: string; // "22:00"
-  plannedHours: number; // Calculated duration
-
-  // Request Info
-  reason: string;
-  taskDescription: string;
-  urgencyLevel: 'normal' | 'urgent' | 'critical';
-
-  // Status
-  status: OvertimeRequestStatus;
-
-  // Approval Info
-  approverId?: string;
-  approverName?: string;
-  approvalDate?: Date;
-  approvalComments?: string;
-  rejectionReason?: string;
-
-  // Clock Records (filled after actual OT)
-  actualClockInTime?: Timestamp;
-  actualClockOutTime?: Timestamp;
-  actualHours?: number;
-  clockStatus: OvertimeClockStatus;
-
-  // Compensation
-  overtimeRate: number; // 1.5x, 2x, 3x
-  calculatedPay?: number; // Auto-calculated based on salary & rate
-
-  // Metadata
-  isEmergency: boolean;
-  attachmentUrl?: string;
-  notes?: string;
-}
+// Re-export main types from schemas (Single Source of Truth)
+export type {
+  OvertimeRequest,
+  OvertimeRequestStatus,
+  OvertimeClockStatus,
+  OvertimeType,
+  UrgencyLevel,
+} from '../schemas';
 
 // ============================================
 // OT History/Record
@@ -88,6 +28,7 @@ export interface OvertimeRequest extends BaseEntity {
 export interface OvertimeHistory extends BaseEntity {
   employeeId: string;
   employeeName: string;
+  employeeCode: string;
   overtimeRequestId: string;
 
   overtimeDate: Date;
@@ -106,6 +47,8 @@ export interface OvertimeHistory extends BaseEntity {
   status: 'completed' | 'paid';
   paidDate?: Date;
   payrollPeriod?: string; // "2025-01"
+
+  tenantId: string;
 }
 
 // ============================================
@@ -150,13 +93,17 @@ export interface EmployeeOvertimeSummary {
 }
 
 // ============================================
-// Input Types
+// Input Types (UI-specific, not for Firestore)
 // ============================================
 
 /**
- * Input payload for creating OT request
+ * Input payload for creating OT request (UI form)
+ * NOTE: For Firestore creation, use OvertimeRequestSchema from schemas
  */
-export type CreateOvertimeRequestInput = Omit<OvertimeRequest, 'id' | 'createdAt' | 'updatedAt'>;
+export type CreateOvertimeRequestInput = Omit<
+  OvertimeRequest,
+  'id' | 'createdAt' | 'updatedAt' | 'tenantId' | 'createdBy' | 'updatedBy'
+>;
 
 /**
  * Input payload for updating OT request (pending only)

@@ -4,6 +4,10 @@
  */
 
 import { z } from 'zod';
+import {
+  DenormalizedDepartmentRefSchema,
+  DenormalizedPositionRefSchema,
+} from '@/shared/schemas/denormalized.schema';
 
 /**
  * Holiday Type Schema
@@ -38,9 +42,9 @@ export const CreatePublicHolidaySchema = z.object({
   locations: z.array(z.string()).default([]),
   regions: z.array(z.string()).default([]),
 
-  // Applicable to
-  applicableDepartments: z.array(z.string()).default([]),
-  applicablePositions: z.array(z.string()).default([]),
+  // Applicable to (denormalized)
+  applicableDepartments: z.record(DenormalizedDepartmentRefSchema).optional(),
+  applicablePositions: z.record(DenormalizedPositionRefSchema).optional(),
 });
 
 export type CreatePublicHolidayValidated = z.infer<typeof CreatePublicHolidaySchema>;
@@ -67,9 +71,9 @@ export const UpdatePublicHolidaySchema = z.object({
   locations: z.array(z.string()).optional(),
   regions: z.array(z.string()).optional(),
 
-  // Applicable to
-  applicableDepartments: z.array(z.string()).optional(),
-  applicablePositions: z.array(z.string()).optional(),
+  // Applicable to (denormalized)
+  applicableDepartments: z.record(DenormalizedDepartmentRefSchema).optional(),
+  applicablePositions: z.record(DenormalizedPositionRefSchema).optional(),
 
   isActive: z.boolean().optional(),
 });
@@ -131,9 +135,9 @@ export const PublicHolidaySchema = z.object({
   locations: z.array(z.string()),
   regions: z.array(z.string()),
 
-  // Applicable to
-  applicableDepartments: z.array(z.string()),
-  applicablePositions: z.array(z.string()),
+  // Applicable to (denormalized)
+  applicableDepartments: z.record(DenormalizedDepartmentRefSchema).optional(),
+  applicablePositions: z.record(DenormalizedPositionRefSchema).optional(),
 
   // Metadata
   isActive: z.boolean(),

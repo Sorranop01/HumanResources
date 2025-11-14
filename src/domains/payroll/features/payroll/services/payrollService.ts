@@ -17,10 +17,16 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore';
+import { z } from 'zod';
 import { attendanceService } from '@/domains/people/features/attendance';
 import { employeeService } from '@/domains/people/features/employees/services/employeeService';
 import type { OvertimeRequestStatus } from '@/domains/people/features/overtime/types';
 import { db } from '@/shared/lib/firebase';
+import {
+  CreatePayrollInputSchema,
+  PayrollRecordSchema,
+  UpdatePayrollInputSchema,
+} from '../schemas';
 import type {
   Allowances,
   ApprovePayrollInput,
@@ -81,58 +87,39 @@ function convertTimestamps(data: unknown): unknown {
 /**
  * Convert Firestore document to PayrollRecord with validation
  * ✅ Converts Timestamps to Dates BEFORE validation
+ * ✅ Uses Zod schema for runtime type safety
  */
 function docToPayrollRecord(id: string, data: DocumentData): PayrollRecord {
   // Convert all Timestamps to Dates first
   const converted = convertTimestamps(data) as Record<string, unknown>;
 
-  // Build the record with converted data
+  // Handle fallback for old field names (temporary during migration)
   const departmentId = (converted.departmentId ?? converted.department ?? '') as string;
   const departmentName = (converted.departmentName ?? converted.department ?? '') as string;
   const positionId = (converted.positionId ?? converted.position ?? '') as string;
   const positionName = (converted.positionName ?? converted.position ?? '') as string;
 
-  return {
-    id,
-    employeeId: converted.employeeId,
-    employeeName: converted.employeeName,
-    employeeCode: converted.employeeCode,
-    departmentId,
-    departmentName,
-    positionId,
-    positionName,
-    month: converted.month,
-    year: converted.year,
-    periodStart: converted.periodStart,
-    periodEnd: converted.periodEnd,
-    payDate: converted.payDate,
-    baseSalary: converted.baseSalary,
-    overtimePay: converted.overtimePay,
-    bonus: converted.bonus,
-    allowances: converted.allowances,
-    grossIncome: converted.grossIncome,
-    deductions: converted.deductions,
-    totalDeductions: converted.totalDeductions,
-    netPay: converted.netPay,
-    workingDays: converted.workingDays,
-    actualWorkDays: converted.actualWorkDays,
-    absentDays: converted.absentDays,
-    lateDays: converted.lateDays,
-    onLeaveDays: converted.onLeaveDays,
-    overtimeHours: converted.overtimeHours,
-    status: converted.status,
-    approvedBy: converted.approvedBy ?? undefined,
-    approvedAt: converted.approvedAt ?? undefined,
-    approvalComments: converted.approvalComments ?? undefined,
-    paidBy: converted.paidBy ?? undefined,
-    paidAt: converted.paidAt ?? undefined,
-    paymentMethod: converted.paymentMethod ?? undefined,
-    transactionRef: converted.transactionRef ?? undefined,
-    notes: converted.notes ?? undefined,
-    tenantId: converted.tenantId,
-    createdAt: converted.createdAt,
-    updatedAt: converted.updatedAt,
-  } as PayrollRecord;
+  // ✅ Use schema validation instead of type assertion
+  try {
+    return PayrollRecordSchema.parse({
+      id,
+      ...converted,
+      // Override with fallback values
+      departmentId,
+      departmentName,
+      positionId,
+      positionName,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error(`Payroll record validation failed for ID: ${id}`, error.errors);
+      throw new Error(
+        `Invalid payroll record data from database for ID: ${id}. Details: ${error.errors.map((e) => e.message).join(', ')}`
+      );
+    }
+    console.error(`Unexpected error when parsing payroll record for ID: ${id}`, error);
+    throw error;
+  }
 }
 
 export const payrollService = {
@@ -401,22 +388,29 @@ export const payrollService = {
    */
   async create(input: CreatePayrollInput): Promise<string> {
     try {
+      // ✅ Validate input data
+      const validatedInput = CreatePayrollInputSchema.parse(input);
+
       // Get employee details
-      const employee = await employeeService.getById(input.employeeId);
+      const employee = await employeeService.getById(validatedInput.employeeId);
       if (!employee) {
         throw new Error('ไม่พบข้อมูลพนักงาน');
       }
 
       // Check if payroll already exists for this period
-      const existing = await this.getByEmployeeAndPeriod(input.employeeId, input.month, input.year);
+      const existing = await this.getByEmployeeAndPeriod(
+        validatedInput.employeeId,
+        validatedInput.month,
+        validatedInput.year
+      );
       if (existing) {
         throw new Error('มีข้อมูลเงินเดือนสำหรับช่วงเวลานี้แล้ว');
       }
 
       // Get attendance data
       const userId = employee.userId ?? employee.id; // Fallback to employee ID if userId not set
-      const startDate = input.periodStart.toISOString().split('T')[0];
-      const endDate = input.periodEnd.toISOString().split('T')[0];
+      const startDate = validatedInput.periodStart.toISOString().split('T')[0];
+      const endDate = validatedInput.periodEnd.toISOString().split('T')[0];
 
       if (!userId) {
         throw new Error('ไม่พบ userId ของพนักงาน');
@@ -424,15 +418,15 @@ export const payrollService = {
 
       const attendanceStats = await attendanceService.calculateStats(
         userId,
-        input.employeeId,
+        validatedInput.employeeId,
         startDate ?? '',
         endDate ?? ''
       );
 
       const overtimeSummary = await this.getApprovedOvertimeSummary(
         employee.id,
-        input.periodStart,
-        input.periodEnd
+        validatedInput.periodStart,
+        validatedInput.periodEnd
       );
       const overtimeHours = overtimeSummary.totalHours;
       const averageOvertimeRate =
@@ -442,9 +436,9 @@ export const payrollService = {
 
       // Calculate payroll
       const calculation = await this.calculatePayroll({
-        employeeId: input.employeeId,
-        month: input.month,
-        year: input.year,
+        employeeId: validatedInput.employeeId,
+        month: validatedInput.month,
+        year: validatedInput.year,
         actualWorkDays: attendanceStats.presentDays,
         absentDays: attendanceStats.absentDays,
         lateDays: attendanceStats.lateDays,
@@ -473,11 +467,11 @@ export const payrollService = {
         departmentName,
         positionId,
         positionName,
-        month: input.month,
-        year: input.year,
-        periodStart: Timestamp.fromDate(input.periodStart),
-        periodEnd: Timestamp.fromDate(input.periodEnd),
-        payDate: Timestamp.fromDate(input.payDate),
+        month: validatedInput.month,
+        year: validatedInput.year,
+        periodStart: Timestamp.fromDate(validatedInput.periodStart),
+        periodEnd: Timestamp.fromDate(validatedInput.periodEnd),
+        payDate: Timestamp.fromDate(validatedInput.payDate),
         baseSalary: calculation.baseSalary,
         overtimePay: calculation.overtimePay,
         bonus: calculation.bonus,
@@ -500,7 +494,7 @@ export const payrollService = {
         paidAt: null,
         paymentMethod: null,
         transactionRef: null,
-        notes: input.notes ?? null,
+        notes: validatedInput.notes ?? null,
         tenantId: 'default',
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
@@ -612,6 +606,9 @@ export const payrollService = {
    */
   async update(id: string, input: UpdatePayrollInput): Promise<void> {
     try {
+      // ✅ Validate input data
+      const validatedInput = UpdatePayrollInputSchema.parse(input);
+
       const docRef = doc(db, COLLECTION_NAME, id);
       const docSnap = await getDoc(docRef);
 
@@ -629,34 +626,37 @@ export const payrollService = {
         updatedAt: Timestamp.now(),
       };
 
-      if (input.baseSalary !== undefined) updateData.baseSalary = input.baseSalary;
-      if (input.overtimePay !== undefined) updateData.overtimePay = input.overtimePay;
-      if (input.bonus !== undefined) updateData.bonus = input.bonus;
-      if (input.allowances !== undefined) {
+      if (validatedInput.baseSalary !== undefined)
+        updateData.baseSalary = validatedInput.baseSalary;
+      if (validatedInput.overtimePay !== undefined)
+        updateData.overtimePay = validatedInput.overtimePay;
+      if (validatedInput.bonus !== undefined) updateData.bonus = validatedInput.bonus;
+      if (validatedInput.allowances !== undefined) {
         updateData.allowances = {
           ...current.allowances,
-          ...input.allowances,
+          ...validatedInput.allowances,
         };
       }
-      if (input.deductions !== undefined) {
+      if (validatedInput.deductions !== undefined) {
         updateData.deductions = {
           ...current.deductions,
-          ...input.deductions,
+          ...validatedInput.deductions,
         };
       }
-      if (input.payDate !== undefined) updateData.payDate = Timestamp.fromDate(input.payDate);
-      if (input.notes !== undefined) updateData.notes = input.notes;
+      if (validatedInput.payDate !== undefined)
+        updateData.payDate = Timestamp.fromDate(validatedInput.payDate);
+      if (validatedInput.notes !== undefined) updateData.notes = validatedInput.notes;
 
       // Recalculate totals if income or deductions changed
       if (
-        input.baseSalary !== undefined ||
-        input.overtimePay !== undefined ||
-        input.bonus !== undefined ||
-        input.allowances !== undefined
+        validatedInput.baseSalary !== undefined ||
+        validatedInput.overtimePay !== undefined ||
+        validatedInput.bonus !== undefined ||
+        validatedInput.allowances !== undefined
       ) {
-        const baseSalary = input.baseSalary ?? current.baseSalary;
-        const overtimePay = input.overtimePay ?? current.overtimePay;
-        const bonus = input.bonus ?? current.bonus;
+        const baseSalary = validatedInput.baseSalary ?? current.baseSalary;
+        const overtimePay = validatedInput.overtimePay ?? current.overtimePay;
+        const bonus = validatedInput.bonus ?? current.bonus;
         const allowances = updateData.allowances ?? current.allowances;
 
         const totalAllowances = Object.values(allowances).reduce<number>(
@@ -666,7 +666,7 @@ export const payrollService = {
         updateData.grossIncome = baseSalary + overtimePay + bonus + totalAllowances;
       }
 
-      if (input.deductions !== undefined) {
+      if (validatedInput.deductions !== undefined) {
         const deductions = updateData.deductions ?? current.deductions;
         updateData.totalDeductions = Object.values(deductions).reduce<number>(
           (sum: number, val) => sum + (val as number),

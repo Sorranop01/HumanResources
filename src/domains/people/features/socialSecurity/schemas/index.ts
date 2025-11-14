@@ -98,6 +98,8 @@ export const SocialSecuritySchema = z.object({
   tenantId: TenantIdSchema,
   createdAt: FirestoreTimestampSchema,
   updatedAt: FirestoreTimestampSchema,
+  createdBy: z.string().optional(),
+  updatedBy: z.string().optional(),
 });
 
 export type SocialSecurityRecord = z.infer<typeof SocialSecuritySchema>;

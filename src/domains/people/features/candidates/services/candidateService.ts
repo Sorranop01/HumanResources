@@ -103,7 +103,7 @@ export const candidateService = {
       q = query(q, where('status', '==', filters.status));
     }
     if (filters?.position) {
-      q = query(q, where('positionApplied', '==', filters.position));
+      q = query(q, where('positionId', '==', filters.position));
     }
 
     const snapshot = await getDocs(q);

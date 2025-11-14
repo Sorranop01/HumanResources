@@ -7,8 +7,6 @@ import { getFirestore } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { type CallableRequest, HttpsError, onCall } from 'firebase-functions/v2/https';
 
-const db = getFirestore();
-
 interface CheckPermissionRequest {
   resource: string;
   permission: string;
@@ -42,6 +40,7 @@ async function checkUserPermission(
   permission: string,
   targetUserId?: string
 ): Promise<CheckPermissionResponse> {
+  const db = getFirestore();
   try {
     // Get role permissions from Firestore
     const rolePermissionsQuery = await db
@@ -152,6 +151,7 @@ export const checkUserPermissionFunction = onCall<
     enforceAppCheck: false,
   },
   async (request: CallableRequest<CheckPermissionRequest>) => {
+    const db = getFirestore();
     const { auth, data } = request;
 
     // Check authentication

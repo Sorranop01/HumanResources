@@ -208,6 +208,8 @@ export const workSchedulePolicyService = {
 
   /**
    * Get all policies with filters
+   * Note: Firestore only allows ONE array-contains clause per query,
+   * so we fetch all active policies and filter in memory
    */
   async getAll(
     tenantId: string,
@@ -216,20 +218,7 @@ export const workSchedulePolicyService = {
     try {
       const constraints: QueryConstraint[] = [where('tenantId', '==', tenantId)];
 
-      if (filters?.department) {
-        constraints.push(where('applicableDepartments', 'array-contains', filters.department));
-      }
-
-      if (filters?.position) {
-        constraints.push(where('applicablePositions', 'array-contains', filters.position));
-      }
-
-      if (filters?.employmentType) {
-        constraints.push(
-          where('applicableEmploymentTypes', 'array-contains', filters.employmentType)
-        );
-      }
-
+      // Only add isActive filter to query (more efficient than array-contains)
       if (filters?.isActive !== undefined) {
         constraints.push(where('isActive', '==', filters.isActive));
       }
@@ -239,9 +228,30 @@ export const workSchedulePolicyService = {
       const q = query(collection(db, COLLECTION_NAME), ...constraints);
       const snapshot = await getDocs(q);
 
-      return snapshot.docs
+      let policies = snapshot.docs
         .map((doc) => docToWorkSchedulePolicy(doc.id, doc.data()))
         .filter((policy): policy is WorkSchedulePolicy => policy !== null);
+
+      // Filter in memory (because Firestore doesn't support multiple array-contains)
+      if (filters?.department) {
+        policies = policies.filter((policy) =>
+          policy.applicableDepartments?.includes(filters.department!)
+        );
+      }
+
+      if (filters?.position) {
+        policies = policies.filter((policy) =>
+          policy.applicablePositions?.includes(filters.position!)
+        );
+      }
+
+      if (filters?.employmentType) {
+        policies = policies.filter((policy) =>
+          policy.applicableEmploymentTypes?.includes(filters.employmentType!)
+        );
+      }
+
+      return policies;
     } catch (error) {
       console.error('Failed to fetch work schedule policies', error);
       throw new Error('Failed to fetch work schedule policies');

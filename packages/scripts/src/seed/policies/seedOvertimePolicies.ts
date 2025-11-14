@@ -78,8 +78,8 @@ const overtimePolicies: Omit<
     code: 'OT-STD',
 
     eligibleEmployeeTypes: ['full-time'],
-    eligiblePositions: [],
-    eligibleDepartments: [],
+    eligiblePositions: {},
+    eligibleDepartments: {},
 
     rules: [
       {
@@ -137,8 +137,8 @@ const overtimePolicies: Omit<
     code: 'OT-HIGH',
 
     eligibleEmployeeTypes: ['full-time'],
-    eligiblePositions: ['Senior Developer', 'Team Lead', 'Manager'],
-    eligibleDepartments: ['IT', 'Engineering'],
+    eligiblePositions: {},
+    eligibleDepartments: {},
 
     rules: [
       {

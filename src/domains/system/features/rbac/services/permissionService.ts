@@ -16,6 +16,8 @@ import {
   updateDoc,
   where,
 } from 'firebase/firestore';
+import type { Permission } from '@/shared/constants/permissions';
+import type { Resource } from '@/shared/constants/resources';
 import type { Role } from '@/shared/constants/roles';
 import { db } from '@/shared/lib/firebase';
 import {
@@ -32,7 +34,11 @@ import type {
   RolePermission,
   RolePermissionFirestore,
 } from '../types/rbacTypes';
-import type { Permission, Resource } from '../utils/checkPermission';
+import {
+  buildAvailablePermissionDetails,
+  getResourceName,
+  getRoleName,
+} from '../utils/denormalization';
 
 const PERMISSION_DEFINITIONS_COLLECTION = 'permissionDefinitions';
 const ROLE_PERMISSIONS_COLLECTION = 'rolePermissions';
@@ -133,6 +139,8 @@ export async function createPermissionDefinition(
   const newPermission = {
     ...validatedData,
     isActive: true,
+    // ✅ Add denormalized available permissions
+    availablePermissions: buildAvailablePermissionDetails(validatedData.permissions),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     createdBy: userId,
@@ -231,6 +239,9 @@ export async function assignRolePermission(
   const newRolePermission = {
     ...validatedData,
     roleId,
+    // ✅ Add denormalized role and resource names
+    roleName: getRoleName(validatedData.role),
+    resourceName: getResourceName(validatedData.resource),
     isActive: true,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),

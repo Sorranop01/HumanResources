@@ -65,7 +65,11 @@ export const AttendanceRecordSchema = z.object({
   // Employee (denormalized)
   employeeId: z.string().optional(),
   employeeName: z.string().min(1),
+  employeeCode: z.string().min(1),
+  departmentId: z.string().optional(),
   departmentName: z.string().min(1),
+  positionId: z.string().optional(),
+  positionName: z.string().min(1),
 
   // Clock in/out
   clockInTime: FirestoreTimestampSchema,

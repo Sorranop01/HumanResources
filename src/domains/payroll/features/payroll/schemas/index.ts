@@ -180,8 +180,10 @@ export const PayrollRecordSchema = z.object({
   employeeId: z.string().min(1, 'Employee ID is required'),
   employeeName: z.string().min(1, 'Employee name is required'),
   employeeCode: z.string().min(1, 'Employee code is required'),
-  department: z.string().min(1, 'Department is required'),
-  position: z.string().min(1, 'Position is required'),
+  departmentId: z.string().min(1, 'Department ID is required'),
+  departmentName: z.string().min(1, 'Department name is required'),
+  positionId: z.string().min(1, 'Position ID is required'),
+  positionName: z.string().min(1, 'Position name is required'),
 
   // Period
   month: z.number().min(1).max(12),
@@ -216,18 +218,18 @@ export const PayrollRecordSchema = z.object({
   status: PayrollStatusSchema,
 
   // Approval
-  approvedBy: z.string().nullable().optional(),
-  approvedAt: z.date().nullable().optional(),
-  approvalComments: z.string().nullable().optional(),
+  approvedBy: z.string().optional(),
+  approvedAt: z.date().optional(),
+  approvalComments: z.string().optional(),
 
   // Payment
-  paidBy: z.string().nullable().optional(),
-  paidAt: z.date().nullable().optional(),
-  paymentMethod: PaymentMethodSchema.nullable().optional(),
-  transactionRef: z.string().nullable().optional(),
+  paidBy: z.string().optional(),
+  paidAt: z.date().optional(),
+  paymentMethod: PaymentMethodSchema.optional(),
+  transactionRef: z.string().optional(),
 
   // Notes
-  notes: z.string().nullable().optional(),
+  notes: z.string().optional(),
 
   // Multi-tenancy
   tenantId: z.string(),

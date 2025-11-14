@@ -17,9 +17,11 @@ import {
   Tag,
   Typography,
 } from 'antd';
+import type { Timestamp } from 'firebase/firestore';
 import type { FC } from 'react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+
 import {
   DocumentExpiryAlert,
   DocumentList,
@@ -73,6 +75,16 @@ const STATUS_LABELS: Record<EmployeeStatus, string> = {
   terminated: 'เลิกจ้าง',
 };
 
+/**
+ * Convert Firestore Timestamp or Date to Date
+ */
+function toDate(value: Date | Timestamp): Date {
+  if (value instanceof Date) {
+    return value;
+  }
+  return value.toDate();
+}
+
 export const EmployeeDetailPage: FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -81,6 +93,16 @@ export const EmployeeDetailPage: FC = () => {
   const { deleteWithConfirm, isPending: isDeleting } = useDeleteEmployee();
   const updateEmployee = useUpdateEmployee();
   const uploadedByName = user?.displayName || user?.email || undefined;
+
+  // Convert documents timestamps
+  const convertedDocuments = useMemo(() => {
+    if (!employee?.documents) return [];
+    return employee.documents.map((doc) => ({
+      ...doc,
+      uploadDate: toDate(doc.uploadDate),
+      expiryDate: doc.expiryDate ? toDate(doc.expiryDate) : undefined,
+    }));
+  }, [employee?.documents]);
 
   // Social Security state
   const [isSocialSecurityModalOpen, setIsSocialSecurityModalOpen] = useState(false);
@@ -857,7 +879,7 @@ export const EmployeeDetailPage: FC = () => {
               children: (
                 <Row gutter={[16, 16]}>
                   <Col span={24}>
-                    <DocumentExpiryAlert documents={employee.documents ?? []} />
+                    <DocumentExpiryAlert documents={convertedDocuments} />
                   </Col>
                   <Col xs={24} lg={10}>
                     <Card title="อัปโหลดเอกสาร" style={{ marginBottom: 16 }}>
@@ -869,7 +891,7 @@ export const EmployeeDetailPage: FC = () => {
                   </Col>
                   <Col xs={24} lg={14}>
                     <Card title="รายการเอกสาร">
-                      <DocumentList employeeId={employee.id} documents={employee.documents ?? []} />
+                      <DocumentList employeeId={employee.id} documents={convertedDocuments} />
                     </Card>
                   </Col>
                 </Row>

@@ -68,32 +68,32 @@ export function formDataToLeaveRequestInput(
   formData: LeaveRequestFormInput,
   employeeId: string
 ): {
+  reason: string;
   employeeId: string;
-  leaveTypeId: string;
   startDate: Date;
   endDate: Date;
-  isHalfDay?: boolean | undefined;
-  halfDayPeriod?: 'morning' | 'afternoon' | undefined;
-  reason: string;
-  contactDuringLeave?: string | undefined;
-  workHandoverTo?: string | undefined;
-  workHandoverNotes?: string | undefined;
-  hasCertificate?: boolean | undefined;
-  certificateUrl?: string | undefined;
-  certificateFileName?: string | undefined;
+  leaveTypeId: string;
+  isHalfDay: boolean;
+  hasCertificate: boolean;
+  halfDayPeriod?: 'morning' | 'afternoon' | null | undefined;
+  contactDuringLeave?: string | null | undefined;
+  workHandoverTo?: string | null | undefined;
+  workHandoverNotes?: string | null | undefined;
+  certificateUrl?: string | null | undefined;
+  certificateFileName?: string | null | undefined;
 } {
   return {
+    reason: formData.reason,
     employeeId,
     leaveTypeId: formData.leaveTypeId,
     startDate: new Date(formData.startDate),
     endDate: new Date(formData.endDate),
-    isHalfDay: formData.isHalfDay ?? undefined,
+    isHalfDay: formData.isHalfDay ?? false,
+    hasCertificate: formData.hasCertificate ?? false,
     halfDayPeriod: formData.halfDayPeriod ?? undefined,
-    reason: formData.reason,
     contactDuringLeave: formData.contactDuringLeave ?? undefined,
     workHandoverTo: formData.workHandoverTo ?? undefined,
     workHandoverNotes: formData.workHandoverNotes ?? undefined,
-    hasCertificate: formData.hasCertificate ?? undefined,
     certificateUrl: formData.certificateUrl ?? undefined,
     certificateFileName: formData.certificateFileName ?? undefined,
   };

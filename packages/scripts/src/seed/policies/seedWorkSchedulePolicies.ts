@@ -103,8 +103,8 @@ const workSchedulePolicies: Omit<
     overtimeStartsAfter: 30, // After 30 minutes
     maxOvertimeHoursPerDay: 4,
 
-    applicableDepartments: [],
-    applicablePositions: [],
+    applicableDepartments: {},
+    applicablePositions: {},
     applicableEmploymentTypes: ['full-time'],
 
     isActive: true,
@@ -137,8 +137,8 @@ const workSchedulePolicies: Omit<
     overtimeStartsAfter: 30,
     maxOvertimeHoursPerDay: 4,
 
-    applicableDepartments: [],
-    applicablePositions: [],
+    applicableDepartments: {},
+    applicablePositions: {},
     applicableEmploymentTypes: ['full-time'],
 
     isActive: true,
@@ -179,8 +179,8 @@ const workSchedulePolicies: Omit<
     overtimeStartsAfter: 60,
     maxOvertimeHoursPerDay: 3,
 
-    applicableDepartments: ['IT', 'Marketing'],
-    applicablePositions: [],
+    applicableDepartments: {},
+    applicablePositions: {},
     applicableEmploymentTypes: ['full-time'],
 
     isActive: true,

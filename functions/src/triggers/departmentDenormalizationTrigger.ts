@@ -16,14 +16,13 @@ import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/v2';
 import { onDocumentUpdated } from 'firebase-functions/v2/firestore';
 
-const db = getFirestore();
-
 interface DepartmentData {
   name: string;
   code: string;
 }
 
 export const syncDepartmentName = onDocumentUpdated('departments/{deptId}', async (event) => {
+  const db = getFirestore();
   const beforeData = event.data?.before.data() as DepartmentData;
   const afterData = event.data?.after.data() as DepartmentData;
   const deptId = event.params.deptId;

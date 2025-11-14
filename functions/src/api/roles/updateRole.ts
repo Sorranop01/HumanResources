@@ -9,8 +9,6 @@ import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { UpdateRoleSchema } from '../../shared/schemas/roleSchemas.js';
 import type { UpdateRoleInput } from '../../shared/types/role.js';
 
-const db = getFirestore();
-
 interface UpdateRoleRequest extends UpdateRoleInput {
   roleId: string;
 }
@@ -21,6 +19,7 @@ export const updateRole = onCall<UpdateRoleRequest>(
     cors: true,
   },
   async (request) => {
+    const db = getFirestore();
     // 1. Authentication check
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'User must be authenticated');

@@ -2,6 +2,7 @@ import dayjs, { type Dayjs } from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
+import type { Timestamp } from 'firebase/firestore';
 import 'dayjs/locale/th';
 
 // Extend dayjs with plugins
@@ -13,17 +14,29 @@ dayjs.extend(timezone);
 dayjs.tz.setDefault('Asia/Bangkok');
 
 /**
+ * Convert Firestore Timestamp to Date
+ */
+function toDate(value: Date | Timestamp): Date {
+  if (value instanceof Date) {
+    return value;
+  }
+  return value.toDate();
+}
+
+/**
  * Format date to Thai date format
  */
-export function formatThaiDate(date: Date | Dayjs | string): string {
-  return dayjs(date).locale('th').format('DD/MM/YYYY');
+export function formatThaiDate(date: Date | Dayjs | string | Timestamp): string {
+  const dateValue = typeof date === 'object' && 'toDate' in date ? toDate(date) : date;
+  return dayjs(dateValue).locale('th').format('DD/MM/YYYY');
 }
 
 /**
  * Format date to Thai datetime format
  */
-export function formatThaiDateTime(date: Date | Dayjs | string): string {
-  return dayjs(date).locale('th').format('DD/MM/YYYY HH:mm');
+export function formatThaiDateTime(date: Date | Dayjs | string | Timestamp): string {
+  const dateValue = typeof date === 'object' && 'toDate' in date ? toDate(date) : date;
+  return dayjs(dateValue).locale('th').format('DD/MM/YYYY HH:mm');
 }
 
 /**

@@ -121,7 +121,7 @@ export const OvertimeRequestTable: FC<OvertimeRequestTableProps> = ({
         <Space direction="vertical" size={0}>
           <Text strong>{record.employeeName}</Text>
           <Text type="secondary" style={{ fontSize: 12 }}>
-            {record.department} · {record.position}
+            {record.departmentName} · {record.positionName}
           </Text>
         </Space>
       ),

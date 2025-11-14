@@ -40,7 +40,10 @@ export const PositionSchema = z.object({
   name: z.string().min(2).max(100),
   nameEn: z.string().min(2).max(100),
   description: z.string(),
-  department: z.string().min(1),
+  // Department reference (denormalized)
+  department: z.string().min(1), // ✅ Department ID
+  departmentName: z.string().min(1), // ✅ Denormalized department name
+  departmentCode: z.string().min(1), // ✅ Denormalized department code
   level: z.string().min(1),
   minSalary: z.number().min(0),
   maxSalary: z.number().min(0),
@@ -72,9 +75,10 @@ const BasePositionSchema = z.object({
   level: PositionLevelSchema,
   category: PositionCategorySchema,
 
-  // Organization
+  // Organization (denormalized)
   departmentId: z.string().min(1, 'แผนกจำเป็นต้องระบุ'),
   departmentName: z.string().min(1, 'ชื่อแผนกจำเป็นต้องระบุ'),
+  departmentCode: z.string().min(1, 'รหัสแผนกจำเป็นต้องระบุ'),
 
   // Salary Range
   minSalary: z.number().min(0, 'เงินเดือนขั้นต่ำต้องไม่ติดลบ').optional().or(z.nan()),

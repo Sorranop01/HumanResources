@@ -320,9 +320,14 @@ export const EmployeeSchema = z.object({
 
   notes: z.string().optional(),
 
+  // Multi-tenancy
+  tenantId: z.string().min(1, 'Tenant ID ต้องไม่ว่าง'),
+
   // Timestamps (Universal validator accepts both Date and Timestamp)
   createdAt: FirestoreTimestampSchema,
   updatedAt: FirestoreTimestampSchema,
+  createdBy: z.string().optional(),
+  updatedBy: z.string().optional(),
 });
 
 /**

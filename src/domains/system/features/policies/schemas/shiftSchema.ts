@@ -217,10 +217,17 @@ export type ShiftAssignmentFiltersValidated = z.infer<typeof ShiftAssignmentFilt
  */
 export const ShiftAssignmentSchema = z.object({
   id: z.string().min(1),
+  // Employee reference (denormalized)
   employeeId: z.string().min(1),
   employeeName: z.string().min(1),
+  employeeDepartmentId: z.string().optional(), // ✅ Added employee department ID
+  employeeDepartmentName: z.string().optional(), // ✅ Added employee department name
+  employeePositionId: z.string().optional(), // ✅ Added employee position ID
+  employeePositionName: z.string().optional(), // ✅ Added employee position name
+  // Shift reference (denormalized)
   shiftId: z.string().min(1),
   shiftCode: z.string().min(1),
+  shiftName: z.string().optional(), // ✅ Added shift name
 
   // Assignment period
   startDate: z.date(),
@@ -238,8 +245,9 @@ export const ShiftAssignmentSchema = z.object({
   isActive: z.boolean(),
   notes: z.string().max(500).nullable(),
 
-  // Assignment metadata
+  // Assignment metadata (denormalized)
   assignedBy: z.string().min(1),
+  assignedByName: z.string().optional(), // ✅ Added assignedBy name
   assignedAt: z.date(),
 
   // Tenant metadata
