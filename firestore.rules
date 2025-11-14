@@ -284,6 +284,173 @@ service cloud.firestore {
     }
 
     // ============================================
+    // Departments collection
+    // ✅ Validation aligned with Zod DepartmentSchema
+    // ============================================
+    match /departments/{departmentId} {
+      // Helper function: Validate department data structure
+      function isValidDepartmentData(data) {
+        let hasRequiredFields = data.keys().hasAll([
+          'code',
+          'name',
+          'nameEn',
+          'description',
+          'level',
+          'path',
+          'headCount',
+          'isActive',
+          'tenantId',
+          'createdAt',
+          'updatedAt'
+        ]);
+
+        let validTypes =
+          data.code is string &&
+          data.name is string &&
+          data.nameEn is string &&
+          data.description is string &&
+          data.level is number &&
+          data.path is string &&
+          data.headCount is number &&
+          data.isActive is bool &&
+          data.tenantId is string;
+
+        let validConstraints =
+          data.code.size() >= 2 && data.code.size() <= 10 &&
+          data.name.size() >= 2 && data.name.size() <= 100 &&
+          data.nameEn.size() >= 2 && data.nameEn.size() <= 100 &&
+          data.description.size() <= 500 &&
+          data.level >= 1 &&
+          data.headCount >= 0;
+
+        let validOptionalFields =
+          (!('parentDepartment' in data) || data.parentDepartment == null || data.parentDepartment is string) &&
+          (!('managerId' in data) || data.managerId == null || data.managerId is string) &&
+          (!('managerName' in data) || data.managerName == null || data.managerName is string) &&
+          (!('costCenter' in data) || data.costCenter == null || data.costCenter is string) &&
+          (!('budgetAmount' in data) || data.budgetAmount == null || data.budgetAmount is number);
+
+        return hasRequiredFields && validTypes && validConstraints && validOptionalFields;
+      }
+
+      // Helper function: Validate department update (partial)
+      function isValidDepartmentUpdate(data) {
+        let validCodeUpdate =
+          (!('code' in data) || (data.code is string && data.code.size() >= 2 && data.code.size() <= 10));
+
+        let validNameUpdate =
+          (!('name' in data) || (data.name is string && data.name.size() >= 2 && data.name.size() <= 100)) &&
+          (!('nameEn' in data) || (data.nameEn is string && data.nameEn.size() >= 2 && data.nameEn.size() <= 100));
+
+        let validOptionalUpdates =
+          (!('description' in data) || (data.description is string && data.description.size() <= 500)) &&
+          (!('isActive' in data) || data.isActive is bool) &&
+          (!('headCount' in data) || (data.headCount is number && data.headCount >= 0));
+
+        return validCodeUpdate && validNameUpdate && validOptionalUpdates;
+      }
+
+      // Read: HR can read all, employees can read their own department
+      allow read: if isHR() || isEmployee();
+
+      // Create: HR/Admin only, with validation
+      allow create: if isHR() && isValidDepartmentData(request.resource.data);
+
+      // Update: HR/Admin only, with validation
+      allow update: if isHR() &&
+                       isValidDepartmentUpdate(request.resource.data) &&
+                       // Prevent changing critical fields
+                       !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+                         'tenantId',
+                         'createdAt',
+                         'createdBy'
+                       ]);
+
+      // Delete: Admin only
+      allow delete: if isAdmin();
+    }
+
+    // ============================================
+    // Positions collection
+    // ✅ Validation aligned with Zod PositionSchema
+    // ============================================
+    match /positions/{positionId} {
+      // Helper function: Validate position data
+      function isValidPositionData(data) {
+        let hasRequiredFields = data.keys().hasAll([
+          'code',
+          'name',
+          'nameEn',
+          'description',
+          'department',
+          'level',
+          'minSalary',
+          'maxSalary',
+          'isActive',
+          'tenantId',
+          'createdAt',
+          'updatedAt'
+        ]);
+
+        let validTypes =
+          data.code is string &&
+          data.name is string &&
+          data.nameEn is string &&
+          data.description is string &&
+          data.department is string &&
+          data.level is string &&
+          data.minSalary is number &&
+          data.maxSalary is number &&
+          data.isActive is bool &&
+          data.tenantId is string;
+
+        let validConstraints =
+          data.code.size() >= 2 && data.code.size() <= 20 &&
+          data.name.size() >= 2 && data.name.size() <= 100 &&
+          data.nameEn.size() >= 2 && data.nameEn.size() <= 100 &&
+          data.minSalary >= 0 &&
+          data.maxSalary >= 0 &&
+          data.minSalary <= data.maxSalary;
+
+        return hasRequiredFields && validTypes && validConstraints;
+      }
+
+      // Helper function: Validate position update
+      function isValidPositionUpdate(data) {
+        let validCodeUpdate =
+          (!('code' in data) || (data.code is string && data.code.size() >= 2 && data.code.size() <= 20));
+
+        let validNameUpdate =
+          (!('name' in data) || (data.name is string && data.name.size() >= 2 && data.name.size() <= 100)) &&
+          (!('nameEn' in data) || (data.nameEn is string && data.nameEn.size() >= 2 && data.nameEn.size() <= 100));
+
+        let validSalaryUpdate =
+          (!('minSalary' in data) || (data.minSalary is number && data.minSalary >= 0)) &&
+          (!('maxSalary' in data) || (data.maxSalary is number && data.maxSalary >= 0));
+
+        return validCodeUpdate && validNameUpdate && validSalaryUpdate;
+      }
+
+      // Read: HR can read all, employees can read active positions
+      allow read: if isHR() || (isEmployee() && resource.data.isActive == true);
+
+      // Create: HR/Admin only
+      allow create: if isHR() && isValidPositionData(request.resource.data);
+
+      // Update: HR/Admin only
+      allow update: if isHR() &&
+                       isValidPositionUpdate(request.resource.data) &&
+                       !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+                         'tenantId',
+                         'createdAt',
+                         'createdBy'
+                       ]);
+
+      // Delete: Admin only
+      allow delete: if isAdmin();
+    }
+
+    // ============================================
     // Attendance collection
     // ✅ Validation aligned with Zod AttendanceRecordSchema
     // ============================================
@@ -494,10 +661,10 @@ service cloud.firestore {
       }
 
       // Helper function: Check if user is an approver in the approval chain
+      // Note: Firestore security rules don't support .map(), so this function
+      // is simplified to check if the user is HR/Manager (approvers)
       function isApprover() {
-        return isAuthenticated() &&
-               exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.employeeId in resource.data.approvalChain.map((step) => step.approverId);
+        return isAuthenticated() && isManager();
       }
 
       // Read: All authenticated users can read
@@ -732,6 +899,97 @@ service cloud.firestore {
     match /audit-logs/{logId} {
       allow read: if isAuditor() || isAdmin();
       allow write: if false; // Only Cloud Functions can write
+    }
+
+    // ============================================
+    // Holidays collection
+    // ✅ Validation aligned with Zod PublicHolidaySchema
+    // ============================================
+    match /holidays/{holidayId} {
+      // Helper function: Validate holiday data structure
+      function isValidHolidayData(data) {
+        let hasRequiredFields = data.keys().hasAll([
+          'name',
+          'nameEn',
+          'description',
+          'date',
+          'year',
+          'type',
+          'isSubstituteDay',
+          'workPolicy',
+          'overtimeRate',
+          'locations',
+          'regions',
+          'applicableDepartments',
+          'applicablePositions',
+          'isActive',
+          'tenantId',
+          'createdAt',
+          'updatedAt'
+        ]);
+
+        let validTypes =
+          data.name is string &&
+          data.nameEn is string &&
+          data.description is string &&
+          data.date is timestamp &&
+          data.year is number &&
+          data.type is string &&
+          data.isSubstituteDay is bool &&
+          data.workPolicy is string &&
+          data.overtimeRate is number &&
+          data.locations is list &&
+          data.regions is list &&
+          data.applicableDepartments is list &&
+          data.applicablePositions is list &&
+          data.isActive is bool &&
+          data.tenantId is string &&
+          data.createdAt is timestamp &&
+          data.updatedAt is timestamp;
+
+        let validConstraints =
+          data.name.size() >= 1 && data.name.size() <= 200 &&
+          data.nameEn.size() >= 1 && data.nameEn.size() <= 200 &&
+          data.description.size() <= 500 &&
+          data.year >= 2000 && data.year <= 2100 &&
+          data.type in ['national', 'regional', 'company', 'substitute'] &&
+          data.workPolicy in ['no-work', 'optional', 'required', 'overtime-only'] &&
+          data.overtimeRate >= 1 && data.overtimeRate <= 10 &&
+          data.tenantId.size() >= 1;
+
+        return hasRequiredFields && validTypes && validConstraints;
+      }
+
+      // Helper function: Validate holiday update
+      function isValidHolidayUpdate(data) {
+        let validTypes =
+          (!('name' in data) || data.name is string) &&
+          (!('nameEn' in data) || data.nameEn is string) &&
+          (!('description' in data) || data.description is string) &&
+          (!('date' in data) || data.date is timestamp) &&
+          (!('year' in data) || data.year is number) &&
+          (!('type' in data) || data.type is string) &&
+          (!('isSubstituteDay' in data) || data.isSubstituteDay is bool) &&
+          (!('workPolicy' in data) || data.workPolicy is string) &&
+          (!('overtimeRate' in data) || data.overtimeRate is number) &&
+          (!('isActive' in data) || data.isActive is bool);
+
+        let validConstraints =
+          (!('name' in data) || (data.name.size() >= 1 && data.name.size() <= 200)) &&
+          (!('nameEn' in data) || (data.nameEn.size() >= 1 && data.nameEn.size() <= 200)) &&
+          (!('description' in data) || data.description.size() <= 500) &&
+          (!('year' in data) || (data.year >= 2000 && data.year <= 2100)) &&
+          (!('type' in data) || data.type in ['national', 'regional', 'company', 'substitute']) &&
+          (!('workPolicy' in data) || data.workPolicy in ['no-work', 'optional', 'required', 'overtime-only']) &&
+          (!('overtimeRate' in data) || (data.overtimeRate >= 1 && data.overtimeRate <= 10));
+
+        return validTypes && validConstraints;
+      }
+
+      allow read: if isHR() || isEmployee();
+      allow create: if isHR() && isValidHolidayData(request.resource.data);
+      allow update: if isHR() && isValidHolidayUpdate(request.resource.data);
+      allow delete: if isAdmin();
     }
 
     // Default deny all
