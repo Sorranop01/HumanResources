@@ -5,7 +5,7 @@ import dayjs from 'dayjs';
 import type { FC } from 'react';
 import { useMemo, useState } from 'react';
 import { useDeleteEmployeeDocument } from '@/domains/people/features/employees/hooks/useEmployeeDocuments';
-import type { DocumentRecord } from '@/domains/people/features/employees/types';
+import type { DocumentRecord, DocumentType } from '@/domains/people/features/employees/types';
 import { DocumentViewerModal } from './DocumentViewerModal';
 import { DOCUMENT_TYPE_LABELS } from './documentTypes';
 
@@ -15,6 +15,9 @@ interface DocumentListProps {
 }
 
 export const DocumentList: FC<DocumentListProps> = ({ employeeId, documents }) => {
+  const resolveLabel = (type: DocumentRecord['type']) =>
+    DOCUMENT_TYPE_LABELS[type as DocumentType] ?? type;
+
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const deleteMutation = useDeleteEmployeeDocument(employeeId);
 
@@ -32,7 +35,7 @@ export const DocumentList: FC<DocumentListProps> = ({ employeeId, documents }) =
       key: 'type',
       render: (type: DocumentRecord['type']) => (
         <Tag icon={<FileOutlined />} color="blue">
-          {DOCUMENT_TYPE_LABELS[type] ?? type}
+          {resolveLabel(type)}
         </Tag>
       ),
     },

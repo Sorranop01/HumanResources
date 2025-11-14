@@ -104,8 +104,6 @@ const employee = stripUndefined({
 EmployeeSchema.parse(employee);
 await addDoc(collection(db, 'employees'), employee);
 🧰 Section 3 — Utility: stripUndefined()
-ts
-คัดลอกโค้ด
 export function stripUndefined<T extends Record<string, unknown>>(obj: T): T {
   return Object.fromEntries(
     Object.entries(obj).filter(([, value]) => value !== undefined),

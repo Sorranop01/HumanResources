@@ -8,6 +8,7 @@ import { Button, Col, DatePicker, Form, Input, Row, Select, Switch, TimePicker }
 import dayjs from 'dayjs';
 import type { FC } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import type { z } from 'zod';
 import type { OvertimeRequestFormInput } from '@/domains/people/features/overtime/schemas';
 import { OvertimeRequestFormSchema } from '@/domains/people/features/overtime/schemas';
 import type { OvertimeType } from '@/domains/people/features/overtime/types';
@@ -41,11 +42,18 @@ export const OvertimeRequestForm: FC<OvertimeRequestFormProps> = ({
   onCancel,
   submitting,
 }) => {
+  type OvertimeRequestFormValues = z.input<typeof OvertimeRequestFormSchema>;
+
+  const handleValidSubmit = (values: OvertimeRequestFormValues) => {
+    const parsed = OvertimeRequestFormSchema.parse(values);
+    onSubmit(parsed);
+  };
+
   const {
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<OvertimeRequestFormInput>({
+  } = useForm<OvertimeRequestFormValues>({
     resolver: zodResolver(OvertimeRequestFormSchema),
     defaultValues: {
       overtimeDate: initialValues?.overtimeDate ?? dayjs().format('YYYY-MM-DD'),
@@ -62,7 +70,7 @@ export const OvertimeRequestForm: FC<OvertimeRequestFormProps> = ({
   });
 
   return (
-    <Form layout="vertical" onFinish={handleSubmit(onSubmit)}>
+    <Form layout="vertical" onFinish={handleSubmit(handleValidSubmit)}>
       <Row gutter={16}>
         <Col span={12}>
           <Form.Item

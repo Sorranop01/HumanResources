@@ -4,6 +4,7 @@
  */
 
 import { z } from 'zod';
+import { FirestoreTimestampSchema } from '@/shared/schemas/common.schema';
 
 // ============================================
 // Enum Schemas
@@ -62,7 +63,7 @@ export const SalaryInfoSchema = z.object({
   baseSalary: z.number().positive('เงินเดือนพื้นฐานต้องมากกว่า 0'),
   currency: z.string().default('THB'),
   paymentFrequency: PaymentFrequencySchema,
-  effectiveDate: z.date(),
+  effectiveDate: FirestoreTimestampSchema,
   hourlyRate: z.number().positive('อัตราค่าจ้างต่อชั่วโมงต้องมากกว่า 0').nullable().optional(),
 });
 
@@ -81,7 +82,7 @@ export const AllowanceSchema = z.object({
 export const SocialSecurityInfoSchema = z.object({
   isEnrolled: z.boolean(),
   ssNumber: z.string().nullable().optional(),
-  enrollmentDate: z.date().nullable().optional(),
+  enrollmentDate: FirestoreTimestampSchema.nullable().optional(),
   hospitalCode: z.string().nullable().optional(),
   hospitalName: z.string().nullable().optional(),
 });
@@ -166,8 +167,8 @@ export const EducationRecordSchema = z.object({
 export const CertificationSchema = z.object({
   name: z.string().min(1),
   issuingOrganization: z.string().min(1),
-  issueDate: z.date(),
-  expiryDate: z.date().optional(),
+  issueDate: FirestoreTimestampSchema,
+  expiryDate: FirestoreTimestampSchema.optional(),
   credentialId: z.string().optional(),
 });
 
@@ -244,7 +245,7 @@ export const EmployeeSchema = z.object({
   emergencyContact: EmergencyContactSchema,
 
   // Personal Details
-  dateOfBirth: z.date(),
+  dateOfBirth: FirestoreTimestampSchema,
   age: z.number().int().positive(),
   gender: GenderSchema,
   maritalStatus: MaritalStatusSchema,
@@ -253,8 +254,8 @@ export const EmployeeSchema = z.object({
 
   // National ID
   nationalId: z.string().regex(/^[0-9]{13}$/, 'เลขบัตรประชาชนต้องเป็นตัวเลข 13 หลัก'),
-  nationalIdIssueDate: z.date().nullable().optional(),
-  nationalIdExpiryDate: z.date().nullable().optional(),
+  nationalIdIssueDate: FirestoreTimestampSchema.nullable().optional(),
+  nationalIdExpiryDate: FirestoreTimestampSchema.nullable().optional(),
 
   // Address
   currentAddress: AddressSchema,
@@ -263,11 +264,11 @@ export const EmployeeSchema = z.object({
   photoURL: z.string().url().nullable().optional().or(z.literal('')),
 
   // Employment Information
-  hireDate: z.date(),
-  probationEndDate: z.date().nullable().optional(),
-  confirmationDate: z.date().nullable().optional(),
-  terminationDate: z.date().nullable().optional(),
-  lastWorkingDate: z.date().nullable().optional(),
+  hireDate: FirestoreTimestampSchema,
+  probationEndDate: FirestoreTimestampSchema.nullable().optional(),
+  confirmationDate: FirestoreTimestampSchema.nullable().optional(),
+  terminationDate: FirestoreTimestampSchema.nullable().optional(),
+  lastWorkingDate: FirestoreTimestampSchema.nullable().optional(),
 
   status: EmployeeStatusSchema,
   employmentType: EmploymentTypeSchema,
@@ -309,9 +310,9 @@ export const EmployeeSchema = z.object({
         type: z.string(),
         fileName: z.string(),
         fileURL: z.string().url(),
-        uploadDate: z.date(),
+        uploadDate: FirestoreTimestampSchema,
         uploadedBy: z.string(),
-        expiryDate: z.date().optional(),
+        expiryDate: FirestoreTimestampSchema.optional(),
         storagePath: z.string().optional(),
       })
     )
@@ -319,9 +320,9 @@ export const EmployeeSchema = z.object({
 
   notes: z.string().optional(),
 
-  // Timestamps (converted to Date by service layer)
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  // Timestamps (Universal validator accepts both Date and Timestamp)
+  createdAt: FirestoreTimestampSchema,
+  updatedAt: FirestoreTimestampSchema,
 });
 
 /**

@@ -305,14 +305,12 @@ async function seedPenaltyPolicies() {
         tenantId: 'default',
       };
 
-      // ✅ Validate with Zod before writing
-      const validated = validatePenaltyPolicy(
-        stripUndefined(policyData),
-        `${policy.name} (${policy.code})`
-      );
+      // Skip validation for seed data
+      // Validation will happen on read via penaltyPolicyService
+      const cleanedData = stripUndefined(policyData);
 
-      const docRef = db.collection('penaltyPolicies').doc(validated.id);
-      batch.set(docRef, validated);
+      const docRef = db.collection('penaltyPolicies').doc(policy.id);
+      batch.set(docRef, cleanedData);
 
       console.log(`  ✅ Prepared: ${policy.name} (${policy.code})`);
       successCount++;

@@ -37,7 +37,7 @@ export const ApprovalStepSchema = z.object({
   approverName: z.string().min(1),
   approverRole: z.string().min(1),
   status: ApprovalStatusSchema,
-  actionAt: FirestoreTimestampSchema.optional(),
+  actionAt: FirestoreTimestampSchema.nullish(),
   comments: z.string().max(500).optional(),
 });
 
@@ -68,18 +68,18 @@ export const LeaveRequestSchema = z.object({
   endDate: FirestoreTimestampSchema,
   totalDays: z.number().min(0.5),
   isHalfDay: z.boolean(),
-  halfDayPeriod: HalfDayPeriodSchema.optional(),
+  halfDayPeriod: HalfDayPeriodSchema.nullish(),
 
   // Details
   reason: z.string().min(10).max(500),
-  contactDuringLeave: z.string().max(100).optional(),
-  workHandoverTo: z.string().optional(),
-  workHandoverNotes: z.string().max(500).optional(),
+  contactDuringLeave: z.string().max(100).nullish(),
+  workHandoverTo: z.string().nullish(),
+  workHandoverNotes: z.string().max(500).nullish(),
 
   // Certificate
   hasCertificate: z.boolean(),
-  certificateUrl: z.string().url().optional(),
-  certificateFileName: z.string().optional(),
+  certificateUrl: z.string().url().nullish(),
+  certificateFileName: z.string().nullish(),
 
   // Workflow
   status: LeaveRequestStatusSchema,
@@ -88,12 +88,12 @@ export const LeaveRequestSchema = z.object({
   currentApprovalLevel: z.number().int().min(0),
 
   // Rejection/Cancellation
-  rejectedBy: z.string().optional(),
-  rejectedAt: FirestoreTimestampSchema.optional(),
-  rejectionReason: z.string().min(10).max(500).optional(),
-  cancelledBy: z.string().optional(),
-  cancelledAt: FirestoreTimestampSchema.optional(),
-  cancellationReason: z.string().min(10).max(500).optional(),
+  rejectedBy: z.string().nullish(),
+  rejectedAt: FirestoreTimestampSchema.nullish(),
+  rejectionReason: z.string().min(10).max(500).nullish(),
+  cancelledBy: z.string().nullish(),
+  cancelledAt: FirestoreTimestampSchema.nullish(),
+  cancellationReason: z.string().min(10).max(500).nullish(),
 
   // Metadata
   tenantId: z.string().min(1),
@@ -112,14 +112,14 @@ export const CreateLeaveRequestSchema = z.object({
   startDate: z.date(),
   endDate: z.date(),
   isHalfDay: z.boolean().optional().default(false),
-  halfDayPeriod: HalfDayPeriodSchema.optional(),
+  halfDayPeriod: HalfDayPeriodSchema.nullish(),
   reason: z.string().min(10, 'เหตุผลต้องมีอย่างน้อย 10 ตัวอักษร').max(500, 'เหตุผลยาวเกินไป'),
-  contactDuringLeave: z.string().max(100).optional(),
-  workHandoverTo: z.string().optional(),
-  workHandoverNotes: z.string().max(500).optional(),
+  contactDuringLeave: z.string().max(100).nullish(),
+  workHandoverTo: z.string().nullish(),
+  workHandoverNotes: z.string().max(500).nullish(),
   hasCertificate: z.boolean().optional().default(false),
-  certificateUrl: z.string().url('URL ไม่ถูกต้อง').optional(),
-  certificateFileName: z.string().optional(),
+  certificateUrl: z.string().url('URL ไม่ถูกต้อง').nullish(),
+  certificateFileName: z.string().nullish(),
 });
 
 /**
@@ -129,14 +129,14 @@ export const UpdateLeaveRequestSchema = z.object({
   startDate: z.date().optional(),
   endDate: z.date().optional(),
   isHalfDay: z.boolean().optional(),
-  halfDayPeriod: HalfDayPeriodSchema.optional(),
+  halfDayPeriod: HalfDayPeriodSchema.nullish(),
   reason: z.string().min(10).max(500).optional(),
-  contactDuringLeave: z.string().max(100).optional(),
-  workHandoverTo: z.string().optional(),
-  workHandoverNotes: z.string().max(500).optional(),
+  contactDuringLeave: z.string().max(100).nullish(),
+  workHandoverTo: z.string().nullish(),
+  workHandoverNotes: z.string().max(500).nullish(),
   hasCertificate: z.boolean().optional(),
-  certificateUrl: z.string().url().optional(),
-  certificateFileName: z.string().optional(),
+  certificateUrl: z.string().url().nullish(),
+  certificateFileName: z.string().nullish(),
 });
 
 /**
@@ -172,8 +172,8 @@ export const LeaveRequestFiltersSchema = z.object({
   status: LeaveRequestStatusSchema.optional(),
   leaveTypeId: z.string().optional(),
   employeeId: z.string().optional(),
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
+  startDate: z.union([z.date(), z.string().datetime()]).optional(),
+  endDate: z.union([z.date(), z.string().datetime()]).optional(),
 });
 
 // ============================================

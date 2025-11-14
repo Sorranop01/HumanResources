@@ -185,8 +185,8 @@ export function formDataToOvertimeRequestInput(
   overtimeRate: number;
   clockStatus: 'not-started';
   status: 'pending';
-  attachmentUrl?: string | null | undefined;
-  notes?: string | null | undefined;
+  attachmentUrl?: string;
+  notes?: string;
 } {
   const plannedHours = calculatePlannedHours(formData.plannedStartTime, formData.plannedEndTime);
 

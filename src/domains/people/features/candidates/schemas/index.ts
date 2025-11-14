@@ -58,14 +58,14 @@ export const CandidateSchema = z.object({
   lastName: z.string().min(1, 'นามสกุลต้องไม่ว่าง'),
   email: z.string().email('รูปแบบอีเมลไม่ถูกต้อง'),
   phone: z.string().min(9, 'เบอร์โทรศัพท์ไม่ถูกต้อง'),
-  dateOfBirth: z.string().optional(),
-  nationality: z.string().optional(),
-  address: z.string().optional(),
+  dateOfBirth: z.string().nullable().optional(),
+  nationality: z.string().nullable().optional(),
+  address: z.string().nullable().optional(),
 
   // Position Information
   positionApplied: z.string().min(1, 'กรุณาระบุตำแหน่งที่สมัคร'),
-  expectedSalary: z.number().min(0).optional(),
-  availableDate: z.string().optional(),
+  expectedSalary: z.number().min(0).nullable().optional(),
+  availableDate: z.string().nullable().optional(),
 
   // Experience & Skills
   experienceLevel: ExperienceLevelSchema.optional(),
@@ -84,9 +84,9 @@ export const CandidateSchema = z.object({
 
   // Application Status
   status: CandidateStatusSchema,
-  notes: z.string().optional(),
-  interviewDate: z.string().optional(),
-  interviewer: z.string().optional(),
+  notes: z.string().nullable().optional(),
+  interviewDate: z.string().nullable().optional(),
+  interviewer: z.string().nullable().optional(),
 
   // Application Source
   source: z.string().default('website'),

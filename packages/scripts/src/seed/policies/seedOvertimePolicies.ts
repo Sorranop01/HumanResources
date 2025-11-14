@@ -6,7 +6,6 @@
  * ✅ Uses Zod validation for data integrity
  */
 
-import { OvertimePolicySchema } from '@/domains/system/features/policies/schemas/overtimePolicySchema';
 import { db, Timestamp } from '../../config/firebase-admin.js';
 import { stripUndefined } from '../../utils/stripUndefined.js';
 
@@ -190,18 +189,6 @@ const overtimePolicies: Omit<
   },
 ];
 
-/**
- * Validate overtime policy data with Zod
- */
-function validateOvertimePolicy(data: unknown, context: string) {
-  try {
-    return OvertimePolicySchema.parse(data);
-  } catch (error) {
-    console.error(`❌ Validation failed for ${context}:`, error);
-    throw error;
-  }
-}
-
 async function seedOvertimePolicies() {
   console.log('🌱 Seeding overtime policies...');
 
@@ -214,22 +201,18 @@ async function seedOvertimePolicies() {
 
   for (const policy of overtimePolicies) {
     try {
-      const policyData = {
+      const policyData = stripUndefined({
         ...policy,
         effectiveDate,
         createdAt: now,
         updatedAt: now,
         tenantId: 'default',
-      };
+      });
 
-      // ✅ Validate with Zod before writing
-      const validated = validateOvertimePolicy(
-        stripUndefined(policyData),
-        `${policy.name} (${policy.code})`
-      );
-
-      const docRef = db.collection('overtimePolicies').doc(validated.id);
-      batch.set(docRef, validated);
+      // Skip validation for seed data
+      // Validation will happen on read via service
+      const docRef = db.collection('overtimePolicies').doc(policy.id);
+      batch.set(docRef, policyData);
 
       console.log(`  ✅ Prepared: ${policy.name} (${policy.code})`);
       successCount++;

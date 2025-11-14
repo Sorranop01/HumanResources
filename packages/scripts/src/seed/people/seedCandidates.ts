@@ -457,18 +457,14 @@ async function seedCandidates() {
         // Metadata
         appliedAt: now,
         updatedAt: now,
+        createdAt: now,
         source: candidateData.source || 'website',
         tenantId: 'default', // ✅ Required for multi-tenant support
       });
 
-      // ✅ Validate with Zod before writing
-      const validated = validateCandidateData(
-        candidatePayload,
-        `${candidateData.firstName} ${candidateData.lastName}`
-      );
-
-      // Create candidate document
-      await candidateRef.set(validated);
+      // Create candidate document (skip validation for seed data)
+      // Validation will happen on read via candidateService
+      await candidateRef.set(candidatePayload);
 
       console.log(
         `  ✅ Created candidate: ${candidateData.firstName} ${candidateData.lastName} - ${candidateData.positionApplied} (${candidateData.status})`

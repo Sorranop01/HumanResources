@@ -3,7 +3,7 @@
  * Re-exports from schema for type consistency
  */
 
-export type { OvertimePolicy } from '../schemas/overtimePolicySchema';
+export type { OvertimePolicy, OvertimeRule } from '../schemas/overtimePolicySchema';
 
 /**
  * Create Overtime Policy Input

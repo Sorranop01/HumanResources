@@ -93,3 +93,11 @@ functions/lib/
 **/*_SUMMARY.md
 **/*_GUIDE.md
 console_mcp/
+
+# MCP todo list
+.mcp-todos.json
+.mcp.json
+
+# Local development tools (embedded git repos)
+code-summarizer/
+ib-mcp-cache-server/

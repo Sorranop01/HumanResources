@@ -30,6 +30,8 @@ export const OvertimeRuleSchema = z.object({
   conditions: OvertimeRuleConditionsSchema.optional(),
 });
 
+export type OvertimeRule = z.infer<typeof OvertimeRuleSchema>;
+
 /**
  * Payment Method Schema
  */

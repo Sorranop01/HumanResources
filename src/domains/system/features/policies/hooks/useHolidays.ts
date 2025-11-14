@@ -13,6 +13,8 @@ import type {
   WorkingDaysCalculationInput,
 } from '../types/holiday';
 
+const TENANT_ID = 'default';
+
 /**
  * Query keys for holidays
  */
@@ -38,7 +40,7 @@ export const holidayKeys = {
 export function useHolidays(filters?: PublicHolidayFilters) {
   return useQuery({
     queryKey: holidayKeys.list(filters),
-    queryFn: () => holidayService.getAll(filters),
+    queryFn: () => holidayService.getAll(TENANT_ID, filters),
   });
 }
 
@@ -59,7 +61,7 @@ export function useHoliday(id: string | undefined) {
 export function useHolidaysByDate(date: Date) {
   return useQuery({
     queryKey: holidayKeys.byDate(date),
-    queryFn: () => holidayService.getByDate(date),
+    queryFn: () => holidayService.getByDate(TENANT_ID, date),
   });
 }
 
@@ -69,7 +71,7 @@ export function useHolidaysByDate(date: Date) {
 export function useYearHolidays(year: number, filters?: PublicHolidayFilters) {
   return useQuery({
     queryKey: holidayKeys.byYear(year),
-    queryFn: () => holidayService.getYearHolidays(year, filters),
+    queryFn: () => holidayService.getYearHolidays(TENANT_ID, year, filters),
   });
 }
 
@@ -79,7 +81,7 @@ export function useYearHolidays(year: number, filters?: PublicHolidayFilters) {
 export function useHolidaysInRange(startDate: Date, endDate: Date) {
   return useQuery({
     queryKey: holidayKeys.inRange(startDate, endDate),
-    queryFn: () => holidayService.getHolidaysInRange(startDate, endDate),
+    queryFn: () => holidayService.getHolidaysInRange(TENANT_ID, startDate, endDate),
   });
 }
 
@@ -89,7 +91,7 @@ export function useHolidaysInRange(startDate: Date, endDate: Date) {
 export function useIsHoliday(date: Date, location?: string, region?: string, department?: string) {
   return useQuery({
     queryKey: holidayKeys.isHoliday(date, location, region, department),
-    queryFn: () => holidayService.isHoliday(date, location, region, department),
+    queryFn: () => holidayService.isHoliday(TENANT_ID, date, location, region, department),
   });
 }
 
@@ -99,7 +101,7 @@ export function useIsHoliday(date: Date, location?: string, region?: string, dep
 export function useWorkingDays(input: WorkingDaysCalculationInput) {
   return useQuery({
     queryKey: holidayKeys.workingDays(input),
-    queryFn: () => holidayService.calculateWorkingDays(input),
+    queryFn: () => holidayService.calculateWorkingDays(TENANT_ID, input),
   });
 }
 
@@ -110,7 +112,7 @@ export function useCreateHoliday() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: CreatePublicHolidayInput) => holidayService.create(input),
+    mutationFn: (input: CreatePublicHolidayInput) => holidayService.create(TENANT_ID, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: holidayKeys.lists() });
       message.success('สร้างวันหยุดสำเร็จ');

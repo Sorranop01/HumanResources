@@ -45,55 +45,94 @@ interface OvertimeSummary {
 }
 
 /**
- * Convert Firestore document to PayrollRecord
+ * Convert Firestore Timestamp to Date (recursively handles nested objects and arrays)
+ */
+function convertTimestamps(data: unknown): unknown {
+  // Handle null or undefined
+  if (data === null || data === undefined) {
+    return data;
+  }
+
+  // Convert Timestamp to Date
+  if (data instanceof Timestamp) {
+    return data.toDate();
+  }
+
+  // Handle arrays - recursively convert each element
+  if (Array.isArray(data)) {
+    return data.map((item) => convertTimestamps(item));
+  }
+
+  // Handle objects - recursively convert each property
+  if (typeof data === 'object') {
+    const converted: Record<string, unknown> = {};
+
+    for (const [key, value] of Object.entries(data)) {
+      converted[key] = convertTimestamps(value);
+    }
+
+    return converted;
+  }
+
+  // Return primitive values as-is
+  return data;
+}
+
+/**
+ * Convert Firestore document to PayrollRecord with validation
+ * ✅ Converts Timestamps to Dates BEFORE validation
  */
 function docToPayrollRecord(id: string, data: DocumentData): PayrollRecord {
-  const departmentId = data.departmentId ?? data.department ?? '';
-  const departmentName = data.departmentName ?? data.department ?? '';
-  const positionId = data.positionId ?? data.position ?? '';
-  const positionName = data.positionName ?? data.position ?? '';
+  // Convert all Timestamps to Dates first
+  const converted = convertTimestamps(data) as Record<string, unknown>;
+
+  // Build the record with converted data
+  const departmentId = (converted.departmentId ?? converted.department ?? '') as string;
+  const departmentName = (converted.departmentName ?? converted.department ?? '') as string;
+  const positionId = (converted.positionId ?? converted.position ?? '') as string;
+  const positionName = (converted.positionName ?? converted.position ?? '') as string;
 
   return {
     id,
-    employeeId: data.employeeId,
-    employeeName: data.employeeName,
-    employeeCode: data.employeeCode,
+    employeeId: converted.employeeId,
+    employeeName: converted.employeeName,
+    employeeCode: converted.employeeCode,
     departmentId,
     departmentName,
     positionId,
     positionName,
-    month: data.month,
-    year: data.year,
-    periodStart: data.periodStart.toDate(),
-    periodEnd: data.periodEnd.toDate(),
-    payDate: data.payDate.toDate(),
-    baseSalary: data.baseSalary,
-    overtimePay: data.overtimePay,
-    bonus: data.bonus,
-    allowances: data.allowances,
-    grossIncome: data.grossIncome,
-    deductions: data.deductions,
-    totalDeductions: data.totalDeductions,
-    netPay: data.netPay,
-    workingDays: data.workingDays,
-    actualWorkDays: data.actualWorkDays,
-    absentDays: data.absentDays,
-    lateDays: data.lateDays,
-    onLeaveDays: data.onLeaveDays,
-    overtimeHours: data.overtimeHours,
-    status: data.status,
-    approvedBy: data.approvedBy ?? undefined,
-    approvedAt: data.approvedAt ? data.approvedAt.toDate() : undefined,
-    approvalComments: data.approvalComments ?? undefined,
-    paidBy: data.paidBy ?? undefined,
-    paidAt: data.paidAt ? data.paidAt.toDate() : undefined,
-    paymentMethod: data.paymentMethod ?? undefined,
-    transactionRef: data.transactionRef ?? undefined,
-    notes: data.notes ?? undefined,
-    tenantId: data.tenantId,
-    createdAt: data.createdAt.toDate(),
-    updatedAt: data.updatedAt.toDate(),
-  };
+    month: converted.month,
+    year: converted.year,
+    periodStart: converted.periodStart,
+    periodEnd: converted.periodEnd,
+    payDate: converted.payDate,
+    baseSalary: converted.baseSalary,
+    overtimePay: converted.overtimePay,
+    bonus: converted.bonus,
+    allowances: converted.allowances,
+    grossIncome: converted.grossIncome,
+    deductions: converted.deductions,
+    totalDeductions: converted.totalDeductions,
+    netPay: converted.netPay,
+    workingDays: converted.workingDays,
+    actualWorkDays: converted.actualWorkDays,
+    absentDays: converted.absentDays,
+    lateDays: converted.lateDays,
+    onLeaveDays: converted.onLeaveDays,
+    overtimeHours: converted.overtimeHours,
+    status: converted.status,
+    approvedBy: converted.approvedBy ?? undefined,
+    approvedAt: converted.approvedAt ?? undefined,
+    approvalComments: converted.approvalComments ?? undefined,
+    paidBy: converted.paidBy ?? undefined,
+    paidAt: converted.paidAt ?? undefined,
+    paymentMethod: converted.paymentMethod ?? undefined,
+    transactionRef: converted.transactionRef ?? undefined,
+    notes: converted.notes ?? undefined,
+    tenantId: converted.tenantId,
+    createdAt: converted.createdAt,
+    updatedAt: converted.updatedAt,
+  } as PayrollRecord;
 }
 
 export const payrollService = {

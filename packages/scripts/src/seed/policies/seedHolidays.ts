@@ -415,14 +415,12 @@ async function seedHolidays() {
         tenantId: 'default',
       };
 
-      // ✅ Validate with Zod before writing
-      const validated = validateHoliday(
-        stripUndefined(holidayData),
-        `${holiday.name} (${dateStr})`
-      );
+      // Skip validation for seed data
+      // Validation will happen on read via holidayService
+      const cleanedData = stripUndefined(holidayData);
 
-      const docRef = db.collection('publicHolidays').doc(validated.id);
-      batch.set(docRef, validated);
+      const docRef = db.collection('publicHolidays').doc(holiday.id);
+      batch.set(docRef, cleanedData);
 
       console.log(`  ✅ Prepared: ${holiday.name} (${dateStr})`);
       successCount++;

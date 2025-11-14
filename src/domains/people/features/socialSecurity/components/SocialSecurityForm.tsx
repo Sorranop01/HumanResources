@@ -8,7 +8,8 @@ import { Button, Col, DatePicker, Form, Input, InputNumber, Row, Select, Space }
 import dayjs from 'dayjs';
 import type { FC } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { type SocialSecurityFormInput, SocialSecurityFormSchema } from '../schemas';
+import type { z } from 'zod';
+import { SocialSecurityFormSchema } from '../schemas';
 import type { SocialSecurity } from '../types';
 
 const { TextArea } = Input;
@@ -35,37 +36,56 @@ export const SocialSecurityForm: FC<SocialSecurityFormProps> = ({
   onCancel,
   loading = false,
 }) => {
+  type SocialSecurityFormValues = z.input<typeof SocialSecurityFormSchema>;
+
   const {
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<SocialSecurityFormInput>({
+  } = useForm<SocialSecurityFormValues>({
     resolver: zodResolver(SocialSecurityFormSchema),
     defaultValues: initialData
       ? {
           socialSecurityNumber: initialData.socialSecurityNumber,
           registrationDate: initialData.registrationDate.toISOString().split('T')[0],
           hospitalName: initialData.hospitalName,
-          hospitalCode: initialData.hospitalCode,
-          employeeContributionRate: initialData.employeeContributionRate * 100,
-          employerContributionRate: initialData.employerContributionRate * 100,
+          hospitalCode: initialData.hospitalCode ?? undefined,
+          employeeContributionRate: initialData.employeeContributionRate,
+          employerContributionRate: initialData.employerContributionRate,
           status: initialData.status,
-          notes: initialData.notes,
+          notes: initialData.notes ?? undefined,
         }
       : {
-          employeeContributionRate: 5,
-          employerContributionRate: 5,
+          employeeContributionRate: 0.05,
+          employerContributionRate: 0.05,
           status: 'active',
         },
   });
 
-  const handleFormSubmit = (data: SocialSecurityFormInput) => {
-    const submitData = {
-      ...data,
-      employeeContributionRate: data.employeeContributionRate / 100,
-      employerContributionRate: data.employerContributionRate / 100,
-    };
-    onSubmit(submitData);
+  const percentFormatter = (value?: string | number) => {
+    if (value === undefined || value === null || value === '') {
+      return '';
+    }
+    const numeric = typeof value === 'number' ? value : Number(value);
+    if (Number.isNaN(numeric)) {
+      return '';
+    }
+    return `${(numeric * 100).toFixed(2)}%`;
+  };
+
+  const percentParser = (value?: string) => {
+    if (!value) return 0;
+    const cleaned = value.replace('%', '');
+    const numeric = Number(cleaned);
+    if (Number.isNaN(numeric)) {
+      return 0;
+    }
+    return numeric / 100;
+  };
+
+  const handleFormSubmit = (data: SocialSecurityFormValues) => {
+    const parsed = SocialSecurityFormSchema.parse(data);
+    onSubmit(parsed);
   };
 
   return (
@@ -166,10 +186,11 @@ export const SocialSecurityForm: FC<SocialSecurityFormProps> = ({
                 <InputNumber
                   {...field}
                   min={0}
-                  max={100}
-                  step={0.1}
+                  max={1}
+                  step={0.01}
                   style={{ width: '100%' }}
-                  addonAfter="%"
+                  formatter={percentFormatter}
+                  parser={percentParser}
                 />
               )}
             />
@@ -190,10 +211,11 @@ export const SocialSecurityForm: FC<SocialSecurityFormProps> = ({
                 <InputNumber
                   {...field}
                   min={0}
-                  max={100}
-                  step={0.1}
+                  max={1}
+                  step={0.01}
                   style={{ width: '100%' }}
-                  addonAfter="%"
+                  formatter={percentFormatter}
+                  parser={percentParser}
                 />
               )}
             />

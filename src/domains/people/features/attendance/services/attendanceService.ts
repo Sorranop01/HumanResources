@@ -292,6 +292,10 @@ export const attendanceService = {
       date: getTodayDateString(),
       durationHours: null,
 
+      // ✅ Required denormalized fields for Firestore rules
+      employeeName: employee?.displayName || employee?.firstName || 'Unknown',
+      departmentName: employee?.department || 'Unknown',
+
       // Schedule reference
       scheduledStartTime,
       scheduledEndTime,
@@ -328,6 +332,11 @@ export const attendanceService = {
       isMissedClockOut: false,
       isManualEntry: false,
       isCorrected: false,
+
+      // ✅ Metadata fields required by Firestore rules
+      tenantId: 'default',
+      createdAt: now,
+      updatedAt: now,
     };
 
     if (workSchedulePolicyId) {

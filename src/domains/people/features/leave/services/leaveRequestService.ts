@@ -36,39 +36,52 @@ import { leaveTypeService } from './leaveTypeService';
 const COLLECTION_NAME = 'leaveRequests';
 
 /**
+ * Convert Firestore Timestamp to Date (recursively handles nested objects and arrays)
+ */
+function convertTimestamps(data: unknown): unknown {
+  // Handle null or undefined
+  if (data === null || data === undefined) {
+    return data;
+  }
+
+  // Convert Timestamp to Date
+  if (data instanceof Timestamp) {
+    return data.toDate();
+  }
+
+  // Handle arrays - recursively convert each element
+  if (Array.isArray(data)) {
+    return data.map((item) => convertTimestamps(item));
+  }
+
+  // Handle objects - recursively convert each property
+  if (typeof data === 'object') {
+    const converted: Record<string, unknown> = {};
+
+    for (const [key, value] of Object.entries(data)) {
+      converted[key] = convertTimestamps(value);
+    }
+
+    return converted;
+  }
+
+  // Return primitive values as-is
+  return data;
+}
+
+/**
  * Convert Firestore document to LeaveRequest with Zod validation
- * ✅ Validates data from Firestore before returning
+ * ✅ Converts Timestamps to Dates BEFORE validation
  */
 function docToLeaveRequest(id: string, data: DocumentData): LeaveRequest | null {
-  // Helper to convert Timestamp to Date for validation
-  const toDate = (value: unknown): Date => {
-    if (value instanceof Date) return value;
-    if (value && typeof value === 'object' && 'toDate' in value) {
-      return (value as Timestamp).toDate();
-    }
-    return new Date(value as string);
-  };
+  // Convert all Timestamps to Dates first
+  const converted = convertTimestamps(data) as Record<string, unknown>;
 
-  // Convert Firestore Timestamps to Dates for Zod validation
-  const converted = {
+  // ✅ Validate with Zod schema AFTER conversion
+  const validation = LeaveRequestSchema.safeParse({
     id,
-    ...data,
-    startDate: toDate(data.startDate),
-    endDate: toDate(data.endDate),
-    submittedAt: data.submittedAt ? toDate(data.submittedAt) : undefined,
-    rejectedAt: data.rejectedAt ? toDate(data.rejectedAt) : undefined,
-    cancelledAt: data.cancelledAt ? toDate(data.cancelledAt) : undefined,
-    createdAt: toDate(data.createdAt),
-    updatedAt: toDate(data.updatedAt),
-    approvalChain:
-      data.approvalChain?.map((step: DocumentData) => ({
-        ...step,
-        actionAt: step.actionAt ? toDate(step.actionAt) : undefined,
-      })) || [],
-  };
-
-  // ✅ Validate with Zod schema
-  const validation = LeaveRequestSchema.safeParse(converted);
+    ...converted,
+  });
 
   if (!validation.success) {
     console.warn(
@@ -81,21 +94,9 @@ function docToLeaveRequest(id: string, data: DocumentData): LeaveRequest | null 
     return null;
   }
 
-  // Convert validated Firestore Timestamps back to Dates for the interface
-  return {
-    ...validation.data,
-    startDate: toDate(validation.data.startDate),
-    endDate: toDate(validation.data.endDate),
-    submittedAt: validation.data.submittedAt ? toDate(validation.data.submittedAt) : undefined,
-    rejectedAt: validation.data.rejectedAt ? toDate(validation.data.rejectedAt) : undefined,
-    cancelledAt: validation.data.cancelledAt ? toDate(validation.data.cancelledAt) : undefined,
-    createdAt: toDate(validation.data.createdAt),
-    updatedAt: toDate(validation.data.updatedAt),
-    approvalChain: validation.data.approvalChain.map((step) => ({
-      ...step,
-      actionAt: step.actionAt ? toDate(step.actionAt) : undefined,
-    })),
-  };
+  // ✅ Type assertion: After timestamp conversion and validation,
+  // we know all timestamps are Date objects (LeaveRequest type)
+  return validation.data as LeaveRequest;
 }
 
 export const leaveRequestService = {

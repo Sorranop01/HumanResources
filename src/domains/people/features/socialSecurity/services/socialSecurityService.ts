@@ -130,6 +130,9 @@ export const socialSecurityService = {
       if (snapshot.empty) return null;
 
       const docSnap = snapshot.docs[0];
+      if (!docSnap) {
+        return null;
+      }
       return docToSocialSecurity(docSnap.id, docSnap.data());
     } catch (error) {
       console.error('Failed to fetch social security by employee ID', error);

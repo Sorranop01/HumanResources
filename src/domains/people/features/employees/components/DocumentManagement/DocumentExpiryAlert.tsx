@@ -1,7 +1,7 @@
 import { Alert, List, Tag } from 'antd';
 import dayjs from 'dayjs';
 import type { FC } from 'react';
-import type { DocumentRecord } from '@/domains/people/features/employees/types';
+import type { DocumentRecord, DocumentType } from '@/domains/people/features/employees/types';
 import { DOCUMENT_TYPE_LABELS } from './documentTypes';
 
 interface DocumentExpiryAlertProps {
@@ -13,6 +13,9 @@ export const DocumentExpiryAlert: FC<DocumentExpiryAlertProps> = ({
   documents,
   warningDays = 30,
 }) => {
+  const resolveLabel = (type: DocumentRecord['type']) =>
+    DOCUMENT_TYPE_LABELS[type as DocumentType] ?? type;
+
   if (!documents?.length) {
     return null;
   }
@@ -45,7 +48,7 @@ export const DocumentExpiryAlert: FC<DocumentExpiryAlertProps> = ({
               dataSource={expired}
               renderItem={(doc) => (
                 <List.Item>
-                  <Tag color="red">{DOCUMENT_TYPE_LABELS[doc.type] ?? doc.type}</Tag>
+                  <Tag color="red">{resolveLabel(doc.type)}</Tag>
                   <span>{doc.fileName}</span>
                   <span style={{ marginLeft: 'auto' }}>
                     หมดอายุ {dayjs(doc.expiryDate).format('DD/MM/YYYY')}
@@ -69,7 +72,7 @@ export const DocumentExpiryAlert: FC<DocumentExpiryAlertProps> = ({
               dataSource={expiringSoon}
               renderItem={(doc) => (
                 <List.Item>
-                  <Tag color="orange">{DOCUMENT_TYPE_LABELS[doc.type] ?? doc.type}</Tag>
+                  <Tag color="orange">{resolveLabel(doc.type)}</Tag>
                   <span>{doc.fileName}</span>
                   <span style={{ marginLeft: 'auto' }}>
                     หมดอายุ {dayjs(doc.expiryDate).format('DD/MM/YYYY')}

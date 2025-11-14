@@ -13,6 +13,7 @@ export interface CreateUserProfileData {
   role?: Role | undefined;
   phoneNumber?: string | undefined;
   photoURL?: string | undefined;
+  employeeId?: string | undefined;
 }
 
 /**

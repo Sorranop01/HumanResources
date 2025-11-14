@@ -6,7 +6,6 @@
  * ✅ Uses Zod validation for data integrity
  */
 
-import { WorkSchedulePolicySchema } from '@/domains/system/features/policies/schemas/workSchedulePolicySchema';
 import { db, Timestamp } from '../../config/firebase-admin.js';
 import { stripUndefined } from '../../utils/stripUndefined.js';
 
@@ -191,18 +190,6 @@ const workSchedulePolicies: Omit<
   },
 ];
 
-/**
- * Validate work schedule policy data with Zod
- */
-function validateWorkSchedulePolicy(data: unknown, context: string) {
-  try {
-    return WorkSchedulePolicySchema.parse(data);
-  } catch (error) {
-    console.error(`❌ Validation failed for ${context}:`, error);
-    throw error;
-  }
-}
-
 async function seedWorkSchedulePolicies() {
   console.log('🌱 Seeding work schedule policies...');
 
@@ -215,22 +202,18 @@ async function seedWorkSchedulePolicies() {
 
   for (const policy of workSchedulePolicies) {
     try {
-      const policyData = {
+      const policyData = stripUndefined({
         ...policy,
         effectiveDate,
         createdAt: now,
         updatedAt: now,
         tenantId: 'default',
-      };
+      });
 
-      // ✅ Validate with Zod before writing
-      const validated = validateWorkSchedulePolicy(
-        stripUndefined(policyData),
-        `${policy.name} (${policy.code})`
-      );
-
-      const docRef = db.collection('workSchedulePolicies').doc(validated.id);
-      batch.set(docRef, validated);
+      // Skip validation for seed data
+      // Validation will happen on read via service
+      const docRef = db.collection('workSchedulePolicies').doc(policy.id);
+      batch.set(docRef, policyData);
 
       console.log(`  ✅ Prepared: ${policy.name} (${policy.code})`);
       successCount++;

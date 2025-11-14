@@ -167,7 +167,7 @@ export const LeaveDebugPanel: FC = () => {
       const usersSnapshot = await getDocs(usersRef);
 
       const currentUserData = user?.id
-        ? usersSnapshot.docs.find((doc) => doc.id === user.id)?.data() ?? null
+        ? (usersSnapshot.docs.find((doc) => doc.id === user.id)?.data() ?? null)
         : null;
 
       info.collections.users = {

@@ -26,23 +26,17 @@ export function toDate(value: Timestamp | Date | undefined | null): Date | undef
 
   // Fallback: try to parse as date if it's a timestamp-like object
   // Handle both firebase-admin format (_seconds/_nanoseconds) and client format (seconds/nanoseconds)
-  if (typeof value === 'object') {
-    const seconds =
-      'seconds' in value
-        ? Number(value.seconds)
-        : '_seconds' in value
-          ? Number(value._seconds)
-          : null;
+  if (typeof value === 'object' && value !== null) {
+    // Type guard for Admin SDK format
+    if ('_seconds' in value && typeof (value as { _seconds: unknown })._seconds === 'number') {
+      const { _seconds, _nanoseconds } = value as { _seconds: number; _nanoseconds?: number };
+      return new Date(_seconds * 1000 + (_nanoseconds ?? 0) / 1000000);
+    }
 
-    const nanoseconds =
-      'nanoseconds' in value
-        ? Number(value.nanoseconds)
-        : '_nanoseconds' in value
-          ? Number(value._nanoseconds)
-          : null;
-
-    if (seconds !== null && nanoseconds !== null) {
-      return new Date(seconds * 1000 + nanoseconds / 1000000);
+    // Type guard for Client SDK format
+    if ('seconds' in value && typeof (value as { seconds: unknown }).seconds === 'number') {
+      const { seconds, nanoseconds } = value as { seconds: number; nanoseconds?: number };
+      return new Date(seconds * 1000 + (nanoseconds ?? 0) / 1000000);
     }
   }
 

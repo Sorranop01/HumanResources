@@ -318,102 +318,121 @@ The updated Firestore Security Rules (Step 5) that now enforce the new rule.
 
 ## 🔧 Step 7: Common Schemas and Timestamp Validation Policy (Revised)
 
-\*Date Added: 2025-11-14 Status: MANDATORY REVISION
+Date Added: 2025-11-14 (Re-revised) Status: FINAL UNIFIED STRATEGY
 
-The Problem: Timestamp Inconsistency and Data Drift
-A previous version of this guide (and several auto-generated schemas) introduced a FirestoreTimestampSchema using z.custom<Timestamp>.
+The Problem: Client Date vs. Admin Timestamp
+Our stack has two different "Timestamp" formats:
 
-This creates a critical conflict:
+Client-side (Frontend): Our Service Layer converts Firestore Timestamps to JavaScript Date objects before validation.
 
-Zod Schema (FirestoreTimestampSchema): Expects a raw Firestore Timestamp object (e.g., { \_seconds: ..., \_nanoseconds: ... }).
+Backend-side (Admin SDK/Seed Scripts): Our Cloud Functions and Seed Scripts (documented in 09-) read and write raw Firebase Timestamp objects (e.g., { \_seconds, \_nanoseconds }).
 
-Legacy Types (BaseEntity): Expects a JavaScript Date object (e.g., createdAt: Date).
+The z.date() rule (from a previous revision) works for the Client-side, but FAILS on the Backend-side. This creates a critical conflict for any schema shared between Frontend and Backend (like EmployeeSchema).
 
-Service Layer: Was forced to convert data after validation, or pass raw Timestamps to the UI, leading to errors.
+The Solution: Universal FirestoreTimestampSchema
+To fix this permanently, we adopt the universal validator strategy (from 09-seed-scripts-and-emulator-guide.md, T6) as our Single Source of Truth.
 
-This inconsistency breaks the Single Source of Truth principle.
+The Golden Rule: Shared Zod schemas MUST use a z.custom() validator (named FirestoreTimestampSchema) that can correctly parse BOTH JavaScript Date objects (from the client) and raw Timestamp objects (from the backend/admin).
 
-The Solution: Standardize on z.date()
-To fix this permanently, we are standardizing on a single, clear rule:
-
-The Golden Rule: The Service Layer (e.g., employeeService.ts) is ALWAYS responsible for converting raw Firestore Timestamp objects into JavaScript Date objects (using .toDate()) immediately after fetching data and before validation.
-
-Therefore, all Zod schemas MUST use z.date() to validate timestamps.
-
-The FirestoreTimestampSchema (which used z.custom<Timestamp>) is DEPRECATED and must be removed from common.schema.ts and any other schema files.
-
-Implementation Example (The Correct Way)
-This is how all new and refactored schemas and services must work.
-
-File: src/shared/schemas/common.schema.ts (REVISED) (Notice FirestoreTimestampSchema is gone and z.date() is used)
+Implementation (The Correct Way)
+File: src/shared/schemas/common.schema.ts (REVISED) (This file now exports the universal timestamp schema)
 
 TypeScript
 
 import { z } from 'zod';
-export const TenantIdSchema = z.string().min(1, 'Tenant ID is required');
+/\*\*
+
+Universal Timestamp Validator (Zod Schema)
+
+This is the SSOT for all timestamp validation.
+
+It correctly handles:
+
+JS Date objects (from client-side service layer)
+
+Firebase Client SDK Timestamps ({ seconds, ... })
+
+// 📍 File: src/shared/schemas/common.schema.ts (REVISED)
+// ...
+/\*\*
+
+- Universal Timestamp Validator (Zod Schema)
+- This is the SSOT for all timestamp validation.
+- It correctly handles:
+- 1.  JS Date objects (from client-side service layer)
+- 2.  Firebase Client SDK Timestamps ({ seconds, ... })
+- 3.  Firebase Admin SDK Timestamps ({ \_seconds, ... })
+- 4.  FieldValue.serverTimestamp() (sentinel value for writes)
+      \*/
+      export const FirestoreTimestampSchema = z.custom<unknown>(
+      (val) => {
+      if (val && typeof val === 'object') {
+      return (
+      // 1. Admin SDK Timestamp
+      ('\_seconds' in val && '\_nanoseconds' in val) ||
+      // 2. Client SDK Timestamp
+      ('seconds' in val && 'nanoseconds' in val) ||
+      // 3. JS Date object (from client service layer)
+      (typeof (val as Date).toDate === 'function') ||
+      // 4. FieldValue.serverTimestamp() (sentinel value from serverTimestamp())
+      // We use duck-typing to check for the sentinel's 'isEqual' method
+      (typeof (val as any).isEqual === 'function')
+      );
+      }
+      // Fallback for JS Date object
+      return val instanceof Date;
+      },
+      { message: 'Expected Firebase Timestamp, JS Date, or serverTimestamp()' }
+      );
+      // ...
 
 /\*\*
 
-Defines the core metadata fields REQUIRED for most Firestore documents.
+Defines the core metadata fields REQUIRED for most Firestore documents. \*/ export const FirestoreMetadataSchema = z.object({ createdAt: FirestoreTimestampSchema, // ✅ Use the universal validator updatedAt: FirestoreTimestampSchema, // ✅ Use the universal validator createdBy: z.string().optional(), updatedBy: z.string().optional(), tenantId: z.string().min(1, 'Tenant ID is required'), });
 
-IMPORTANT: Timestamps are validated as z.date(), NOT Firestore Timestamps.
-
-The service layer MUST convert Timestamps to Dates (.toDate()) before validation. \*/ export const FirestoreMetadataSchema = z.object({ createdAt: z.date(), updatedAt: z.date(), createdBy: z.string().optional(), updatedBy: z.string().optional(), tenantId: TenantIdSchema, });
-
-File: src/domains/people/features/employees/schemas/index.ts (REVISED) (This schema now correctly uses the revised FirestoreMetadataSchema)
+File: src/domains/people/features/employees/services/employeeService.ts (Client-side) (This file's responsibility does not change. It still must convert to Date.)
 
 TypeScript
 
-import { z } from 'zod';
-import { FirestoreMetadataSchema } from '@/shared/schemas/common.schema';
-// Base schema for employee data fields export const EmployeeBaseSchema = z.object({ id: z.string(), firstName: z.string(), lastName: z.string(), // ... other fields });
+// File: src/domains/people/features/employees/services/employeeService.ts (Client-side)
+// (This file's responsibility is now simplified. It validates Raw Data directly.) // ✅
 
-// Merge base fields with the standardized metadata export const EmployeeSchema = EmployeeBaseSchema.merge(FirestoreMetadataSchema);
+// ... imports
+// ❗️ (No convertTimestampsToDates function is needed here anymore)
 
-export type Employee = z.infer;
+export const employeeService = {
+async getById(id: string): Promise<Employee | null> {
+// ...
+const rawData = { id: docSnap.id, ...docSnap.data() }; // ✅
 
-File: src/domains/people/features/employees/services/employeeService.ts (CRITICAL EXAMPLE) (This shows the service layer fulfilling its new responsibility)
+    // The universal FirestoreTimestampSchema will
+    // correctly validate the RAW TIMESTAMP OBJECT provided by rawData.
+    const validation = EmployeeSchema.safeParse(rawData); // ✅
+    // ...
 
-TypeScript
+},
+};
 
-import { doc, getDoc, type DocumentData } from 'firebase/firestore';
-import { db } from '@/shared/lib/firebase';
-import { EmployeeSchema, type Employee } from '../schemas';
-/\*\*
+Benefits of this (Final) Approach
+// ...
+Clear Responsibility: The Client Service Layer validates raw data directly. // ✅
+The Backend (Functions/Seeds) can work with raw Timestamps directly.
+Both will pass validation using the same schema.
 
-Converts Firestore Timestamps in nested data to JS Dates.
+export const employeeService = { async getById(id: string): Promise<Employee | null> { // ... const dataWithDates = convertTimestampsToDates(rawData);
 
-@param data The raw data from Firestore.
-
-@returns Data with Timestamps converted to Dates. \*/ function convertTimestampsToDates(data: DocumentData) { // This helper function is crucial. // It finds all Timestamp objects and calls .toDate() on them. // You must implement this logic robustly. // For this example, we'll only convert the top-level fields: const converted = { ...data };
-
-if (converted.createdAt && typeof converted.createdAt.toDate === 'function') { converted.createdAt = converted.createdAt.toDate(); } if (converted.updatedAt && typeof converted.updatedAt.toDate === 'function') { converted.updatedAt = converted.updatedAt.toDate(); } // ... convert other nested timestamps (e.g., clockInTime)
-
-return converted; }
-
-export const employeeService = { async getById(id: string): Promise<Employee | null> { const docSnap = await getDoc(doc(db, 'employees', id)); if (!docSnap.exists()) return null;
-
-// 1. Get raw data and convert Timestamps to Dates
-const rawData = { id: docSnap.id, ...docSnap.data() };
-const dataWithDates = convertTimestampsToDates(rawData);
-// 2. Validate the data (which now has JS Dates)
+// The universal FirestoreTimestampSchema will
+// correctly validate the `Date` object provided by dataWithDates.
 const validation = EmployeeSchema.safeParse(dataWithDates);
-if (!validation.success) {
-console.error(`Invalid employee data (ID: ${id}):`, validation.error);
-return null;
-}
-// 3. Return the 100% type-safe data
-return validation.data;
+// ...
 }, };
 
-Benefits of this (Revised) Approach
-Single Source of Truth: z.date() is the clear standard in all schemas.
+Benefits of this (Final) Approach
+True Single Source of Truth: One schema (...Schema.merge(FirestoreMetadataSchema)) works everywhere.
 
-No Data Drift: The conflict between interface (expecting Date) and schema (expecting Timestamp) is eliminated.
+Robust Validation: Handles Client, Admin, and Seed Script data formats correctly.
 
-UI/App-Ready Data: The service layer now returns data (like Employee) that contains standard JavaScript Date objects, which components and libraries (like date pickers) can use directly without conversion.
-
-## Clear Responsibility: The Service Layer handles data conversion; the Zod Schema handles validation. This is a clean separation of concerns.
+Clear Responsibility: The Client Service Layer is still responsible for converting Timestamps to Dates for UI consistency. The Backend (Functions/Seeds) can work with raw Timestamps directly. Both will pass validation.
 
 ## 🛠️ Step 8: Practical Implementation Guide
 

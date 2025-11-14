@@ -1,149 +1,29 @@
 /**
- * Leave Request Types
- * Employee leave requests (คำขอลา)
+ * Leave Request Types (SSOT)
+ * Re-export type definitions from the Zod schemas to avoid divergence.
  */
 
-import type { BaseEntity } from '@/shared/types';
+import type {
+  ApprovalStatus as SchemaApprovalStatus,
+  ApprovalStep as SchemaApprovalStep,
+  CloudFunctionApproveLeaveRequest,
+  CloudFunctionRejectLeaveRequest,
+  CreateLeaveRequest,
+  HalfDayPeriod as SchemaHalfDayPeriod,
+  LeaveRequest,
+  LeaveRequestFilters,
+  LeaveRequestStatus as SchemaLeaveRequestStatus,
+  UpdateLeaveRequest,
+} from '../schemas/leaveRequestSchema';
 
-/**
- * Leave Request Status
- */
-export type LeaveRequestStatus = 'draft' | 'pending' | 'approved' | 'rejected' | 'cancelled';
+export type LeaveRequestStatus = SchemaLeaveRequestStatus;
+export type ApprovalStatus = SchemaApprovalStatus;
+export type HalfDayPeriod = SchemaHalfDayPeriod;
+export type ApprovalStep = SchemaApprovalStep;
+export type { LeaveRequest, LeaveRequestFilters };
 
-/**
- * Approval Status
- */
-export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
+export type CreateLeaveRequestInput = CreateLeaveRequest;
+export type UpdateLeaveRequestInput = UpdateLeaveRequest;
 
-/**
- * Half Day Period
- */
-export type HalfDayPeriod = 'morning' | 'afternoon';
-
-/**
- * Approval Step
- */
-export interface ApprovalStep {
-  level: number;
-  approverId: string;
-  approverName: string;
-  approverRole: string;
-  status: ApprovalStatus;
-  actionAt?: Date;
-  comments?: string;
-}
-
-/**
- * Leave Request Entity
- */
-export interface LeaveRequest extends BaseEntity {
-  requestNumber: string;
-
-  // Employee (denormalized for display/reporting)
-  employeeId: string;
-  employeeName: string; // Denormalized: from Employee.displayName
-  employeeCode: string; // Denormalized: from Employee.employeeCode
-  departmentId: string; // Reference ID
-  departmentName: string; // Denormalized: from departments collection
-  positionId: string; // Reference ID
-  positionName: string; // Denormalized: from positions collection
-
-  // Leave Type (denormalized for display)
-  leaveTypeId: string;
-  leaveTypeCode: string; // Denormalized: from leaveTypes collection
-  leaveTypeName: string; // Denormalized: from leaveTypes collection
-
-  // Period
-  startDate: Date;
-  endDate: Date;
-  totalDays: number;
-  isHalfDay: boolean;
-  halfDayPeriod?: HalfDayPeriod;
-
-  // Details
-  reason: string;
-  contactDuringLeave?: string;
-  workHandoverTo?: string;
-  workHandoverNotes?: string;
-
-  // Certificate
-  hasCertificate: boolean;
-  certificateUrl?: string;
-  certificateFileName?: string;
-
-  // Workflow
-  status: LeaveRequestStatus;
-  submittedAt?: Date;
-  approvalChain: ApprovalStep[];
-  currentApprovalLevel: number;
-
-  // Rejection/Cancellation
-  rejectedBy?: string;
-  rejectedAt?: Date;
-  rejectionReason?: string;
-  cancelledBy?: string;
-  cancelledAt?: Date;
-  cancellationReason?: string;
-
-  tenantId: string;
-}
-
-/**
- * Create Leave Request Input
- */
-export interface CreateLeaveRequestInput {
-  employeeId: string;
-  leaveTypeId: string;
-  startDate: Date;
-  endDate: Date;
-  isHalfDay?: boolean | undefined;
-  halfDayPeriod?: HalfDayPeriod | undefined;
-  reason: string;
-  contactDuringLeave?: string | undefined;
-  workHandoverTo?: string | undefined;
-  workHandoverNotes?: string | undefined;
-  hasCertificate?: boolean | undefined;
-  certificateUrl?: string | undefined;
-  certificateFileName?: string | undefined;
-}
-
-/**
- * Update Leave Request Input
- */
-export interface UpdateLeaveRequestInput {
-  startDate?: Date | undefined;
-  endDate?: Date | undefined;
-  isHalfDay?: boolean | undefined;
-  halfDayPeriod?: HalfDayPeriod | undefined;
-  reason?: string | undefined;
-  contactDuringLeave?: string | undefined;
-  workHandoverTo?: string | undefined;
-  workHandoverNotes?: string | undefined;
-  hasCertificate?: boolean | undefined;
-  certificateUrl?: string | undefined;
-  certificateFileName?: string | undefined;
-}
-
-/**
- * Approve/Reject Leave Request Input
- */
-export interface ApproveLeaveRequestInput {
-  approverId: string;
-  comments?: string | undefined;
-}
-
-export interface RejectLeaveRequestInput {
-  approverId: string;
-  reason: string;
-}
-
-/**
- * Leave Request Filters
- */
-export interface LeaveRequestFilters {
-  status?: LeaveRequestStatus | undefined;
-  leaveTypeId?: string | undefined;
-  employeeId?: string | undefined;
-  startDate?: Date | undefined;
-  endDate?: Date | undefined;
-}
+export type ApproveLeaveRequestInput = Omit<CloudFunctionApproveLeaveRequest, 'requestId'>;
+export type RejectLeaveRequestInput = Omit<CloudFunctionRejectLeaveRequest, 'requestId'>;

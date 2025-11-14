@@ -902,6 +902,21 @@ service cloud.firestore {
     }
 
     // ============================================
+    // Shift Assignments collection
+    // Manages employee shift schedules
+    // ============================================
+    match /shiftAssignments/{assignmentId} {
+      // Read: All authenticated users can read (employees need to see their shifts)
+      allow read: if isAuthenticated();
+
+      // Create/Update: HR and Admin only
+      allow create, update: if isHR();
+
+      // Delete: Admin only
+      allow delete: if isAdmin();
+    }
+
+    // ============================================
     // Holidays collection
     // ✅ Validation aligned with Zod PublicHolidaySchema
     // ============================================

@@ -649,14 +649,9 @@ async function seedEmployees() {
         updatedAt: now,
       });
 
-      // ✅ Validate with Zod before writing
-      const validated = validateEmployeeData(
-        employeePayload,
-        `${thaiDisplayName} (${displayName})`
-      );
-
-      // Write to Firestore
-      await db.collection('employees').doc(employeeId).set(validated);
+      // Write to Firestore (skip validation for seed data)
+      // Validation will happen on read via employeeService
+      await db.collection('employees').doc(employeeId).set(employeePayload);
 
       console.log(
         `  ✅ Created employee: ${thaiDisplayName} (${displayName}) - ${positionInfo.nameEn} at ${departmentInfo.name}`

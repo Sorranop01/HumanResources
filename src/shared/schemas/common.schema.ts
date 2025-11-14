@@ -8,13 +8,14 @@ import { z } from 'zod';
  */
 
 /**
- * Firestore Timestamp Schema
- * Validates Firebase Timestamp objects from both Admin SDK and Client SDK
+ * Universal Timestamp Validator (Zod Schema)
+ * This is the SSOT for all timestamp validation.
  *
- * Supports three formats:
- * - Admin SDK: { _seconds, _nanoseconds }
- * - Client SDK: { seconds, nanoseconds }
- * - Timestamp object: has .toDate() method
+ * Correctly handles:
+ * 1. JS Date objects (from client-side service layer)
+ * 2. Firebase Client SDK Timestamps ({ seconds, nanoseconds })
+ * 3. Firebase Admin SDK Timestamps ({ _seconds, _nanoseconds })
+ * 4. FieldValue.serverTimestamp() (sentinel value for writes)
  *
  * @example
  * ```typescript
@@ -27,18 +28,31 @@ import { z } from 'zod';
  * });
  * ```
  */
-export const FirestoreTimestampSchema = z.custom<Timestamp>(
+export const FirestoreTimestampSchema = z.custom<Timestamp | Date>(
   (val) => {
+    // ✅ 1. Check Date first (most common after conversion)
+    if (val instanceof Date) {
+      return true;
+    }
+
+    // ✅ 2. Check Timestamp formats (for raw Firestore data)
     if (val && typeof val === 'object') {
       return (
-        ('_seconds' in val && '_nanoseconds' in val) || // Admin SDK format
-        ('seconds' in val && 'nanoseconds' in val) || // Client SDK format
-        typeof (val as { toDate?: unknown }).toDate === 'function' // Timestamp instance
+        // Admin SDK Timestamp ({ _seconds, _nanoseconds })
+        ('_seconds' in val && '_nanoseconds' in val) ||
+        // Client SDK Timestamp ({ seconds, nanoseconds })
+        ('seconds' in val && 'nanoseconds' in val) ||
+        // Timestamp instance (has toDate method)
+        typeof (val as { toDate?: unknown }).toDate === 'function' ||
+        // FieldValue.serverTimestamp() (sentinel value)
+        // biome-ignore lint/suspicious/noExplicitAny: checking for Firebase sentinel method
+        typeof (val as any).isEqual === 'function'
       );
     }
+
     return false;
   },
-  { message: 'Expected Firebase Timestamp' }
+  { message: 'Expected Firebase Timestamp, JS Date, or serverTimestamp()' }
 );
 
 /**
