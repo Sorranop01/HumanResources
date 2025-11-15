@@ -11,6 +11,7 @@ import {
 } from '@ant-design/icons';
 import { Button, Card, Col, Descriptions, Empty, Row, Spin, Tag, Timeline } from 'antd';
 import dayjs from 'dayjs';
+import { Timestamp } from 'firebase/firestore';
 import type { FC } from 'react';
 import { useLeaveRequest } from '../hooks/useLeaveRequest';
 
@@ -29,6 +30,26 @@ const statusConfig = {
   approved: { color: 'success', text: 'อนุมัติแล้ว' },
   rejected: { color: 'error', text: 'ปฏิเสธ' },
   cancelled: { color: 'default', text: 'ยกเลิกแล้ว' },
+};
+
+type TimestampLike = Date | Timestamp | null | undefined;
+
+const normalizeTimestamp = (value: TimestampLike): Date | null => {
+  if (!value) {
+    return null;
+  }
+  if (value instanceof Date) {
+    return value;
+  }
+  if (value instanceof Timestamp) {
+    return value.toDate();
+  }
+  return null;
+};
+
+const formatDate = (value: TimestampLike, format = 'DD/MM/YYYY') => {
+  const dateValue = normalizeTimestamp(value);
+  return dateValue ? dayjs(dateValue).format(format) : '-';
 };
 
 export const LeaveRequestCard: FC<LeaveRequestCardProps> = ({
@@ -96,10 +117,10 @@ export const LeaveRequestCard: FC<LeaveRequestCardProps> = ({
           {request.leaveTypeName}
         </Descriptions.Item>
         <Descriptions.Item label="วันที่เริ่มลา">
-          {dayjs(request.startDate).format('DD/MM/YYYY')}
+          {formatDate(request.startDate)}
         </Descriptions.Item>
         <Descriptions.Item label="วันที่สิ้นสุด">
-          {dayjs(request.endDate).format('DD/MM/YYYY')}
+          {formatDate(request.endDate)}
         </Descriptions.Item>
         <Descriptions.Item label="จำนวนวัน">{request.totalDays} วัน</Descriptions.Item>
         <Descriptions.Item label="ลาครึ่งวัน">
@@ -131,7 +152,7 @@ export const LeaveRequestCard: FC<LeaveRequestCardProps> = ({
           </Descriptions.Item>
         )}
         <Descriptions.Item label="วันที่ยื่นคำขอ" span={2}>
-          {request.submittedAt ? dayjs(request.submittedAt).format('DD/MM/YYYY HH:mm') : '-'}
+          {formatDate(request.submittedAt, 'DD/MM/YYYY HH:mm')}
         </Descriptions.Item>
       </Descriptions>
 
@@ -156,15 +177,15 @@ export const LeaveRequestCard: FC<LeaveRequestCardProps> = ({
                             : 'warning'
                       }
                     >
-                      {step.status === 'approved'
-                        ? 'อนุมัติ'
-                        : step.status === 'rejected'
-                          ? 'ปฏิเสธ'
-                          : 'รออนุมัติ'}
+                    {step.status === 'approved'
+                      ? 'อนุมัติ'
+                      : step.status === 'rejected'
+                        ? 'ปฏิเสธ'
+                        : 'รออนุมัติ'}
                     </Tag>
                     {step.actionAt && (
                       <span style={{ marginLeft: 8, color: '#8c8c8c' }}>
-                        {dayjs(step.actionAt).format('DD/MM/YYYY HH:mm')}
+                        {formatDate(step.actionAt, 'DD/MM/YYYY HH:mm')}
                       </span>
                     )}
                   </div>
@@ -179,29 +200,29 @@ export const LeaveRequestCard: FC<LeaveRequestCardProps> = ({
       )}
 
       {/* Rejection/Cancellation Info */}
-      {request.status === 'rejected' && request.rejectionReason && (
-        <div style={{ marginTop: 24, padding: 16, background: '#fff1f0', borderRadius: 4 }}>
-          <strong style={{ color: '#cf1322' }}>เหตุผลที่ปฏิเสธ:</strong>
-          <div style={{ marginTop: 8 }}>{request.rejectionReason}</div>
-          {request.rejectedAt && (
-            <div style={{ marginTop: 8, color: '#8c8c8c', fontSize: 12 }}>
-              ปฏิเสธเมื่อ: {dayjs(request.rejectedAt).format('DD/MM/YYYY HH:mm')}
+          {request.status === 'rejected' && request.rejectionReason && (
+            <div style={{ marginTop: 24, padding: 16, background: '#fff1f0', borderRadius: 4 }}>
+              <strong style={{ color: '#cf1322' }}>เหตุผลที่ปฏิเสธ:</strong>
+              <div style={{ marginTop: 8 }}>{request.rejectionReason}</div>
+              {request.rejectedAt && (
+                <div style={{ marginTop: 8, color: '#8c8c8c', fontSize: 12 }}>
+                  ปฏิเสธเมื่อ: {formatDate(request.rejectedAt, 'DD/MM/YYYY HH:mm')}
+                </div>
+              )}
             </div>
           )}
-        </div>
-      )}
 
-      {request.status === 'cancelled' && request.cancellationReason && (
-        <div style={{ marginTop: 24, padding: 16, background: '#fafafa', borderRadius: 4 }}>
-          <strong>เหตุผลที่ยกเลิก:</strong>
-          <div style={{ marginTop: 8 }}>{request.cancellationReason}</div>
-          {request.cancelledAt && (
-            <div style={{ marginTop: 8, color: '#8c8c8c', fontSize: 12 }}>
-              ยกเลิกเมื่อ: {dayjs(request.cancelledAt).format('DD/MM/YYYY HH:mm')}
+          {request.status === 'cancelled' && request.cancellationReason && (
+            <div style={{ marginTop: 24, padding: 16, background: '#fafafa', borderRadius: 4 }}>
+              <strong>เหตุผลที่ยกเลิก:</strong>
+              <div style={{ marginTop: 8 }}>{request.cancellationReason}</div>
+              {request.cancelledAt && (
+                <div style={{ marginTop: 8, color: '#8c8c8c', fontSize: 12 }}>
+                  ยกเลิกเมื่อ: {formatDate(request.cancelledAt, 'DD/MM/YYYY HH:mm')}
+                </div>
+              )}
             </div>
           )}
-        </div>
-      )}
 
       {/* Action Buttons */}
       {showActions && (

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import type { Timestamp } from 'firebase/firestore';
+import { Timestamp } from 'firebase/firestore';
 import { attendanceKeys } from '@/domains/people/features/attendance/hooks/useTodayAttendance';
 import type { ClockOutInput } from '@/domains/people/features/attendance/schemas';
 import { attendanceService } from '@/domains/people/features/attendance/services/attendanceService';
@@ -44,9 +44,12 @@ export const useClockOut = () => {
         clockOutMethod: 'web',
       };
 
+      const normalizedClockInTime =
+        clockInTime instanceof Timestamp ? clockInTime : Timestamp.fromDate(clockInTime);
+
       return attendanceService.clockOut(
         clockOutData,
-        clockInTime,
+        normalizedClockInTime,
         scheduledEndTime,
         gracePeriodMinutes,
         earlyLeaveThresholdMinutes

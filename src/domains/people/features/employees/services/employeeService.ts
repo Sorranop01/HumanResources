@@ -152,8 +152,33 @@ function normalizeNationalId(value: unknown): string {
 }
 
 function toDate(value: unknown): Date | undefined {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
   if (value instanceof Date) {
     return value;
+  }
+  if (value instanceof Timestamp) {
+    return value.toDate();
+  }
+  if (isRecord(value)) {
+    if ('seconds' in value && typeof value.seconds === 'number') {
+      const seconds = (value as { seconds: number }).seconds;
+      const nanoseconds =
+        'nanoseconds' in value && typeof (value as { nanoseconds?: number }).nanoseconds === 'number'
+          ? (value as { nanoseconds: number }).nanoseconds
+          : 0;
+      return new Date(seconds * 1000 + nanoseconds / 1_000_000);
+    }
+    if ('_seconds' in value && typeof value._seconds === 'number') {
+      const seconds = (value as { _seconds: number })._seconds;
+      const nanoseconds =
+        '_nanoseconds' in value &&
+        typeof (value as { _nanoseconds?: number })._nanoseconds === 'number'
+          ? (value as { _nanoseconds: number })._nanoseconds
+          : 0;
+      return new Date(seconds * 1000 + nanoseconds / 1_000_000);
+    }
   }
   if (typeof value === 'string' || typeof value === 'number') {
     const parsed = new Date(value);
@@ -409,10 +434,16 @@ function normalizeEmployeeData(data: PlainObject, docId: string): PlainObject {
 
   normalized.userId = ensureString(normalized.userId, docId);
   normalized.employeeCode = ensureString(normalized.employeeCode, docId);
-  normalized.firstName = ensureString(normalized.firstName, 'Unknown');
-  normalized.lastName = ensureString(normalized.lastName, normalized.firstName);
-  normalized.thaiFirstName = ensureString(normalized.thaiFirstName, normalized.firstName);
-  normalized.thaiLastName = ensureString(normalized.thaiLastName, normalized.lastName);
+
+  const resolvedFirstName = ensureString(normalized.firstName, 'Unknown');
+  const resolvedLastName = ensureString(normalized.lastName, resolvedFirstName);
+  const resolvedThaiFirstName = ensureString(normalized.thaiFirstName, resolvedFirstName);
+  const resolvedThaiLastName = ensureString(normalized.thaiLastName, resolvedLastName);
+
+  normalized.firstName = resolvedFirstName;
+  normalized.lastName = resolvedLastName;
+  normalized.thaiFirstName = resolvedThaiFirstName;
+  normalized.thaiLastName = resolvedThaiLastName;
   normalized.email = ensureString(normalized.email, `${docId}@invalid.local`);
   normalized.phoneNumber = sanitizePhoneNumber(normalized.phoneNumber);
 
@@ -721,6 +752,10 @@ export const employeeService = {
       const createEmployeeFunction = httpsCallable(functions, 'createEmployee');
 
       const { employeeData, password } = payload;
+      const normalizedDateOfBirth = employeeData.dateOfBirth
+        ? toDate(employeeData.dateOfBirth)
+        : undefined;
+      const normalizedHireDate = employeeData.hireDate ? toDate(employeeData.hireDate) : undefined;
 
       const result = await createEmployeeFunction({
         email: employeeData.email,
@@ -728,9 +763,9 @@ export const employeeService = {
         displayName: `${employeeData.firstName} ${employeeData.lastName}`,
         employeeData: {
           ...employeeData,
-          // Convert date strings from form to Date objects
-          dateOfBirth: employeeData.dateOfBirth ? new Date(employeeData.dateOfBirth) : undefined,
-          hireDate: employeeData.hireDate ? new Date(employeeData.hireDate) : undefined,
+          // Convert possible Timestamp inputs to plain Date objects for Cloud Functions
+          dateOfBirth: normalizedDateOfBirth,
+          hireDate: normalizedHireDate,
         },
       });
 
