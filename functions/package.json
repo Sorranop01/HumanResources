@@ -22,7 +22,7 @@
     "zod": "^3.22.0"
   },
   "devDependencies": {
-    "@types/node": "^20.17.10",
+    "@types/node": "^20.19.25",
     "firebase-functions-test": "^3.3.0",
     "tsc-alias": "^1.8.16",
     "typescript": "^5.5.0"
