@@ -87,11 +87,7 @@ export const PayrollSettingsPage = memo(() => {
   return (
     <div>
       {/* Page Header */}
-      <PageHeader
-        icon={<SettingOutlined />}
-        title="ตั้งค่าระบบเงินเดือน"
-        subtitle="กำหนดค่าพื้นฐานสำหรับการคำนวณและจ่ายเงินเดือน"
-      />
+      <PageHeader title="ตั้งค่าระบบเงินเดือน" />
 
       {/* Introduction */}
       <Card style={{ marginBottom: 16 }}>

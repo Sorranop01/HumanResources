@@ -4,6 +4,7 @@
  */
 
 import type { BaseEntity } from '@/shared/types';
+import type { Shift, ShiftBreak, ShiftRotationPattern } from '../schemas/shiftSchema';
 
 export type { Shift } from '../schemas/shiftSchema';
 

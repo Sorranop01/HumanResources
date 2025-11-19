@@ -96,10 +96,10 @@ export const overtimePolicyService = {
   /**
    * Create overtime policy
    */
-  async create(tenantId: string, input: CreateOvertimePolicyInput): Promise<string> {
+  async create(input: CreateOvertimePolicyInput, tenantId = 'tenant-default'): Promise<string> {
     try {
       // Check if code already exists
-      const existing = await this.getByCode(tenantId, input.code);
+      const existing = await this.getByCode(input.code, tenantId);
       if (existing) {
         throw new Error('Policy code already exists');
       }
@@ -168,7 +168,7 @@ export const overtimePolicyService = {
   /**
    * Get policy by code
    */
-  async getByCode(tenantId: string, code: string): Promise<OvertimePolicy | null> {
+  async getByCode(code: string, tenantId = 'tenant-default'): Promise<OvertimePolicy | null> {
     try {
       const q = query(
         collection(db, COLLECTION_NAME),
@@ -196,7 +196,7 @@ export const overtimePolicyService = {
   /**
    * Get all policies with filters
    */
-  async getAll(tenantId: string, filters?: OvertimePolicyFilters): Promise<OvertimePolicy[]> {
+  async getAll(filters?: OvertimePolicyFilters, tenantId = 'tenant-default'): Promise<OvertimePolicy[]> {
     try {
       const constraints: QueryConstraint[] = [where('tenantId', '==', tenantId)];
 
@@ -393,12 +393,20 @@ export const overtimePolicyService = {
     }
 
     // Check position
-    if (policy.eligiblePositions.length > 0 && !policy.eligiblePositions.includes(position)) {
+    if (
+      Array.isArray(policy.eligiblePositions) &&
+      policy.eligiblePositions.length > 0 &&
+      !policy.eligiblePositions.includes(position)
+    ) {
       return false;
     }
 
     // Check department
-    if (policy.eligibleDepartments.length > 0 && !policy.eligibleDepartments.includes(department)) {
+    if (
+      Array.isArray(policy.eligibleDepartments) &&
+      policy.eligibleDepartments.length > 0 &&
+      !policy.eligibleDepartments.includes(department)
+    ) {
       return false;
     }
 

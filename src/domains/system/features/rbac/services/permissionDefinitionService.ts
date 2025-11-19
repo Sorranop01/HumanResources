@@ -6,13 +6,11 @@
 import {
   addDoc,
   collection,
-  doc,
   getDoc,
   getDocs,
   query,
   serverTimestamp,
   type Timestamp,
-  updateDoc,
   where,
 } from 'firebase/firestore';
 import type { Permission } from '@/shared/constants/permissions';
@@ -133,12 +131,13 @@ export async function getPermissionDefinition(
     return null;
   }
 
-  const data = snapshot.docs[0]?.data() as PermissionDefinitionFirestore;
-  if (!data) {
+  const doc = snapshot.docs[0];
+  if (!doc) {
     return null;
   }
 
-  return convertToPermissionDefinition({ ...data, id: snapshot.docs[0].id });
+  const data = doc.data() as PermissionDefinitionFirestore;
+  return convertToPermissionDefinition({ ...data, id: doc.id });
 }
 
 /**
@@ -151,7 +150,7 @@ export async function createPermissionDefinition(
   const validatedData = createPermissionDefinitionDetailSchema.parse(data);
 
   // Check if already exists
-  const existing = await getPermissionDefinition(validatedData.resource, validatedData.permission);
+  const existing = await getPermissionDefinition(validatedData.resource, validatedData.permission as Permission);
   if (existing) {
     throw new Error(
       `Permission definition for ${validatedData.resource}:${validatedData.permission} already exists`
@@ -219,20 +218,20 @@ export async function getRoutePermission(route: string): Promise<RoutePermission
     return null;
   }
 
-  const data = snapshot.docs[0]?.data() as RoutePermissionFirestore;
-  if (!data) {
+  const doc = snapshot.docs[0];
+  if (!doc) {
     return null;
   }
 
-  return convertToRoutePermission({ ...data, id: snapshot.docs[0].id });
+  const data = doc.data() as RoutePermissionFirestore;
+  return convertToRoutePermission({ ...data, id: doc.id });
 }
 
 /**
  * Create route permission
  */
 export async function createRoutePermission(
-  data: CreateRoutePermissionType,
-  userId: string
+  data: CreateRoutePermissionType
 ): Promise<RoutePermission> {
   const validatedData = createRoutePermissionSchema.parse(data);
 
@@ -295,20 +294,20 @@ export async function getActionPermission(action: string): Promise<ActionPermiss
     return null;
   }
 
-  const data = snapshot.docs[0]?.data() as ActionPermissionFirestore;
-  if (!data) {
+  const doc = snapshot.docs[0];
+  if (!doc) {
     return null;
   }
 
-  return convertToActionPermission({ ...data, id: snapshot.docs[0].id });
+  const data = doc.data() as ActionPermissionFirestore;
+  return convertToActionPermission({ ...data, id: doc.id });
 }
 
 /**
  * Create action permission
  */
 export async function createActionPermission(
-  data: CreateActionPermissionType,
-  userId: string
+  data: CreateActionPermissionType
 ): Promise<ActionPermission> {
   const validatedData = createActionPermissionSchema.parse(data);
 

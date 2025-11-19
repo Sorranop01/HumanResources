@@ -28,6 +28,7 @@ export const ShiftBreakSchema = z.object({
   startTime: z.string().regex(timeFormatRegex, 'Must be in HH:mm format'),
   duration: z.number().min(1).max(240), // 1-240 minutes
 });
+export type ShiftBreak = z.infer<typeof ShiftBreakSchema>;
 
 /**
  * Shift Rotation Type Schema
@@ -49,6 +50,7 @@ export const ShiftRotationPatternSchema = z.object({
   cycleDays: z.number().min(1).max(365),
   startDate: z.date(),
 });
+export type ShiftRotationPattern = z.infer<typeof ShiftRotationPatternSchema>;
 
 /**
  * Firestore representation of rotation patterns

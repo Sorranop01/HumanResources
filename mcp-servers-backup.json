@@ -1,0 +1,81 @@
+{
+  "sequential-thinking": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+    "env": {}
+  },
+  "filesystem": {
+    "type": "stdio",
+    "command": "npx",
+    "args": [
+      "-y",
+      "@modelcontextprotocol/server-filesystem",
+      "/Users/sorranopkhanonvech/Desktop/HumanResources"
+    ],
+    "env": {}
+  },
+  "console-mcp": {
+    "type": "stdio",
+    "command": "node",
+    "args": ["/Users/sorranopkhanonvech/Desktop/HumanResources/console_mcp/build/index.js"],
+    "env": {
+      "CONSOLE_LOG_DIR": "/Users/sorranopkhanonvech/Desktop/HumanResources/logs"
+    }
+  },
+  "memory": {
+    "type": "stdio",
+    "command": "node",
+    "args": ["/Users/sorranopkhanonvech/Desktop/HumanResources/memory-server/build/index.js"],
+    "env": {}
+  },
+  "knowledge-graph": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-memory"],
+    "env": {}
+  },
+  "puppeteer": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@modelcontextprotocol/server-puppeteer"],
+    "env": {}
+  },
+  "firebase": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "firebase-tools@latest", "mcp"],
+    "env": {
+      "FIRESTORE_PROJECT": "human-b4c2c",
+      "FIRESTORE_DATABASE": "(default)",
+      "FIRESTORE_EMULATOR_HOST": "localhost:8888",
+      "FIREBASE_AUTH_EMULATOR_HOST": "localhost:9099",
+      "FIREBASE_STORAGE_EMULATOR_HOST": "localhost:9199"
+    }
+  },
+  "code-summarizer": {
+    "type": "stdio",
+    "command": "node",
+    "args": [
+      "/Users/sorranopkhanonvech/Desktop/HumanResources/code-summarizer/dist/bin/cli.js",
+      "server"
+    ],
+    "env": {
+      "GOOGLE_API_KEY": "AIzaSyABkqJ4j9reJzwNPnQvgnDxIvlChsIdLL4"
+    }
+  },
+  "memory-cache": {
+    "type": "stdio",
+    "command": "node",
+    "args": ["/Users/sorranopkhanonvech/Desktop/HumanResources/ib-mcp-cache-server/build/index.js"],
+    "env": {}
+  },
+  "gemini": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@el-el-san/gemini-mcp"],
+    "env": {
+      "GEMINI_API_KEY": "AIzaSyABkqJ4j9reJzwNPnQvgnDxIvlChsIdLL4"
+    }
+  }
+}

@@ -5,6 +5,11 @@
 
 export type { WorkSchedulePolicy } from '../schemas/workSchedulePolicySchema';
 
+export interface FlexibleTimeRange {
+  earliest: string;
+  latest: string;
+}
+
 /**
  * Create Work Schedule Policy Input
  */

@@ -60,7 +60,7 @@ export function useActionPermission(action: string) {
 /**
  * Hook to check multiple actions at once
  */
-export function useActionPermissions(actions: string[]) {
+export function useActionPermissionsBatch(actions: string[]) {
   const { user } = useAuth();
   const { data: actionPermissions = [], isLoading } = useActionPermissions();
 

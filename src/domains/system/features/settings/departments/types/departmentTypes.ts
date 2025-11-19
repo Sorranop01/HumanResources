@@ -1,5 +1,3 @@
-import type { Timestamp } from 'firebase/firestore';
-
 /**
  * Department entity
  * Supports hierarchical structure (parent-child)
@@ -29,8 +27,8 @@ export type Department = {
 
   // Metadata
   tenantId: string;
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt: Date;
+  updatedAt: Date;
   createdBy: string;
   updatedBy: string;
 };

@@ -8,6 +8,10 @@
 
 import type { Timestamp } from 'firebase/firestore';
 import type { BaseEntity } from '@/shared/types';
+import type {
+  OvertimeRequest as OvertimeRequestSchema,
+  OvertimeType as OvertimeTypeSchema,
+} from '../schemas';
 
 // Re-export main types from schemas (Single Source of Truth)
 export type {
@@ -16,6 +20,7 @@ export type {
   OvertimeClockStatus,
   OvertimeType,
   UrgencyLevel,
+  CreateOvertimeRequestInput,
 } from '../schemas';
 
 // ============================================
@@ -32,7 +37,7 @@ export interface OvertimeHistory extends BaseEntity {
   overtimeRequestId: string;
 
   overtimeDate: Date;
-  overtimeType: OvertimeType;
+  overtimeType: OvertimeTypeSchema;
 
   clockInTime: Timestamp;
   clockOutTime: Timestamp;
@@ -96,21 +101,13 @@ export interface EmployeeOvertimeSummary {
 // Input Types (UI-specific, not for Firestore)
 // ============================================
 
-/**
- * Input payload for creating OT request (UI form)
- * NOTE: For Firestore creation, use OvertimeRequestSchema from schemas
- */
-export type CreateOvertimeRequestInput = Omit<
-  OvertimeRequest,
-  'id' | 'createdAt' | 'updatedAt' | 'tenantId' | 'createdBy' | 'updatedBy'
->;
 
 /**
  * Input payload for updating OT request (pending only)
  */
 export type UpdateOvertimeRequestInput = Partial<
   Pick<
-    OvertimeRequest,
+    OvertimeRequestSchema,
     | 'overtimeDate'
     | 'overtimeType'
     | 'plannedStartTime'

@@ -51,6 +51,8 @@ export function useAuth(): UseAuthReturn {
       if (!profile) {
         console.warn('User profile not found in Firestore, creating basic profile');
         return {
+          uid: firebaseUser.uid,
+          tenantId: 'default', // Add a default tenantId
           id: firebaseUser.uid,
           email: firebaseUser.email || '',
           displayName: firebaseUser.displayName || '',
@@ -60,7 +62,7 @@ export function useAuth(): UseAuthReturn {
           isActive: true,
           createdAt: new Date(),
           updatedAt: new Date(),
-        } satisfies User;
+        };
       }
 
       return profile;
@@ -82,7 +84,7 @@ export function useAuth(): UseAuthReturn {
   return {
     user: userProfile || null,
     firebaseUser,
-    employeeId: userProfile?.employeeId || null,
+    employeeId: null, // employeeId is not on the user object
     loading,
     isAuthenticated: !!firebaseUser && !!userProfile,
   };

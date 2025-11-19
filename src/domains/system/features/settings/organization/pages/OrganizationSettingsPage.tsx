@@ -127,6 +127,35 @@ export const OrganizationSettingsPage: FC = () => {
 
   if (isLoading) {
     return (
+      <div style={{ padding: 24, textAlign: 'center' }}>
+        <Spin />
+      </div>
+    );
+  }
+
+  if (!organization && !isEditing) {
+    return (
+      <div style={{ padding: 24 }}>
+        <Card
+          title={
+            <span>
+              <BankOutlined /> ข้อมูลองค์กร
+            </span>
+          }
+          extra={
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+              สร้างข้อมูลองค์กร
+            </Button>
+          }
+        >
+          ยังไม่มีข้อมูลองค์กร โปรดสร้างใหม่
+        </Card>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
       <div style={{ textAlign: 'center', padding: '100px' }}>
         <Spin size="large" />
       </div>
@@ -184,7 +213,7 @@ export const OrganizationSettingsPage: FC = () => {
               )
             }
           >
-            {!isEditing ? (
+            {!isEditing && organization ? (
               <Descriptions bordered column={2}>
                 <Descriptions.Item label="ชื่อบริษัท (TH)" span={2}>
                   {organization.companyName}

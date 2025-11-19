@@ -11,8 +11,9 @@ import type {
   UpdateRolePermissionInput,
 } from '../schemas/rbacSchemas';
 import * as permissionService from '../services/permissionService';
+import type { Permission } from '@/shared/constants/permissions';
+import type { Resource } from '@/shared/constants/resources';
 import type { PermissionDefinition, RolePermission } from '../types/rbacTypes';
-import type { Permission, Resource } from '../utils/checkPermission';
 
 // Query Keys
 export const permissionKeys = {

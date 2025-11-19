@@ -22,6 +22,7 @@ import {
   SocialSecuritySchema,
 } from '@/domains/people/features/socialSecurity/schemas';
 import { db } from '@/shared/lib/firebase';
+import { toDateValue } from '@/shared/lib/date';
 import type {
   CreateSocialSecurityInput,
   SocialSecurity,
@@ -55,7 +56,7 @@ function docToSocialSecurity(id: string, data: DocumentData): SocialSecurity | n
     employeeName: parsed.employeeName,
     employeeCode: parsed.employeeCode,
     socialSecurityNumber: parsed.socialSecurityNumber,
-    registrationDate: parsed.registrationDate.toDate(),
+    registrationDate: toDateValue(parsed.registrationDate) ?? new Date(),
     status: parsed.status,
     hospitalName: parsed.hospitalName,
     hospitalCode: parsed.hospitalCode ?? undefined,
@@ -70,11 +71,11 @@ function docToSocialSecurity(id: string, data: DocumentData): SocialSecurity | n
     totalContribution: parsed.totalContribution,
     notes: parsed.notes ?? undefined,
     lastContributionDate: parsed.lastContributionDate
-      ? parsed.lastContributionDate.toDate()
+      ? toDateValue(parsed.lastContributionDate) ?? undefined
       : undefined,
     tenantId: parsed.tenantId,
-    createdAt: parsed.createdAt.toDate(),
-    updatedAt: parsed.updatedAt.toDate(),
+    createdAt: toDateValue(parsed.createdAt) ?? new Date(),
+    updatedAt: toDateValue(parsed.updatedAt) ?? new Date(),
   };
 }
 
@@ -106,15 +107,15 @@ function docToContribution(
     payrollId: parsed.payrollId ?? undefined,
     month: parsed.month,
     year: parsed.year,
-    contributionDate: parsed.contributionDate.toDate(),
+    contributionDate: toDateValue(parsed.contributionDate) ?? new Date(),
     contributionBase: parsed.contributionBase,
     employeeAmount: parsed.employeeAmount,
     employerAmount: parsed.employerAmount,
     totalAmount: parsed.totalAmount,
     status: parsed.status,
-    paidAt: parsed.paidAt ? parsed.paidAt.toDate() : undefined,
-    createdAt: parsed.createdAt.toDate(),
-    updatedAt: parsed.updatedAt.toDate(),
+    paidAt: parsed.paidAt ? toDateValue(parsed.paidAt) ?? undefined : undefined,
+    createdAt: toDateValue(parsed.createdAt) ?? new Date(),
+    updatedAt: toDateValue(parsed.updatedAt) ?? new Date(),
   };
 }
 

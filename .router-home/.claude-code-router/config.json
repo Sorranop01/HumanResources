@@ -1,0 +1,37 @@
+{
+  "LOG": true,
+  "HOST": "127.0.0.1",
+  "PORT": 8080,
+  "APIKEY": "",
+  "API_TIMEOUT_MS": 600000,
+  "Providers": [
+    {
+      "name": "gemini",
+      "api_base_url": "https://generativelanguage.googleapis.com/v1beta/models/",
+      "api_key": "AIzaSyAlm_nywZ0kYm26QpcdKahFBqpJaZO4u9o",
+      "models": ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-pro"],
+      "transformer": {
+        "use": ["gemini"]
+      }
+    },
+    {
+      "name": "kimi",
+      "api_base_url": "https://api.moonshot.cn/v1/chat/completions",
+      "api_key": "sk-6dUiGXquycG237NrIvQJzO15sRV6FkwaKCJw91fjgZYM4mNf",
+      "models": ["moonshot-v1-8k", "moonshot-v1-32k", "moonshot-v1-128k"],
+      "transformer": {
+        "use": ["OpenAI"]
+      }
+    }
+  ],
+  "Router": {
+    "default": "gemini,gemini-2.5-pro",
+    "background": "gemini,gemini-2.5-flash",
+    "think": "gemini,gemini-2.5-pro",
+    "longContext": "gemini,gemini-2.5-pro",
+    "webSearch": "gemini,gemini-2.5-flash",
+    "image": "gemini,gemini-2.5-pro",
+    "kimiReasoning": "kimi,moonshot-v1-128k"
+  },
+  "NON_INTERACTIVE_MODE": false
+}

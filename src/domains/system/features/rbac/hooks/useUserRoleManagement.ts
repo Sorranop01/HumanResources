@@ -18,11 +18,11 @@ import { userRoleKeys } from './useUserRoles';
 /**
  * Hook to get user role assignments by user ID
  */
-export function useUserRoleAssignmentsByUserId(
+export function useRoleHistoryAssignments(
   userId: string | undefined
 ): UseQueryResult<UserRoleAssignment[], Error> {
   return useQuery({
-    queryKey: [...userRoleKeys.assignments(), 'user', userId || ''] as const,
+    queryKey: userRoleKeys.byUser(userId || ''),
     queryFn: async () => {
       if (!userId) {
         throw new Error('User ID is required');
@@ -72,7 +72,7 @@ export function useAssignRole() {
       message.success('มอบหมายบทบาทสำเร็จ');
 
       // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: userRoleKeys.assignments() });
+      queryClient.invalidateQueries({ queryKey: userRoleKeys.lists() });
       queryClient.invalidateQueries({ queryKey: effectiveRoleKeys.user(variables.userId) });
       queryClient.invalidateQueries({ queryKey: ['users'] });
     },
@@ -102,7 +102,7 @@ export function useRevokeRole() {
       message.success('ยกเลิกการมอบหมายบทบาทสำเร็จ');
 
       // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: userRoleKeys.assignments() });
+      queryClient.invalidateQueries({ queryKey: userRoleKeys.lists() });
       queryClient.invalidateQueries({ queryKey: effectiveRoleKeys.user(variables.userId) });
       queryClient.invalidateQueries({ queryKey: ['users'] });
     },

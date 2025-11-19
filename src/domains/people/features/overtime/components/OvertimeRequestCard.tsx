@@ -11,10 +11,10 @@ import {
   TeamOutlined,
 } from '@ant-design/icons';
 import { Button, Card, Col, Flex, Row, Space, Tag, Typography } from 'antd';
-import dayjs from 'dayjs';
 import type { FC, ReactNode } from 'react';
 import { OvertimeStatusBadge } from '@/domains/people/features/overtime/components/OvertimeStatusBadge';
 import type { OvertimeRequest } from '@/domains/people/features/overtime/types';
+import { formatDate } from '@/shared/lib/date';
 
 const { Text } = Typography;
 
@@ -95,7 +95,7 @@ export const OvertimeRequestCard: FC<OvertimeRequestCardProps> = ({
               showClockStatus
             />
             <Tag color="blue" icon={<CalendarOutlined />}>
-              {dayjs(request.overtimeDate).format('DD MMM YYYY')}
+              {formatDate(request.overtimeDate, 'DD MMM YYYY')}
             </Tag>
           </Space>
           <Tag color="purple" icon={<FieldTimeOutlined />}>

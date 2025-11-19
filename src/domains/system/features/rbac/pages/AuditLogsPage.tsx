@@ -24,6 +24,9 @@ export const AuditLogsPage: FC = () => {
       ROLE_DELETED: 'red',
       PERMISSION_GRANTED: 'purple',
       PERMISSION_REVOKED: 'magenta',
+      USER_CREATED: 'geekblue',
+      USER_UPDATED: 'volcano',
+      USER_DELETED: 'red',
     };
     return colorMap[action] || 'default';
   };
@@ -37,6 +40,9 @@ export const AuditLogsPage: FC = () => {
       ROLE_DELETED: 'ลบบทบาท',
       PERMISSION_GRANTED: 'ให้สิทธิ์',
       PERMISSION_REVOKED: 'ยกเลิกสิทธิ์',
+      USER_CREATED: 'สร้างผู้ใช้',
+      USER_UPDATED: 'แก้ไขผู้ใช้',
+      USER_DELETED: 'ลบผู้ใช้',
     };
     return labelMap[action] || action;
   };

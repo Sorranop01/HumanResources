@@ -33,6 +33,7 @@ export type Location = {
   coordinates?: LocationCoordinates;
   geofenceRadius?: number;
   timezone: string;
+  description?: string;
   phone?: string;
   email?: string;
   capacity?: number;

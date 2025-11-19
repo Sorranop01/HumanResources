@@ -140,7 +140,9 @@ export async function createPermissionDefinition(
     ...validatedData,
     isActive: true,
     // ✅ Add denormalized available permissions
-    availablePermissions: buildAvailablePermissionDetails(validatedData.permissions),
+    availablePermissions: buildAvailablePermissionDetails(
+      validatedData.permissions as Permission[]
+    ),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     createdBy: userId,

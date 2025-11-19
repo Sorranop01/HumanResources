@@ -44,7 +44,6 @@ export * as roleCloudFunctionService from './services/roleCloudFunctionService';
 export * as roleService from './services/roleService';
 export * as userRoleService from './services/userRoleService';
 // Types
-export type * from './types/permissionDefinitionTypes';
 export type * from './types/rbacTypes';
 // Utils
 export * from './utils/actionPermissions';

@@ -261,7 +261,7 @@ export const PositionsPage: FC = () => {
         visible={isFormVisible}
         onClose={handleCloseForm}
         onSubmit={handleFormSubmit}
-        initialPosition={selectedPosition || undefined}
+        position={selectedPosition || undefined}
         isLoading={createMutation.isPending || updateMutation.isPending}
       />
     </div>

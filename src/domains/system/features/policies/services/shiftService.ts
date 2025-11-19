@@ -68,7 +68,7 @@ function docToShift(id: string, data: DocumentData): Shift | null {
  * Parse time string (HH:mm) to minutes since midnight
  */
 function timeToMinutes(time: string): number {
-  const [hours, minutes] = time.split(':').map(Number);
+  const [hours = 0, minutes = 0] = time.split(':').map(Number);
   return hours * 60 + minutes;
 }
 
@@ -76,10 +76,10 @@ export const shiftService = {
   /**
    * Create shift
    */
-  async create(tenantId: string, input: CreateShiftInput): Promise<string> {
+  async create(input: CreateShiftInput, tenantId = 'tenant-default'): Promise<string> {
     try {
       // Check if code already exists
-      const existing = await this.getByCode(tenantId, input.code);
+      const existing = await this.getByCode(input.code, tenantId);
       if (existing) {
         throw new Error('Shift code already exists');
       }
@@ -148,7 +148,7 @@ export const shiftService = {
   /**
    * Get shift by code
    */
-  async getByCode(tenantId: string, code: string): Promise<Shift | null> {
+  async getByCode(code: string, tenantId = 'tenant-default'): Promise<Shift | null> {
     try {
       const q = query(
         collection(db, COLLECTION_NAME),
@@ -176,7 +176,7 @@ export const shiftService = {
   /**
    * Get all shifts with filters
    */
-  async getAll(tenantId: string, filters?: ShiftFilters): Promise<Shift[]> {
+  async getAll(filters?: ShiftFilters, tenantId = 'tenant-default'): Promise<Shift[]> {
     try {
       const constraints: QueryConstraint[] = [where('tenantId', '==', tenantId)];
 

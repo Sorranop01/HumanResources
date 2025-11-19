@@ -20,12 +20,7 @@ export const roleSchema = z.enum([
   ROLES.AUDITOR,
 ]);
 
-export const permissionSchema = z.enum([
-  PERMISSIONS.READ,
-  PERMISSIONS.CREATE,
-  PERMISSIONS.UPDATE,
-  PERMISSIONS.DELETE,
-]);
+export const permissionSchema = z.enum(Object.values(PERMISSIONS) as [string, ...string[]]);
 
 export const resourceSchema = z.enum([
   RESOURCES.EMPLOYEES,

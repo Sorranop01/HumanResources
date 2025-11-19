@@ -3,12 +3,12 @@ import { Form, Input, InputNumber, Modal, Select, Switch } from 'antd';
 import type { FC } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
-  type CreateLocationInput,
+  type CreateLocationFormInput,
   CreateLocationSchema,
-  type UpdateLocationInput,
+  type UpdateLocationFormInput,
   UpdateLocationSchema,
 } from '../schemas/locationSchemas';
-import type { Location } from '../types/locationTypes';
+import type { CreateLocationInput, UpdateLocationInput, Location } from '../types/locationTypes';
 
 const TENANT_ID = 'default';
 
@@ -32,14 +32,15 @@ export const LocationForm: FC<LocationFormProps> = ({
   isLoading = false,
 }) => {
   const isEditMode = !!initialData;
+  const schema = isEditMode ? UpdateLocationSchema : CreateLocationSchema;
 
   const {
     control,
     handleSubmit,
     formState: { errors },
     reset,
-  } = useForm<CreateLocationInput | UpdateLocationInput>({
-    resolver: zodResolver(isEditMode ? UpdateLocationSchema : CreateLocationSchema),
+  } = useForm<CreateLocationFormInput | UpdateLocationFormInput>({
+    resolver: zodResolver(schema),
     defaultValues: initialData
       ? {
           code: initialData.code,
@@ -47,41 +48,46 @@ export const LocationForm: FC<LocationFormProps> = ({
           nameEn: initialData.nameEn,
           type: initialData.type,
           address: initialData.address,
-          gpsCoordinates: initialData.gpsCoordinates,
+          coordinates: initialData.coordinates,
           geofenceRadius: initialData.geofenceRadius,
           capacity: initialData.capacity,
-          currentOccupancy: initialData.currentOccupancy,
+          currentEmployeeCount: initialData.currentEmployeeCount,
           supportsRemoteWork: initialData.supportsRemoteWork,
           description: initialData.description,
+          timezone: initialData.timezone,
           isActive: initialData.isActive,
         }
       : {
           tenantId: TENANT_ID,
           code: '',
           name: '',
+          nameEn: '',
           type: 'branch',
           address: {
             addressLine1: '',
+            addressLine2: '',
             district: '',
             subDistrict: '',
             province: '',
             postalCode: '',
             country: 'ประเทศไทย',
           },
-          gpsCoordinates: {
+          coordinates: {
             latitude: 0,
             longitude: 0,
           },
           geofenceRadius: 100,
           capacity: undefined,
-          currentOccupancy: 0,
+          currentEmployeeCount: 0,
           supportsRemoteWork: false,
+          timezone: 'Asia/Bangkok',
           isActive: true,
         },
   });
 
-  const handleFormSubmit = (data: CreateLocationInput | UpdateLocationInput) => {
-    onSubmit(data);
+  const handleFormSubmit = (data: CreateLocationFormInput | UpdateLocationFormInput) => {
+    const parsed = schema.parse(data);
+    onSubmit(parsed as CreateLocationInput | UpdateLocationInput);
     reset();
   };
 
@@ -207,7 +213,7 @@ export const LocationForm: FC<LocationFormProps> = ({
         <Form.Item label="พิกัด GPS" style={{ marginBottom: 8 }}>
           <div style={{ display: 'flex', gap: 8 }}>
             <Controller
-              name="gpsCoordinates.latitude"
+              name="coordinates.latitude"
               control={control}
               render={({ field }) => (
                 <InputNumber
@@ -221,7 +227,7 @@ export const LocationForm: FC<LocationFormProps> = ({
               )}
             />
             <Controller
-              name="gpsCoordinates.longitude"
+              name="coordinates.longitude"
               control={control}
               render={({ field }) => (
                 <InputNumber
@@ -235,12 +241,11 @@ export const LocationForm: FC<LocationFormProps> = ({
               )}
             />
           </div>
-          {(errors.gpsCoordinates?.latitude || errors.gpsCoordinates?.longitude) && (
-            <div style={{ color: '#ff4d4f', fontSize: 12, marginTop: 4 }}>
-              {errors.gpsCoordinates?.latitude?.message ||
-                errors.gpsCoordinates?.longitude?.message}
-            </div>
-          )}
+        {(errors.coordinates?.latitude || errors.coordinates?.longitude) && (
+          <div style={{ color: '#ff4d4f', fontSize: 12, marginTop: 4 }}>
+            {errors.coordinates?.latitude?.message || errors.coordinates?.longitude?.message}
+          </div>
+        )}
         </Form.Item>
 
         <Form.Item
@@ -275,7 +280,7 @@ export const LocationForm: FC<LocationFormProps> = ({
 
         <Form.Item label="จำนวนคนปัจจุบัน">
           <Controller
-            name="currentOccupancy"
+            name="currentEmployeeCount"
             control={control}
             render={({ field }) => (
               <InputNumber {...field} style={{ width: '100%' }} placeholder="0" min={0} />

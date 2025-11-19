@@ -8,6 +8,7 @@ import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import type { FC } from 'react';
 import type { OvertimeRequest } from '@/domains/people/features/overtime/types';
+import { toDateValue } from '@/shared/lib/date';
 
 const statusColors: Record<OvertimeRequest['status'], string> = {
   pending: 'gold',
@@ -29,7 +30,11 @@ export const OvertimeCalendar: FC<OvertimeCalendarProps> = ({
   onSelectDate,
 }) => {
   const grouped = requests?.reduce<Record<string, OvertimeRequest[]>>((acc, request) => {
-    const key = dayjs(request.overtimeDate).format('YYYY-MM-DD');
+    const overtimeDate = toDateValue(request.overtimeDate);
+    if (!overtimeDate) {
+      return acc;
+    }
+    const key = dayjs(overtimeDate).format('YYYY-MM-DD');
     acc[key] = acc[key] ? [...acc[key], request] : [request];
     return acc;
   }, {});

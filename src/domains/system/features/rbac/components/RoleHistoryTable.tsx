@@ -8,7 +8,7 @@ import { Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { FC } from 'react';
 import { ROLE_LABELS } from '@/shared/constants/roles';
-import { useUserRoleAssignmentsByUserId } from '../hooks/useUserRoleManagement';
+import { useRoleHistoryAssignments } from '../hooks/useUserRoleManagement';
 import type { UserRoleAssignment } from '../types/rbacTypes';
 
 const { Text } = Typography;
@@ -21,7 +21,7 @@ interface RoleHistoryTableProps {
  * Table showing role assignment history for a user
  */
 export const RoleHistoryTable: FC<RoleHistoryTableProps> = ({ userId }) => {
-  const { data: assignments, isLoading } = useUserRoleAssignmentsByUserId(userId);
+  const { data: assignments, isLoading } = useRoleHistoryAssignments(userId);
 
   const columns: ColumnsType<UserRoleAssignment> = [
     {

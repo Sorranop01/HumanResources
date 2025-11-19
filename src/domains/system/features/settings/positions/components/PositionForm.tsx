@@ -44,7 +44,28 @@ export const PositionForm: FC<PositionFormProps> = ({
 
   useEffect(() => {
     if (position) {
-      reset(position);
+      // Map Position to CreatePositionFormInput
+      const formValues: CreatePositionFormInput = {
+        code: position.code,
+        title: position.title,
+        titleEn: position.titleEn,
+        level: position.level,
+        category: position.category,
+        departmentId: position.departmentId,
+        departmentName: position.departmentName,
+        departmentCode: position.departmentCode,
+        minSalary: position.minSalary,
+        maxSalary: position.maxSalary,
+        currency: position.currency,
+        description: position.description,
+        responsibilities: position.responsibilities,
+        requirements: position.requirements,
+        employmentTypes: position.employmentTypes,
+        isActive: position.isActive,
+        isPublic: position.isPublic,
+        tenantId: position.tenantId,
+      };
+      reset(formValues);
     } else {
       reset({
         code: '',
@@ -71,7 +92,7 @@ export const PositionForm: FC<PositionFormProps> = ({
       footer={null}
       width={700}
     >
-      <Form layout="vertical" onFinish={handleSubmit(onSubmit)}>
+      <Form layout="vertical" onFinish={handleSubmit((data: CreatePositionFormInput) => onSubmit(data))}>
         <Form.Item
           label="รหัสตำแหน่ง"
           validateStatus={errors.code ? 'error' : ''}

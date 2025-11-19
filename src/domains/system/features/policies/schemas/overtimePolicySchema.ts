@@ -13,6 +13,7 @@ import {
  * Overtime Type Schema
  */
 export const OvertimeTypeSchema = z.enum(['weekday', 'weekend', 'holiday', 'after-hours']);
+export type OvertimeType = z.infer<typeof OvertimeTypeSchema>;
 
 /**
  * Overtime Rule Conditions Schema

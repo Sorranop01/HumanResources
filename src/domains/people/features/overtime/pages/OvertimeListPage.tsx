@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 
 import { useAuth } from '@/shared/hooks/useAuth';
 import { PageHeader } from '@/shared/ui/components/PageHeader';
+import { formatDate } from '@/shared/lib/date';
 
 import { OvertimeRequestTable } from '../components/OvertimeRequestTable';
 import { OvertimeStats } from '../components/OvertimeStats';
@@ -37,7 +38,7 @@ export const OvertimeListPage: FC = () => {
   const handleCancel = (request: OvertimeRequest) => {
     Modal.confirm({
       title: 'ยืนยันการยกเลิกคำขอ OT',
-      content: `ต้องการยกเลิกคำขอ OT วันที่ ${new Date(request.overtimeDate).toLocaleDateString()} หรือไม่?`,
+      content: `ต้องการยกเลิกคำขอ OT วันที่ ${formatDate(request.overtimeDate)} หรือไม่?`,
       okButtonProps: { danger: true },
       okText: 'ยกเลิกคำขอ',
       cancelText: 'กลับ',

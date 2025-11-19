@@ -375,6 +375,9 @@ export const leaveEntitlementService = {
             year: nextYear,
             totalEntitlement: currentEntitlement.accrued, // Use default for next year
             carriedOver: carryOverAmount,
+            basedOnTenure: currentEntitlement.basedOnTenure ?? false,
+            tenureYears: currentEntitlement.tenureYears ?? 0,
+            notes: currentEntitlement.notes,
           });
         }
       }

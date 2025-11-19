@@ -14,78 +14,120 @@ dayjs.extend(timezone);
 dayjs.tz.setDefault('Asia/Bangkok');
 
 /**
- * Convert Firestore Timestamp to Date
+ * Shared date input type that supports JS Date, Firestore Timestamp,
+ * ISO strings, epoch numbers, and Dayjs instances.
  */
-function toDate(value: Date | Timestamp): Date {
+export type DateInput = Date | Dayjs | string | number | Timestamp | null | undefined;
+
+/**
+ * Convert supported date inputs to native Date instances.
+ */
+export function toDateValue(value: DateInput): Date | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
   if (value instanceof Date) {
     return value;
   }
-  return value.toDate();
+  if (typeof value === 'object' && 'toDate' in value && typeof value.toDate === 'function') {
+    return value.toDate();
+  }
+  if (dayjs.isDayjs(value)) {
+    return value.toDate();
+  }
+  if (typeof value === 'string' || typeof value === 'number') {
+    const parsed = dayjs(value);
+    return parsed.isValid() ? parsed.toDate() : null;
+  }
+  return null;
+}
+
+/**
+ * Format generic date values with optional format string.
+ */
+export function formatDate(value: DateInput, format = 'DD/MM/YYYY'): string {
+  const dateValue = toDateValue(value);
+  return dateValue ? dayjs(dateValue).format(format) : '-';
+}
+
+/**
+ * Format generic date-time values with optional format string.
+ */
+export function formatDateTime(value: DateInput, format = 'DD/MM/YYYY HH:mm'): string {
+  const dateValue = toDateValue(value);
+  return dateValue ? dayjs(dateValue).format(format) : '-';
 }
 
 /**
  * Format date to Thai date format
  */
-export function formatThaiDate(date: Date | Dayjs | string | Timestamp): string {
-  const dateValue = typeof date === 'object' && 'toDate' in date ? toDate(date) : date;
-  return dayjs(dateValue).locale('th').format('DD/MM/YYYY');
+export function formatThaiDate(date: DateInput): string {
+  const dateValue = toDateValue(date);
+  return dateValue ? dayjs(dateValue).locale('th').format('DD/MM/YYYY') : '-';
 }
 
 /**
  * Format date to Thai datetime format
  */
-export function formatThaiDateTime(date: Date | Dayjs | string | Timestamp): string {
-  const dateValue = typeof date === 'object' && 'toDate' in date ? toDate(date) : date;
-  return dayjs(dateValue).locale('th').format('DD/MM/YYYY HH:mm');
+export function formatThaiDateTime(date: DateInput): string {
+  const dateValue = toDateValue(date);
+  return dateValue ? dayjs(dateValue).locale('th').format('DD/MM/YYYY HH:mm') : '-';
 }
 
 /**
  * Format date to ISO format
  */
-export function formatISO(date: Date | Dayjs | string): string {
-  return dayjs(date).toISOString();
+export function formatISO(date: DateInput): string {
+  const dateValue = toDateValue(date);
+  return dateValue ? dayjs(dateValue).toISOString() : '';
 }
 
 /**
  * Get relative time (e.g., "2 hours ago")
  */
-export function getRelativeTime(date: Date | Dayjs | string): string {
-  return dayjs(date).locale('th').fromNow();
+export function getRelativeTime(date: DateInput): string {
+  const dateValue = toDateValue(date);
+  return dateValue ? dayjs(dateValue).locale('th').fromNow() : '-';
 }
 
 /**
  * Check if date is today
  */
-export function isToday(date: Date | Dayjs | string): boolean {
-  return dayjs(date).isSame(dayjs(), 'day');
+export function isToday(date: DateInput): boolean {
+  const dateValue = toDateValue(date);
+  return dateValue ? dayjs(dateValue).isSame(dayjs(), 'day') : false;
 }
 
 /**
  * Get start of day
  */
-export function startOfDay(date?: Date | Dayjs | string): Dayjs {
-  return dayjs(date).startOf('day');
+export function startOfDay(date?: DateInput): Dayjs {
+  const dateValue = toDateValue(date ?? new Date()) ?? new Date();
+  return dayjs(dateValue).startOf('day');
 }
 
 /**
  * Get end of day
  */
-export function endOfDay(date?: Date | Dayjs | string): Dayjs {
-  return dayjs(date).endOf('day');
+export function endOfDay(date?: DateInput): Dayjs {
+  const dateValue = toDateValue(date ?? new Date()) ?? new Date();
+  return dayjs(dateValue).endOf('day');
 }
 
 /**
  * Add days to date
  */
-export function addDays(date: Date | Dayjs | string, days: number): Dayjs {
-  return dayjs(date).add(days, 'day');
+export function addDays(date: DateInput, days: number): Dayjs {
+  const dateValue = toDateValue(date ?? new Date()) ?? new Date();
+  return dayjs(dateValue).add(days, 'day');
 }
 
 /**
  * Subtract days from date
  */
-export function subtractDays(date: Date | Dayjs | string, days: number): Dayjs {
-  return dayjs(date).subtract(days, 'day');
+export function subtractDays(date: DateInput, days: number): Dayjs {
+  const dateValue = toDateValue(date ?? new Date()) ?? new Date();
+  return dayjs(dateValue).subtract(days, 'day');
 }
 
 // Re-export dayjs for advanced usage

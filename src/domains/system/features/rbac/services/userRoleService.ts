@@ -135,6 +135,10 @@ export async function assignUserRole(
     id: string;
     email: string;
     displayName: string;
+  },
+  targetUser?: {
+    email: string;
+    displayName: string;
   }
 ): Promise<UserRoleAssignment> {
   // Validate input
@@ -158,8 +162,8 @@ export async function assignUserRole(
 
   const newAssignment = {
     userId: validatedData.userId,
-    userEmail: assignedByUser.email,
-    userDisplayName: assignedByUser.displayName,
+    userEmail: targetUser?.email ?? '',
+    userDisplayName: targetUser?.displayName ?? '',
     role: validatedData.role,
     assignedBy: assignedByUser.id,
     isActive: true,

@@ -10,10 +10,9 @@ import {
   FileTextOutlined,
 } from '@ant-design/icons';
 import { Button, Card, Col, Descriptions, Empty, Row, Spin, Tag, Timeline } from 'antd';
-import dayjs from 'dayjs';
-import { Timestamp } from 'firebase/firestore';
 import type { FC } from 'react';
 import { useLeaveRequest } from '../hooks/useLeaveRequest';
+import { formatDate } from '@/shared/lib/date';
 
 interface LeaveRequestCardProps {
   requestId: string;
@@ -30,26 +29,6 @@ const statusConfig = {
   approved: { color: 'success', text: 'อนุมัติแล้ว' },
   rejected: { color: 'error', text: 'ปฏิเสธ' },
   cancelled: { color: 'default', text: 'ยกเลิกแล้ว' },
-};
-
-type TimestampLike = Date | Timestamp | null | undefined;
-
-const normalizeTimestamp = (value: TimestampLike): Date | null => {
-  if (!value) {
-    return null;
-  }
-  if (value instanceof Date) {
-    return value;
-  }
-  if (value instanceof Timestamp) {
-    return value.toDate();
-  }
-  return null;
-};
-
-const formatDate = (value: TimestampLike, format = 'DD/MM/YYYY') => {
-  const dateValue = normalizeTimestamp(value);
-  return dateValue ? dayjs(dateValue).format(format) : '-';
 };
 
 export const LeaveRequestCard: FC<LeaveRequestCardProps> = ({

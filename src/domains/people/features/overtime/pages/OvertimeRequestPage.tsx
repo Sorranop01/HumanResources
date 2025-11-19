@@ -60,9 +60,11 @@ export const OvertimeRequestPage: FC = () => {
       employee.id,
       employeeStats?.name ?? employee.employeeCode,
       employee.employeeCode,
-      employee.department,
-      employee.position,
-      overtimeRate
+      employee.department, // department ID
+      employee.departmentName ?? 'N/A',
+      employee.position, // position ID
+      employee.positionName ?? 'N/A',
+      overtimeRate,
     );
 
     createRequestMutation.mutate(payload);

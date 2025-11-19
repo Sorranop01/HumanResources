@@ -58,7 +58,9 @@ export const userManagementService = {
     return snapshot.docs.map((doc) => {
       const data = doc.data();
       return {
+        uid: doc.id,
         id: doc.id,
+        tenantId: data.tenantId,
         email: data.email,
         displayName: data.displayName,
         role: data.role,

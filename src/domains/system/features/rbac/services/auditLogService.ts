@@ -14,10 +14,11 @@ import {
   type Timestamp,
   where,
 } from 'firebase/firestore';
+import type { Permission } from '@/shared/constants/permissions';
 import type { Role } from '@/shared/constants/roles';
+import type { Resource } from '@/shared/constants/resources';
 import { db } from '@/shared/lib/firebase';
 import type { RBACAuditLog, RBACAuditLogFirestore } from '../types/rbacTypes';
-import type { Permission, Resource } from '../utils/checkPermission';
 
 const COLLECTION_NAME = 'rbacAuditLogs';
 

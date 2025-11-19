@@ -40,7 +40,7 @@ interface EditPermissionModalProps {
 }
 
 interface FormValues {
-  permissions: string[];
+  permissions: Permission[];
 }
 
 /**
@@ -82,19 +82,18 @@ export const EditPermissionModal: FC<EditPermissionModalProps> = ({
     form
       .validateFields()
       .then((values) => {
+        const { permissions } = values;
         if (!user) {
           message.error('ไม่พบข้อมูลผู้ใช้งาน');
           return;
         }
-
-        const permissions = values.permissions as Permission[];
 
         assignPermission(
           {
             data: {
               role,
               resource,
-              permissions,
+              permissions: permissions as Permission[],
             },
             userId: user.uid,
             roleId: existingPermission?.roleId || role,

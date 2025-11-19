@@ -57,12 +57,12 @@ function convertTimestamps(data: unknown): unknown {
  * ✅ Layer 2: Service Layer Validation
  */
 function docToPosition(id: string, data: any): Position | null {
-  const converted = {
+  const convertedData = {
     id,
     ...(convertTimestamps(data) as Record<string, unknown>),
   };
 
-  const validation = PositionSchema.safeParse(converted);
+  const validation = PositionSchema.safeParse(convertedData);
 
   if (!validation.success) {
     console.warn(
@@ -76,7 +76,6 @@ function docToPosition(id: string, data: any): Position | null {
   }
 
   return validation.data;
-}
 
 export const getAllPositions = async (
   tenantId: string,

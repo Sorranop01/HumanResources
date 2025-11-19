@@ -152,11 +152,11 @@ export const LocationMap: FC<LocationMapProps> = ({
                     <div style={{ fontSize: 12, color: '#666', marginBottom: 8 }}>
                       {location.address.province}
                     </div>
-                    {location.gpsCoordinates && (
+                    {location.coordinates && (
                       <div style={{ fontSize: 12, marginBottom: 4 }}>
                         <Tag color="green" icon={<EnvironmentOutlined />}>
-                          {location.gpsCoordinates.latitude.toFixed(6)},{' '}
-                          {location.gpsCoordinates.longitude.toFixed(6)}
+                          {location.coordinates.latitude.toFixed(6)},{' '}
+                          {location.coordinates.longitude.toFixed(6)}
                         </Tag>
                       </div>
                     )}
@@ -192,11 +192,11 @@ export const LocationMap: FC<LocationMapProps> = ({
             {selectedLocation.address.addressLine1}, {selectedLocation.address.district},{' '}
             {selectedLocation.address.province}
           </p>
-          {selectedLocation.gpsCoordinates && (
+          {selectedLocation.coordinates && (
             <p style={{ margin: '8px 0 0 0', fontSize: 12 }}>
               <Tag icon={<EnvironmentOutlined />}>
-                {selectedLocation.gpsCoordinates.latitude},{' '}
-                {selectedLocation.gpsCoordinates.longitude}
+                {selectedLocation.coordinates.latitude},{' '}
+                {selectedLocation.coordinates.longitude}
               </Tag>
               {selectedLocation.geofenceRadius && (
                 <Tag color="blue">Radius: {selectedLocation.geofenceRadius}m</Tag>

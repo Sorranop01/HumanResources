@@ -20,6 +20,7 @@ export const PenaltyTypeSchema = z.enum([
   'no-clock-out',
   'violation',
 ]);
+export type PenaltyType = z.infer<typeof PenaltyTypeSchema>;
 
 /**
  * Calculation Type Schema
@@ -31,6 +32,7 @@ export const PenaltyCalculationTypeSchema = z.enum([
   'daily-rate',
   'progressive',
 ]);
+export type PenaltyCalculationType = z.infer<typeof PenaltyCalculationTypeSchema>;
 
 /**
  * Penalty Threshold Schema
@@ -40,6 +42,7 @@ export const PenaltyThresholdSchema = z.object({
   occurrences: z.number().min(1).max(100).optional(),
   days: z.number().min(1).max(365).optional(),
 });
+export type PenaltyThreshold = z.infer<typeof PenaltyThresholdSchema>;
 
 /**
  * Progressive Penalty Rule Schema
@@ -51,6 +54,7 @@ export const ProgressivePenaltyRuleSchema = z.object({
   percentage: z.number().min(0).max(100).optional(),
   description: z.string().max(500).optional(),
 });
+export type ProgressivePenaltyRule = z.infer<typeof ProgressivePenaltyRuleSchema>;
 
 /**
  * Create Penalty Policy Schema

@@ -96,8 +96,11 @@ export const getLocationByCode = async (
       return null;
     }
 
-    const doc = snapshot.docs[0];
-    return mapDocToLocation(doc.id, doc.data() as LocationDocument);
+    const docSnap = snapshot.docs[0];
+    if (!docSnap) {
+      return null;
+    }
+    return mapDocToLocation(docSnap.id, docSnap.data() as LocationDocument);
   } catch (error) {
     console.error('❌ Failed to get location by code:', error);
     throw new Error('ไม่สามารถดึงข้อมูลสถานที่ได้');

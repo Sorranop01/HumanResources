@@ -235,12 +235,15 @@ export const attendanceService = {
 
       // If no shift, get work schedule policy
       if (!shiftAssignmentId && employee) {
-        const policies = await workSchedulePolicyService.getAll(TENANT_ID, {
+        const policies = await workSchedulePolicyService.getAll(
+          {
           department: employee.departmentId,
           position: employee.positionId,
           employmentType: employee.employmentType,
           isActive: true,
-        });
+          },
+          TENANT_ID
+        );
 
         if (policies.length > 0 && policies[0]) {
           const policy = policies[0];

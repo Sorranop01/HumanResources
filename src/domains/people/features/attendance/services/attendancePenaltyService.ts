@@ -56,7 +56,7 @@ export const attendancePenaltyService = {
         filters.employmentType = employeeData.employmentType;
       }
 
-      const policies = await penaltyPolicyService.getAll(TENANT_ID, filters);
+      const policies = await penaltyPolicyService.getAll(filters, TENANT_ID);
 
       // Calculate late penalty
       if (record.isLate && !record.isExcusedLate && record.minutesLate > 0) {

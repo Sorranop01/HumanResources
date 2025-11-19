@@ -14,8 +14,7 @@ import { useCreateLocation } from '../hooks/useCreateLocation';
 import { useDeleteLocation } from '../hooks/useDeleteLocation';
 import { useLocations } from '../hooks/useLocations';
 import { useUpdateLocation } from '../hooks/useUpdateLocation';
-import type { CreateLocationInput, UpdateLocationInput } from '../schemas/locationSchemas';
-import type { Location } from '../types/locationTypes';
+import type { CreateLocationInput, UpdateLocationInput, Location } from '../types/locationTypes';
 
 const TENANT_ID = 'default'; // TODO: Get from auth context
 const USER_ID = 'system'; // TODO: Get from auth context
@@ -170,7 +169,7 @@ export const LocationsPage: FC = () => {
       width: 80,
       align: 'center',
       render: (_text, record) =>
-        record.gpsCoordinates?.latitude && record.gpsCoordinates?.longitude ? (
+        record.coordinates?.latitude && record.coordinates?.longitude ? (
           <Tag color="green">✓</Tag>
         ) : (
           <Tag>-</Tag>
@@ -183,7 +182,7 @@ export const LocationsPage: FC = () => {
       width: 100,
       align: 'right',
       render: (capacity, record) =>
-        capacity ? `${record.currentOccupancy || 0}/${capacity}` : '-',
+        capacity ? `${record.currentEmployeeCount || 0}/${capacity}` : '-',
     },
     {
       title: 'Remote',

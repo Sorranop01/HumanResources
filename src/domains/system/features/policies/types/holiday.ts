@@ -7,8 +7,9 @@
  */
 
 import type { BaseEntity } from '@/shared/types';
+import type { PublicHoliday } from '../schemas/holidaySchema';
 
-// Re-export schema-based types
+// Re-export main type from schema (Single Source of Truth)
 export type { PublicHoliday } from '../schemas/holidaySchema';
 
 /**
@@ -29,39 +30,6 @@ export type HolidayWorkPolicy =
   | 'optional' // เลือกทำงานได้
   | 'required' // บังคับทำงาน
   | 'overtime-only'; // ทำงานเป็น OT เท่านั้น
-
-/**
- * @deprecated Legacy PublicHoliday interface - now using schema-based type
- */
-interface PublicHolidayLegacy extends BaseEntity {
-  name: string;
-  nameEn: string;
-  description: string;
-  date: Date;
-  year: number;
-  type: HolidayType;
-
-  // Substitute day info
-  isSubstituteDay: boolean; // เป็นวันหยุดชดเชยหรือไม่
-  originalDate?: Date; // วันที่ต้นฉบับ (ถ้าเป็นวันชดเชย)
-
-  // Work policy
-  workPolicy: HolidayWorkPolicy;
-  overtimeRate: number; // ถ้าทำงานจะได้อัตรา X เท่า (เช่น 3.0)
-
-  // Location
-  locations: string[]; // [] = ทุกพื้นที่, ['Bangkok', 'Chiang Mai'] = เฉพาะพื้นที่
-  regions: string[]; // ['central', 'north'] = เฉพาะภูมิภาค
-
-  // Applicable to
-  applicableDepartments: string[]; // [] = ทุกแผนก
-  applicablePositions: string[]; // [] = ทุกตำแหน่ง
-
-  // Status
-  isActive: boolean;
-
-  tenantId: string;
-}
 
 /**
  * Company Holiday

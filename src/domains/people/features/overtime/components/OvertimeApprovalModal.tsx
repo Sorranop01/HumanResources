@@ -4,9 +4,9 @@
  */
 
 import { Descriptions, Form, Input, Modal, Tag } from 'antd';
-import dayjs from 'dayjs';
 import type { FC } from 'react';
 import type { OvertimeRequest } from '@/domains/people/features/overtime/types';
+import { formatDate } from '@/shared/lib/date';
 
 const { TextArea } = Input;
 
@@ -50,7 +50,7 @@ export const OvertimeApprovalModal: FC<OvertimeApprovalModalProps> = ({
         <Descriptions column={1} size="small" bordered style={{ marginBottom: 16 }}>
           <Descriptions.Item label="พนักงาน">{request.employeeName}</Descriptions.Item>
           <Descriptions.Item label="วันที่">
-            {dayjs(request.overtimeDate).format('DD MMM YYYY')}
+            {formatDate(request.overtimeDate, 'DD MMM YYYY')}
           </Descriptions.Item>
           <Descriptions.Item label="ช่วงเวลา">
             {request.plannedStartTime} - {request.plannedEndTime}

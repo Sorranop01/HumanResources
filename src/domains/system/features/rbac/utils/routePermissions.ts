@@ -4,7 +4,6 @@
  */
 
 import type { Permission } from '@/shared/constants/permissions';
-import type { Resource } from '@/shared/constants/resources';
 import type { Role } from '@/shared/constants/roles';
 import type { RoutePermission } from '../types/permissionDefinitionTypes';
 import { checkPermission } from './checkPermission';

@@ -310,18 +310,29 @@ export const holidayService = {
       // Find applicable holiday
       const applicableHoliday = holidays.find((holiday) => {
         // Check location
-        if (location && holiday.locations.length > 0 && !holiday.locations.includes(location)) {
+        if (
+          location &&
+          Array.isArray(holiday.locations) &&
+          holiday.locations.length > 0 &&
+          !holiday.locations.includes(location)
+        ) {
           return false;
         }
 
         // Check region
-        if (region && holiday.regions.length > 0 && !holiday.regions.includes(region)) {
+        if (
+          region &&
+          Array.isArray(holiday.regions) &&
+          holiday.regions.length > 0 &&
+          !holiday.regions.includes(region)
+        ) {
           return false;
         }
 
         // Check department
         if (
           department &&
+          Array.isArray(holiday.applicableDepartments) &&
           holiday.applicableDepartments.length > 0 &&
           !holiday.applicableDepartments.includes(department)
         ) {

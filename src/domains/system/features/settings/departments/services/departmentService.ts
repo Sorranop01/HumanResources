@@ -76,7 +76,17 @@ function docToDepartment(id: string, data: any): Department | null {
     return null;
   }
 
-  return validation.data;
+  const validatedData = validation.data;
+
+  const normalizeDate = (value: Date | FirestoreTimestamp): Date => {
+    return value instanceof Date ? value : value.toDate();
+  };
+
+  return {
+    ...validatedData,
+    createdAt: normalizeDate(validatedData.createdAt as Date | FirestoreTimestamp),
+    updatedAt: normalizeDate(validatedData.updatedAt as Date | FirestoreTimestamp),
+  } as Department;
 }
 
 /**

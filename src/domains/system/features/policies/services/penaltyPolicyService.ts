@@ -84,10 +84,10 @@ export const penaltyPolicyService = {
   /**
    * Create penalty policy
    */
-  async create(tenantId: string, input: CreatePenaltyPolicyInput): Promise<string> {
+  async create(input: CreatePenaltyPolicyInput, tenantId = 'tenant-default'): Promise<string> {
     try {
       // Check if code already exists
-      const existing = await this.getByCode(tenantId, input.code);
+      const existing = await this.getByCode(input.code, tenantId);
       if (existing) {
         throw new Error('Policy code already exists');
       }
@@ -160,7 +160,7 @@ export const penaltyPolicyService = {
   /**
    * Get policy by code
    */
-  async getByCode(tenantId: string, code: string): Promise<PenaltyPolicy | null> {
+  async getByCode(code: string, tenantId = 'tenant-default'): Promise<PenaltyPolicy | null> {
     try {
       const q = query(
         collection(db, COLLECTION_NAME),
@@ -188,7 +188,7 @@ export const penaltyPolicyService = {
   /**
    * Get all policies with filters
    */
-  async getAll(tenantId: string, filters?: PenaltyPolicyFilters): Promise<PenaltyPolicy[]> {
+  async getAll(filters?: PenaltyPolicyFilters, tenantId = 'tenant-default'): Promise<PenaltyPolicy[]> {
     try {
       const constraints: QueryConstraint[] = [where('tenantId', '==', tenantId)];
 
@@ -480,6 +480,7 @@ export const penaltyPolicyService = {
   ): boolean {
     // Check employee type
     if (
+      Array.isArray(policy.applicableEmploymentTypes) &&
       policy.applicableEmploymentTypes.length > 0 &&
       !policy.applicableEmploymentTypes.includes(employeeType)
     ) {
@@ -487,12 +488,17 @@ export const penaltyPolicyService = {
     }
 
     // Check position
-    if (policy.applicablePositions.length > 0 && !policy.applicablePositions.includes(position)) {
+    if (
+      Array.isArray(policy.applicablePositions) &&
+      policy.applicablePositions.length > 0 &&
+      !policy.applicablePositions.includes(position)
+    ) {
       return false;
     }
 
     // Check department
     if (
+      Array.isArray(policy.applicableDepartments) &&
       policy.applicableDepartments.length > 0 &&
       !policy.applicableDepartments.includes(department)
     ) {

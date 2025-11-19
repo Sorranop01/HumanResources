@@ -3,6 +3,14 @@
  * Re-exports from schema for type consistency
  */
 
+import type { BaseEntity } from '@/shared/types';
+import type {
+  PenaltyType,
+  PenaltyCalculationType,
+  PenaltyThreshold,
+  ProgressivePenaltyRule,
+} from '../schemas/penaltyPolicySchema';
+
 export type { PenaltyPolicy } from '../schemas/penaltyPolicySchema';
 
 /**

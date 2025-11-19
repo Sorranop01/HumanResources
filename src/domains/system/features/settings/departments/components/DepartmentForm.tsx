@@ -30,7 +30,6 @@ export const DepartmentForm: FC<DepartmentFormProps> = ({ visible, department, o
     control,
     handleSubmit,
     reset,
-    watch,
     formState: { errors },
   } = useForm<CreateDepartmentFormInput>({
     resolver: zodResolver(CreateDepartmentSchema),
@@ -44,8 +43,6 @@ export const DepartmentForm: FC<DepartmentFormProps> = ({ visible, department, o
       tenantId: TENANT_ID,
     },
   });
-
-  const _parentDepartmentId = watch('parentDepartmentId');
 
   useEffect(() => {
     if (department) {
@@ -77,7 +74,8 @@ export const DepartmentForm: FC<DepartmentFormProps> = ({ visible, department, o
     }
   }, [department, reset]);
 
-  const onSubmit = (data: CreateDepartmentFormInput) => {
+  const onSubmit = (rawData: CreateDepartmentFormInput) => {
+    const data = CreateDepartmentSchema.parse(rawData);
     if (department) {
       updateDepartment(
         {

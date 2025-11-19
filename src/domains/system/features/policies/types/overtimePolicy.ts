@@ -3,7 +3,10 @@
  * Re-exports from schema for type consistency
  */
 
-export type { OvertimePolicy, OvertimeRule } from '../schemas/overtimePolicySchema';
+import type { BaseEntity } from '@/shared/types';
+import type { OvertimeType, OvertimeRule } from '../schemas/overtimePolicySchema';
+
+export type { OvertimePolicy, OvertimeRule, OvertimeType } from '../schemas/overtimePolicySchema';
 
 /**
  * Create Overtime Policy Input

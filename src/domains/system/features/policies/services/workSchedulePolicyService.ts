@@ -83,27 +83,18 @@ function docToWorkSchedulePolicy(id: string, data: DocumentData): WorkSchedulePo
  * Parse time string (HH:mm) to minutes since midnight
  */
 function timeToMinutes(time: string): number {
-  const [hours, minutes] = time.split(':').map(Number);
+  const [hours = 0, minutes = 0] = time.split(':').map(Number);
   return hours * 60 + minutes;
-}
-
-/**
- * Calculate time difference in minutes
- */
-function _calculateTimeDifference(time1: string, time2: string): number {
-  const minutes1 = timeToMinutes(time1);
-  const minutes2 = timeToMinutes(time2);
-  return minutes1 - minutes2;
 }
 
 export const workSchedulePolicyService = {
   /**
    * Create work schedule policy
    */
-  async create(tenantId: string, input: CreateWorkSchedulePolicyInput): Promise<string> {
+  async create(input: CreateWorkSchedulePolicyInput, tenantId = 'tenant-default'): Promise<string> {
     try {
       // Check if code already exists
-      const existing = await this.getByCode(tenantId, input.code);
+      const existing = await this.getByCode(input.code, tenantId);
       if (existing) {
         throw new Error('Policy code already exists');
       }
@@ -181,7 +172,7 @@ export const workSchedulePolicyService = {
   /**
    * Get policy by code
    */
-  async getByCode(tenantId: string, code: string): Promise<WorkSchedulePolicy | null> {
+  async getByCode(code: string, tenantId = 'tenant-default'): Promise<WorkSchedulePolicy | null> {
     try {
       const q = query(
         collection(db, COLLECTION_NAME),
@@ -212,8 +203,8 @@ export const workSchedulePolicyService = {
    * so we fetch all active policies and filter in memory
    */
   async getAll(
-    tenantId: string,
-    filters?: WorkSchedulePolicyFilters
+    filters?: WorkSchedulePolicyFilters,
+    tenantId = 'tenant-default'
   ): Promise<WorkSchedulePolicy[]> {
     try {
       const constraints: QueryConstraint[] = [where('tenantId', '==', tenantId)];
@@ -234,20 +225,26 @@ export const workSchedulePolicyService = {
 
       // Filter in memory (because Firestore doesn't support multiple array-contains)
       if (filters?.department) {
-        policies = policies.filter((policy) =>
-          policy.applicableDepartments?.includes(filters.department!)
+        policies = policies.filter(
+          (policy) =>
+            Array.isArray(policy.applicableDepartments) &&
+            policy.applicableDepartments.includes(filters.department!),
         );
       }
 
       if (filters?.position) {
-        policies = policies.filter((policy) =>
-          policy.applicablePositions?.includes(filters.position!)
+        policies = policies.filter(
+          (policy) =>
+            Array.isArray(policy.applicablePositions) &&
+            policy.applicablePositions.includes(filters.position!),
         );
       }
 
       if (filters?.employmentType) {
-        policies = policies.filter((policy) =>
-          policy.applicableEmploymentTypes?.includes(filters.employmentType!)
+        policies = policies.filter(
+          (policy) =>
+            Array.isArray(policy.applicableEmploymentTypes) &&
+            policy.applicableEmploymentTypes.includes(filters.employmentType!),
         );
       }
 

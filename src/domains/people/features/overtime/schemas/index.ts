@@ -281,38 +281,25 @@ export function formDataToOvertimeRequestInput(
   employeeId: string,
   employeeName: string,
   employeeCode: string,
-  department: string,
-  position: string,
+  departmentId: string,
+  departmentName: string,
+  positionId: string,
+  positionName: string,
   overtimeRate: number
-): {
-  employeeId: string;
-  employeeName: string;
-  employeeCode: string;
-  department: string;
-  position: string;
-  overtimeDate: Date;
-  overtimeType: 'weekday' | 'weekend' | 'holiday' | 'emergency';
-  plannedStartTime: string;
-  plannedEndTime: string;
-  plannedHours: number;
-  reason: string;
-  taskDescription: string;
-  urgencyLevel: 'normal' | 'urgent' | 'critical';
-  isEmergency: boolean;
-  overtimeRate: number;
-  clockStatus: 'not-started';
-  status: 'pending';
-  attachmentUrl?: string;
-  notes?: string;
-} {
-  const plannedHours = calculatePlannedHours(formData.plannedStartTime, formData.plannedEndTime);
+): CreateOvertimeRequestInput {
+  const plannedHours = calculatePlannedHours(
+    formData.plannedStartTime,
+    formData.plannedEndTime,
+  );
 
   return {
     employeeId,
     employeeName,
     employeeCode,
-    department,
-    position,
+    departmentId,
+    departmentName,
+    positionId,
+    positionName,
     overtimeDate: new Date(formData.overtimeDate),
     overtimeType: formData.overtimeType,
     plannedStartTime: formData.plannedStartTime,
@@ -329,3 +316,33 @@ export function formDataToOvertimeRequestInput(
     notes: formData.notes ?? undefined,
   };
 }
+
+/**
+ * Input type for creating a new Overtime Request.
+ * Omits fields that are auto-generated or have default values.
+ */
+export type CreateOvertimeRequestInput = Omit<
+  OvertimeRequest,
+  | 'id'
+  | 'requestNumber'
+  | 'submittedAt'
+  | 'approvedBy'
+  | 'approvedAt'
+  | 'approvalComments'
+  | 'rejectedBy'
+  | 'rejectedAt'
+  | 'rejectionReason'
+  | 'cancelledBy'
+  | 'cancelledAt'
+  | 'cancellationReason'
+  | 'actualStartTime'
+  | 'actualEndTime'
+  | 'actualHours'
+  | 'overtimePay'
+  | 'baseSalaryForOT'
+  | 'tenantId'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'createdBy'
+  | 'updatedBy'
+>;

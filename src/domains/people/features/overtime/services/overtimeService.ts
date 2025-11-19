@@ -18,6 +18,7 @@ import {
 } from 'firebase/firestore';
 import type { OvertimeFilters } from '@/domains/people/features/overtime/schemas';
 import type {
+  CreateOvertimeRequestInput,
   OvertimeRequest,
   OvertimeRequestStatus,
   UpdateOvertimeRequestInput,
@@ -189,12 +190,29 @@ export const overtimeService = {
   /**
    * Create new OT request
    */
-  async create(data: Omit<OvertimeRequest, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
+  async create(
+    data: CreateOvertimeRequestInput & {
+      tenantId?: string;
+      createdBy?: string;
+      updatedBy?: string;
+    }
+  ): Promise<string> {
     try {
-      const docRef = await addDoc(collection(db, COLLECTION), {
+      const now = Timestamp.now();
+      const requestNumber = `OT-${now.seconds}-${Math.random().toString(36).substring(2, 8)}`;
+
+      const payload: Omit<OvertimeRequest, 'id' | 'createdAt' | 'updatedAt'> = {
         ...data,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
+        requestNumber,
+        tenantId: data.tenantId ?? 'tenant-default',
+        createdBy: data.createdBy ?? 'system',
+        updatedBy: data.updatedBy ?? 'system',
+      };
+
+      const docRef = await addDoc(collection(db, COLLECTION), {
+        ...payload,
+        createdAt: now,
+        updatedAt: now,
       });
 
       return docRef.id;

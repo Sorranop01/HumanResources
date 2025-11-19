@@ -52,6 +52,7 @@ export const CreateLocationSchema = z.object({
     .optional()
     .or(z.nan()),
   timezone: z.string().default('Asia/Bangkok'),
+  description: z.string().max(500).optional(),
   phone: z
     .string()
     .regex(/^(\+66|0)[0-9]{8,9}$/, 'เบอร์โทรศัพท์ไม่ถูกต้อง')
@@ -69,5 +70,5 @@ export const UpdateLocationSchema = CreateLocationSchema.partial().omit({
   tenantId: true,
 });
 
-export type CreateLocationFormInput = z.infer<typeof CreateLocationSchema>;
-export type UpdateLocationFormInput = z.infer<typeof UpdateLocationSchema>;
+export type CreateLocationFormInput = z.input<typeof CreateLocationSchema>;
+export type UpdateLocationFormInput = z.input<typeof UpdateLocationSchema>;

@@ -1,0 +1,104 @@
+{
+  "note": "This is a backup of MCP servers that were causing connection failures",
+  "issues": {
+    "firebase": "Missing 'async' module dependency in firebase-tools MCP package",
+    "filesystem": "Connection timeout (30s) - slow npx package download",
+    "knowledge-graph": "Connection timeout (30s) - slow npx package download",
+    "sequential-thinking": "Connection timeout - slow npx package download",
+    "console-mcp": "Local server not built or missing",
+    "memory": "Local server not built or missing",
+    "code-summarizer": "Local server not built or missing",
+    "memory-cache": "Local server not built or missing"
+  },
+  "mcpServers": {
+    "sequential-thinking": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "env": {}
+    },
+    "filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/sorranopkhanonvech/Desktop/HumanResources"
+      ],
+      "env": {}
+    },
+    "console-mcp": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["/Users/sorranopkhanonvech/Desktop/HumanResources/console_mcp/build/index.js"],
+      "env": {
+        "CONSOLE_LOG_DIR": "/Users/sorranopkhanonvech/Desktop/HumanResources/logs"
+      }
+    },
+    "memory": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["/Users/sorranopkhanonvech/Desktop/HumanResources/memory-server/build/index.js"],
+      "env": {}
+    },
+    "knowledge-graph": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "env": {}
+    },
+    "puppeteer": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-puppeteer"],
+      "env": {}
+    },
+    "firebase": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "firebase-tools@latest", "mcp"],
+      "env": {
+        "FIRESTORE_PROJECT": "human-b4c2c",
+        "FIRESTORE_DATABASE": "(default)",
+        "FIRESTORE_EMULATOR_HOST": "localhost:8888",
+        "FIREBASE_AUTH_EMULATOR_HOST": "localhost:9099",
+        "FIREBASE_STORAGE_EMULATOR_HOST": "localhost:9199"
+      }
+    },
+    "code-summarizer": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "/Users/sorranopkhanonvech/Desktop/HumanResources/code-summarizer/dist/bin/cli.js",
+        "server"
+      ],
+      "env": {
+        "GOOGLE_API_KEY": "AIzaSyABkqJ4j9reJzwNPnQvgnDxIvlChsIdLL4"
+      }
+    },
+    "memory-cache": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "/Users/sorranopkhanonvech/Desktop/HumanResources/ib-mcp-cache-server/build/index.js"
+      ],
+      "env": {}
+    },
+    "gemini": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@el-el-san/gemini-mcp"],
+      "env": {
+        "GEMINI_API_KEY": "AIzaSyABkqJ4j9reJzwNPnQvgnDxIvlChsIdLL4"
+      }
+    }
+  },
+  "solutions": {
+    "firebase": "Use local firebase-tools installation: 'firebase' instead of 'npx -y firebase-tools@latest'",
+    "filesystem": "Pre-install globally: pnpm add -g @modelcontextprotocol/server-filesystem",
+    "knowledge-graph": "Pre-install globally: pnpm add -g @modelcontextprotocol/server-memory",
+    "sequential-thinking": "Pre-install globally: pnpm add -g @modelcontextprotocol/server-sequential-thinking",
+    "local-servers": "Build the local MCP servers before enabling them in config (use pnpm install && pnpm run build)"
+  },
+  "note_package_manager": "This project uses pnpm as the package manager. Use 'pnpm add -g' for global installations instead of 'npm install -g'"
+}

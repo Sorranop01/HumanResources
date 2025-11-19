@@ -3,8 +3,9 @@ import { Button, Space, Table, Tag, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { FC } from 'react';
 import type { Role } from '@/shared/constants/roles';
+import type { Permission } from '@/shared/constants/permissions';
+import type { Resource } from '@/shared/constants/resources';
 import type { RoleDefinition, RolePermission } from '../types/rbacTypes';
-import type { Permission, Resource } from '../utils/checkPermission';
 
 const RESOURCES: Resource[] = [
   'employees',
@@ -52,18 +53,19 @@ export const PermissionMatrixTable: FC<PermissionMatrixTableProps> = ({
   onEditPermission,
 }) => {
   // Build a map of role -> resource -> permissions for quick lookup
-  const permissionMap: Record<Role, Record<Resource, Permission[]>> = {};
+  const permissionMap: Partial<Record<Role, Partial<Record<Resource, Permission[]>>>> = {};
 
   for (const rolePermission of rolePermissions) {
-    if (!permissionMap[rolePermission.role]) {
-      permissionMap[rolePermission.role] = {};
-    }
-    permissionMap[rolePermission.role][rolePermission.resource] = rolePermission.permissions;
+    const roleMap = permissionMap[rolePermission.role] ?? {};
+    roleMap[rolePermission.resource] = rolePermission.permissions;
+    permissionMap[rolePermission.role] = roleMap;
   }
 
   // Render permissions as tags with context indicator
   const renderPermissions = (permissions: Permission[] | undefined): JSX.Element => {
-    if (!permissions || permissions.length === 0) {
+    const normalizedPermissions = permissions ?? [];
+
+    if (normalizedPermissions.length === 0) {
       return (
         <Tooltip title="ไม่มีสิทธิ์">
           <MinusCircleFilled style={{ color: '#d9d9d9' }} />
@@ -71,19 +73,22 @@ export const PermissionMatrixTable: FC<PermissionMatrixTableProps> = ({
       );
     }
 
-    // Group permissions by base permission
     const grouped: Record<string, { own: boolean; all: boolean }> = {};
 
-    for (const permission of permissions) {
+    for (const permission of normalizedPermissions) {
+      if (!permission) continue;
+
       if (permission.includes(':')) {
         const [base, scope] = permission.split(':');
-        if (!grouped[base]) {
-          grouped[base] = { own: false, all: false };
-        }
-        if (scope === 'own') {
-          grouped[base].own = true;
-        } else if (scope === 'all') {
-          grouped[base].all = true;
+        if (base) {
+          if (!grouped[base]) {
+            grouped[base] = { own: false, all: false };
+          }
+          if (scope === 'own') {
+            grouped[base].own = true;
+          } else if (scope === 'all') {
+            grouped[base].all = true;
+          }
         }
       } else {
         // No context means 'all'

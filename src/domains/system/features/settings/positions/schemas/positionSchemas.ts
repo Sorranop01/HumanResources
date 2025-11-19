@@ -31,32 +31,8 @@ export const PositionCategorySchema = z.enum([
 export const EmploymentTypeSchema = z.enum(['permanent', 'contract', 'probation', 'intern']);
 
 /**
- * Complete Position Firestore schema
- * Single Source of Truth for Position data structure
- */
-export const PositionSchema = z.object({
-  id: z.string().min(1),
-  code: z.string().min(2).max(20),
-  name: z.string().min(2).max(100),
-  nameEn: z.string().min(2).max(100),
-  description: z.string(),
-  // Department reference (denormalized)
-  department: z.string().min(1), // ✅ Department ID
-  departmentName: z.string().min(1), // ✅ Denormalized department name
-  departmentCode: z.string().min(1), // ✅ Denormalized department code
-  level: z.string().min(1),
-  minSalary: z.number().min(0),
-  maxSalary: z.number().min(0),
-  isActive: z.boolean(),
-  tenantId: z.string().min(1),
-  createdAt: FirestoreTimestampSchema,
-  updatedAt: FirestoreTimestampSchema,
-  createdBy: z.string().optional(),
-  updatedBy: z.string().optional(),
-});
-
-/**
  * Base position schema (without refinements)
+ * This is the source of truth for the form fields.
  */
 const BasePositionSchema = z.object({
   code: z
@@ -81,8 +57,8 @@ const BasePositionSchema = z.object({
   departmentCode: z.string().min(1, 'รหัสแผนกจำเป็นต้องระบุ'),
 
   // Salary Range
-  minSalary: z.number().min(0, 'เงินเดือนขั้นต่ำต้องไม่ติดลบ').optional().or(z.nan()),
-  maxSalary: z.number().min(0, 'เงินเดือนสูงสุดต้องไม่ติดลบ').optional().or(z.nan()),
+  minSalary: z.number().min(0, 'เงินเดือนขั้นต่ำต้องไม่ติดลบ').optional(),
+  maxSalary: z.number().min(0, 'เงินเดือนสูงสุดต้องไม่ติดลบ').optional(),
   currency: z.string().length(3, 'สกุลเงินต้องเป็นรหัส 3 ตัวอักษร'),
 
   // Job Details
@@ -94,11 +70,23 @@ const BasePositionSchema = z.object({
   employmentTypes: z.array(EmploymentTypeSchema).min(1, 'ต้องระบุประเภทการจ้างงานอย่างน้อย 1 ประเภท'),
 
   // Settings
-  isActive: z.boolean().optional().default(true),
-  isPublic: z.boolean().optional().default(false),
+  isActive: z.boolean(),
+  isPublic: z.boolean(),
 
   // Metadata
   tenantId: z.string().min(1, 'Tenant ID จำเป็นต้องระบุ'),
+});
+
+/**
+ * Complete Position Firestore schema
+ * Extends the base schema with Firestore-specific fields.
+ */
+export const PositionSchema = BasePositionSchema.extend({
+  id: z.string().min(1),
+  createdAt: FirestoreTimestampSchema,
+  updatedAt: FirestoreTimestampSchema,
+  createdBy: z.string().optional(),
+  updatedBy: z.string().optional(),
 });
 
 /**

@@ -22,7 +22,7 @@ interface RouteGuardProps {
  */
 export const RouteGuard: FC<RouteGuardProps> = ({ children, fallback, redirectTo }) => {
   const location = useLocation();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const {
     canAccess,
     isLoading: permissionLoading,

@@ -7,20 +7,26 @@ import { FirestoreTimestampSchema } from '@/shared/schemas/common.schema';
  */
 export const DepartmentSchema = z.object({
   id: z.string().min(1),
-  code: z.string().min(2).max(10),
+  code: z
+    .string()
+    .min(2, 'รหัสแผนกต้องมีอย่างน้อย 2 ตัวอักษร')
+    .max(10, 'รหัสแผนกต้องไม่เกิน 10 ตัวอักษร')
+    .regex(/^[A-Z0-9-]+$/, 'รหัสแผนกต้องเป็นตัวพิมพ์ใหญ่และตัวเลขเท่านั้น'),
   name: z.string().min(2).max(100),
   nameEn: z.string().min(2).max(100),
-  description: z.string(),
-  // Parent department reference (denormalized)
-  parentDepartment: z.string().optional(),
-  parentDepartmentName: z.string().optional(), // ✅ Denormalized parent name
-  parentDepartmentCode: z.string().optional(), // ✅ Denormalized parent code
-  // Manager reference (denormalized)
+  description: z.string().optional(),
+  parentDepartmentId: z.string().optional(),
+  parentDepartmentName: z.string().optional(),
+  parentDepartmentCode: z.string().optional(),
+  level: z.number().int().min(1),
+  path: z.string().min(1),
   managerId: z.string().optional(),
   managerName: z.string().optional(),
-  managerPositionId: z.string().optional(), // ✅ Denormalized manager position ID
-  managerPositionName: z.string().optional(), // ✅ Denormalized manager position name
-  headCount: z.number().int().min(0),
+  managerPositionId: z.string().optional(),
+  managerPositionName: z.string().optional(),
+  headCount: z.number().int().min(0).optional(),
+  costCenter: z.string().optional(),
+  budgetAmount: z.number().optional(),
   isActive: z.boolean(),
   tenantId: z.string().min(1),
   createdAt: FirestoreTimestampSchema,
@@ -104,7 +110,7 @@ export const CloudFunctionDeleteDepartmentSchema = z.object({
  * Inferred types
  */
 export type Department = z.infer<typeof DepartmentSchema>;
-export type CreateDepartmentFormInput = z.infer<typeof CreateDepartmentSchema>;
+export type CreateDepartmentFormInput = z.input<typeof CreateDepartmentSchema>;
 export type UpdateDepartmentFormInput = z.infer<typeof UpdateDepartmentSchema>;
 export type CloudFunctionCreateDepartment = z.infer<typeof CloudFunctionCreateDepartmentSchema>;
 export type CloudFunctionUpdateDepartment = z.infer<typeof CloudFunctionUpdateDepartmentSchema>;
